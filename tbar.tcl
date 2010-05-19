@@ -36,7 +36,7 @@ if {[file exists [file join . config.tcl]]} {
 	source [file join . config.tcl]
 }
 if {[file exists [file join etc tbar config.tcl]]} {
-	source [file join etc tbar config.tcl]
+	source [file join / etc tbar config.tcl]
 }
 if {[file exists [file join $::env(HOME) .tbar config.tcl]]} {
 	source [file join $::env(HOME) .tbar config.tcl]

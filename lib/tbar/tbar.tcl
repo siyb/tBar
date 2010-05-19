@@ -25,7 +25,7 @@ namespace eval geekosphere::tbar {
 	set conf(geom,ypos) 1031
 
 	set conf(widgets,position) "left"
-	set conf(widget,path) [file join . widget]
+	#set conf(widget,path) [file join . widget]
 
 	#
 	# Code
@@ -191,8 +191,13 @@ namespace eval geekosphere::tbar {
 		variable conf
 		set conf(font,bold) $status
 	}
+	
+	proc setWidgetPath {path} {
+		variable conf
+		set conf(widget,path) $path
+	}
 
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
-	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold
+	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath
 }
 

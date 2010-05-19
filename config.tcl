@@ -141,4 +141,3 @@ addWidget cpu 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 #		every $interval seconds
 #
 #addWidget text 1 -command [list exec uptime]
-

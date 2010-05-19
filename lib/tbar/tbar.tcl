@@ -25,7 +25,7 @@ namespace eval geekosphere::tbar {
 	set conf(geom,ypos) 1031
 
 	set conf(widgets,position) "left"
-	#set conf(widget,path) [file join . widget]
+	set conf(widget,path) [file join . widget]
 
 	#
 	# Code

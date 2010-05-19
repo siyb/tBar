@@ -25,6 +25,7 @@ namespace eval geekosphere::tbar {
 	set conf(geom,ypos) 1031
 
 	set conf(widgets,position) "left"
+	set conf(widget,path) [file join . widget]
 
 	#
 	# Code
@@ -66,9 +67,10 @@ namespace eval geekosphere::tbar {
 	# load all widgets
 	proc loadWidgets {} {
 		variable sys
+		variable conf
 		foreach {widget updateInterval settingsList} $sys(widget,list) {
 			if {[catch {
-				uplevel #0 source [file join widget ${widget}.tcl]
+				uplevel #0 source [file join $conf(widget,path) ${widget}.tcl]
 				geekosphere::tbar::widget::${widget}::init $settingsList
 				if {$updateInterval > 0} { updateWidget $widget $updateInterval }
 			} err]} {
@@ -192,7 +194,5 @@ namespace eval geekosphere::tbar {
 
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold
-
-
 }
 

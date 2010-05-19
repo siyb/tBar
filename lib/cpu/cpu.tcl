@@ -1,0 +1,391 @@
+package provide cpu 1.1
+
+package require barChart
+package require util
+
+proc cpu {w args} {
+	geekosphere::tbar::widget::cpu::makeCpu $w $args
+
+	proc $w {args} {
+		geekosphere::tbar::widget::cpu::action [string trim [dict get [info frame 0] proc] ::] $args
+	}
+	return $w
+}
+
+# TODO 1.x: add support for multiple thermal sources
+# TODO 1.1: add functionality to show load for all CPU
+namespace eval geekosphere::tbar::widget::cpu {
+
+	#
+	# For all widgets this information is the same
+	#
+	# cpu thermal information
+	dict set sys(thermal) sys.dir "/sys/class/thermal/" 
+	dict set sys(thermal) sys.file "temp" 
+	dict set sys(thermal) sys.mod "1000"
+	dict set sys(thermal) core.dir "/sys/devices/platform/" 
+	dict set sys(thermal) core.file "temp1_input" 
+	dict set sys(thermal) core.mod "1000"
+	dict set sys(thermal) proc.dir "/proc/acpi/thermal_zone/" 
+	dict set sys(thermal) proc.file "temperature" 
+	dict set sys(thermal) proc.mod "-1"
+	set sys(thermalSource) -1
+	set sys(cpu,temperature) "N/A"
+	# cpu general info
+	set sys(cpuinfo) "/proc/cpuinfo"
+	set sys(general) -1
+	# stat info
+	set sys(stat) "/proc/stat"
+	set sys(statData) -1
+	
+	proc makeCpu {w args} {
+		variable sys
+		
+		set sys($w,originalCommand) ${w}_
+		
+		set sys($w,cpu,temperature) "N/A"
+		set sys($w,cpu,load) "N/A"
+		
+		# cache general cpu information (which is static)
+		set sys(general) [geekosphere::tbar::util::parseProcFile $sys(cpuinfo) [list "processor" "cpuMHz" "cachesize"]]
+		if {[set device [getOption "-device" $args]] eq ""} { error "Specify a device using the -device option." }
+		set sys($w,showMhz) [string is true -strict [getOption "-showMhz" $args]]
+		set sys($w,showCache) [string is true -strict [getOption "-showCache" $args]]
+		set sys($w,showLoad) [string is true -strict [getOption "-showLoad" $args]]
+		set sys($w,showTemperature) [string is true -strict [getOption "-showTemperature" $args]]
+		set sys($w,showTotalLoad) [string is true -strict [getOption "-showTotalLoad" $args]]
+		set sys($w,device) $device
+		set sys($w,cpu,mhz) [getMHz $sys($w,device)]
+		set sys($w,cpu,cache) [getCacheSize $sys($w,device)]
+		
+		set sys($w,cpu,totalTime) 0
+		set sys($w,cpu,activeTime) 0
+		set sys($w,cpu,load) 0
+		
+		frame ${w}
+		
+		if {$sys($w,showTemperature)} {
+			pack [frame ${w}.temperature] -side left -fill both
+			pack [label ${w}.temperature.label -text "Temperature:"] -side left -fill both
+			pack [label ${w}.temperature.display -textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,temperature)] -side left -fill both
+		}
+		
+		if {$sys($w,showMhz)} {
+			pack [frame ${w}.mhz] -side left -fill both
+			pack [label ${w}.mhz.label -text "MHz:"] -side left -fill both
+			pack [label ${w}.mhz.display -textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,mhz) ] -side left -fill both
+		}
+		
+		if {$sys($w,showCache)} {
+			pack [frame ${w}.cache] -side left -fill both
+			pack [label ${w}.cache.label -text "Cache:"] -side left -fill both
+			pack [label ${w}.cache.display -textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,cache)] -side left -fill both
+		}
+		
+		if {$sys($w,showLoad)} {
+			if {$sys($w,showTotalLoad)} {
+				set displayText "CPU Total Load:"
+			} else {
+				set displayText "CPU Load $sys($w,device):"
+			}
+			pack [frame ${w}.load] -side left -fill both
+			pack [label ${w}.load.label -text "$displayText"] -side left -fill both
+			pack [barChart ${w}.load.barChart -textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,load) -width 100] -side left -fill both
+		}
+		
+		# rename widgets so that it will not receive commands
+		uplevel #0 rename $w ${w}_
+
+	# run configuration
+		action $w configure [join $args]
+		
+		# mark the widget as initialized
+		set sys($w,initialized) 1
+	}
+	
+	proc isInitialized {w} {
+		variable sys
+		return [info exists sys($w,initialized)]
+	}
+
+	proc updateWidget {w} {
+		variable sys
+		#
+		# Gather data
+		#
+		if {$sys(thermalSource) == -1} {
+			set sys(thermalSource) [determineThermalsource]
+		}
+		
+		# TODO 1.x: maybe use a timer here to cache information so that the IO requests are reduced
+		set sys(statData) [statFileParser $sys(stat)]
+		
+		#
+		# Updating gui
+		#
+		set sys($w,cpu,temperature) "[getTemperature] C°"
+		
+		set load [getCpuLoad $w]
+		set sys($w,cpu,load) $load
+		if {$sys($w,showLoad)} {
+			${w}.load.barChart pushValue $load
+			${w}.load.barChart update
+		}
+	}
+	
+	proc getOption {option options} {
+		foreach {opt value} [join $options] {
+			if {$opt eq $option} {
+				return $value
+			}
+		}
+		return ""
+	}
+	
+	proc action {w args} {
+		variable sys
+		set args [join $args]
+		set command [lindex $args 0]
+		set rest [lrange $args 1 end]
+		if {$command eq "configure"} {
+			foreach {opt value} $rest {
+				switch $opt {
+					"-fg" - "-foreground" {
+						changeForegroundColor $w $value
+					}
+					"-bg" - "-background" {
+						changeBackgroundColor $w $value
+					}
+					"-lc" - "-loadcolor" {
+						changeLoadColor $w $value
+					}
+					"-device" {
+						if {[isInitialized $w]} { error "Device cannot be changed after widget initialization" }
+					}
+					"-showTotalLoad" {
+						if {[isInitialized $w]} { error "showTotalLoad cannot be changed after widget initialization" }
+					}
+					"-width" {
+						changeWidth $w $value
+					}
+					"-height" {
+						changeHeight $w $value
+					}
+					"-showMhz" {
+						if {[isInitialized $w]} { error "showMhz cannot be changed after widget initialization" }
+					}
+					"-showCache" {
+						if {[isInitialized $w]} { error "showCache cannot be changed after widget initialization" }
+					}
+					"-showLoad" {
+						if {[isInitialized $w]} { error "showLoad cannot be changed after widget initialization" }
+					}
+					"-showTemperature" {
+						if {[isInitialized $w]} { error "showTemperature cannot be changed after widget initialization" }
+					}
+					"-font" {
+						changeFont $w $value
+					}
+					default {
+						error "${opt} not supported"
+					}
+				}
+			}
+		} elseif {$command == "update"} {
+			updateWidget $w
+		} else {
+			error "Command ${command} not supported"
+		}
+	}
+	
+	# determine which thermal source file to use
+	proc determineThermalsource {} {
+		variable sys
+		dict for {item value} $sys(thermal) {
+			if {[string match *.dir $item]} {
+				set dirName $value
+				continue
+			}
+			if {[string match *.file $item]} {
+				set fileName $value
+			}
+			if {$fileName eq "" || $dirName eq ""} {
+				continue
+			}
+			set fileName [glob -nocomplain -directory $dirName *[file separator]$fileName]
+			set fnl [llength $fileName]
+			if {$fnl > 1} { 
+				set fileName [lindex $fileName 0]
+				puts "There seem to be multiple temperature monitors installed on your system, defaulting to ${fileName}" 
+			}
+			if {$fnl < 1} { continue }
+			# return fileName and modifier
+			return [list $fileName [dict get $sys(thermal) [lindex [split $item "."] 0].mod]]
+		}
+	}
+	
+	# get mhz of cpu $device
+	proc getMHz {device} {
+		variable sys
+		return [::tcl::mathfunc::round [lindex [dict get $sys(general) "cpuMHz"] $device]]
+	}
+	
+	# get cache of cpu $device
+	proc getCacheSize {device} {
+		variable sys
+		return [lindex [dict get $sys(general) "cachesize"] $device]
+	}
+	
+	# gets the temperature
+	proc getTemperature {} {
+		variable sys
+		set mod [lindex $sys(thermalSource) 1]
+		set data [set data [read [set fl [open [lindex $sys(thermalSource) 0] r]]]]
+		close $fl
+		set data [geekosphere::tbar::util::parseFirstInteger $data]
+		if {$mod == -1} {
+			return $data
+		} else {
+			return [expr {$data / $mod}]
+		}
+	}
+	
+	# returns the cpu load of the specified cpu device
+	proc getCpuLoad {w} {
+		variable sys
+		# load of all cpus
+		if {$sys($w,showTotalLoad)} {
+			set deviceData [lsearch -inline -index 0 $sys(statData) "cpu"]
+		# load of the cpu specified by -device
+		} else {
+			set deviceData [lsearch -inline -index 0 $sys(statData) "cpu$sys($w,device)"]
+		}
+		set activeTime [expr {[lindex $deviceData 1] + [lindex $deviceData 2] + [lindex $deviceData 3] + [lindex $deviceData 5] + [lindex $deviceData 6] + [lindex $deviceData 7]}]
+		set idleTime [lindex $deviceData 4]
+		set totalTime [expr {$activeTime + $idleTime}]
+		
+		set diffTotal [expr {$totalTime - $sys($w,cpu,totalTime)}]
+		set diffActive [expr {$activeTime - $sys($w,cpu,activeTime)}]
+		if {$diffTotal == 0 || $diffActive == 0} { return 0.0 }
+		set usage [::tcl::mathfunc::floor [expr $diffActive. / $diffTotal. * 100.]]
+		
+		set sys($w,cpu,totalTime) $totalTime
+		set sys($w,cpu,activeTime) $activeTime
+		return $usage
+	}
+	
+	# returns a list of all cpu entries of the statfile
+	proc statFileParser {file} {
+		set data [split [read [set fl [open $file r]]] "\n"]
+		close $fl
+		return [lsearch -all -inline $data "cpu*"]
+	}
+	
+	#
+	# Widget configuration procs
+	#
+	
+	proc changeBackgroundColor {w color} {
+		variable sys
+		$sys($w,originalCommand) configure -bg $color
+		
+		# temperature
+		if {$sys($w,showTemperature)} {
+			${w}.temperature configure -bg $color
+			${w}.temperature.label configure -bg $color
+			${w}.temperature.display configure -bg $color
+		}
+		# mhz
+		if {$sys($w,showMhz)} {
+			${w}.mhz configure -bg $color
+			${w}.mhz.label configure -bg $color
+			${w}.mhz.display configure -bg $color
+		}
+		# cache
+		if {$sys($w,showCache)} {
+			${w}.cache configure -bg $color
+			${w}.cache.label configure -bg $color
+			${w}.cache.display configure -bg $color
+		}
+		# load
+		if {$sys($w,showLoad)} {
+			${w}.load configure -bg $color
+			${w}.load.label configure -bg $color
+			${w}.load.barChart configure -bg $color
+		}
+	}
+	
+	proc changeForegroundColor {w color} {
+		variable sys
+		# temperature
+		if {$sys($w,showTemperature)} {
+			${w}.temperature.label configure -fg $color
+			${w}.temperature.display configure -fg $color
+		}
+		
+		# mhz
+		if {$sys($w,showMhz)} {
+			${w}.mhz.label configure -fg $color
+			${w}.mhz.display configure -fg $color
+		}
+		 
+		# cache
+		if {$sys($w,showCache)} {
+			${w}.cache.label configure -fg $color
+			${w}.cache.display configure -fg $color
+		}
+		
+		# load
+		if {$sys($w,showLoad)} {
+			${w}.load.label configure -fg $color
+			${w}.load.barChart configure -fg $color
+		}
+	}
+	
+	proc changeWidth {w width} {
+		variable sys
+		$sys($w,originalCommand) configure -width $width
+	}
+	
+	proc changeHeight {w height} {
+		variable sys
+		$sys($w,originalCommand) configure -height $height
+		if {$sys($w,showLoad)} {
+			${w}.load.barChart configure -height $height
+		}
+	}
+	
+	proc changeLoadColor {w color} {
+		variable sys
+		if {$sys($w,showLoad)} {
+			${w}.load.barChart configure -gc $color
+		}
+	}
+	
+	proc changeFont {w font} {
+		variable sys
+		# temperature
+		if {$sys($w,showTemperature)} {
+			${w}.temperature.label configure -font $font
+			${w}.temperature.display configure -font $font
+		}
+		
+		# mhz
+		if {$sys($w,showMhz)} {
+			${w}.mhz.label configure -font $font
+			${w}.mhz.display configure -font $font
+		}
+		 
+		# cache
+		if {$sys($w,showCache)} {
+			${w}.cache.label configure -font $font
+			${w}.cache.display configure -font $font
+		}
+		
+		# load
+		if {$sys($w,showLoad)} {
+			${w}.load.label configure -font $font
+			${w}.load.barChart configure -font $font
+		}
+	}
+}

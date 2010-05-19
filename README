@@ -1,0 +1,19 @@
+1. Installation
+
+	- Install Tcl/Tk 8.5 or higher
+	- Modify config.tcl to fit your needs
+	- ./tbar.tcl	
+
+2. License
+
+	tBar is licensed under the terms of the GPL 3. Please refer to the LICENSE file for more information on the GPL 3.
+
+3. Acknowledgement
+
+	- Thanks to Jaafar Mejri aka Jaf (http://wiki.tcl.tk/13498) for his contibution to the program (calendar widget)
+
+4. Contact
+
+	Website: http://siyb.mount.at/tbar
+	Email: siyb@geekosphere.org
+	IRC: #woot @ quipu.mount.at:6697 (SSL only!)

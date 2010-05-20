@@ -139,8 +139,8 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		# mark today
 		${calWin}.cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]
-		
-		wm geometry $calWin [geekosphere::tbar::util::getNewWindowGeometry_ [winfo rootx $w]  [winfo rooty $w] 200 200 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+		puts "[wm geometry $calWin]"
+		wm geometry $calWin [geekosphere::tbar::util::getNewWindowGeometry_ [winfo rootx $w]  [winfo rooty $w] 200 230 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
 		wm overrideredirect $calWin 1
 	}
 	

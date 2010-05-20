@@ -1,8 +1,11 @@
 1. Installation
 
 	- Install Tcl/Tk 8.5 or higher
-	- Modify config.tcl to fit your needs
-	- ./tbar.tcl	
+	- Run: make install (or: make DESTFILE=myfile install)
+	- Modify /etc/tbar/config.tcl to fit your needs or create ~/.tbar/ and copy /etc/tbar/config.tcl there, to have a user specific config
+	- Run: tbar	
+
+	- To uninstall run: make uninstall, make sure to specify DESTFILE if you have done so in the install
 
 2. License
 

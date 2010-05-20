@@ -25,7 +25,7 @@ namespace eval geekosphere::tbar {
 	set conf(geom,ypos) 1031
 
 	set conf(widgets,position) "left"
-	set conf(widget,path) [file join . widget]
+	set conf(widget,path) [file join / usr share tbar]
 
 	#
 	# Code
@@ -70,6 +70,7 @@ namespace eval geekosphere::tbar {
 		variable conf
 		foreach {widget updateInterval settingsList} $sys(widget,list) {
 			if {[catch {
+				if {![file exists $conf(widget,path)]} { puts "Widget path does not exists, use setWidgetPath to set it correctly, if not set it will default to \$installDir/usr/share/tbar/"; exit }
 				uplevel #0 source [file join $conf(widget,path) ${widget}.tcl]
 				geekosphere::tbar::widget::${widget}::init $settingsList
 				if {$updateInterval > 0} { updateWidget $widget $updateInterval }

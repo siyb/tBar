@@ -32,18 +32,18 @@ foreach {parameter value} $argv {
 }
 
 # sourcing configs
-if {[file exists [file join . config.tcl]]} {
-	source [file join . config.tcl]
-}
-if {[file exists [file join / etc tbar config.tcl]]} {
-	source [file join / etc tbar config.tcl]
-}
-if {[file exists [file join $::env(HOME) .tbar config.tcl]]} {
-	source [file join $::env(HOME) .tbar config.tcl]
-}
 if {[info exists geekosphere::tbar::sys(config)] && [file exists $geekosphere::tbar::sys(config)]} {
 	source $geekosphere::tbar::sys(config)
+} elseif {[file exists [file join $::env(HOME) .tbar config.tcl]]} {
+	source [file join $::env(HOME) .tbar config.tcl]
+} elseif {[file exists [file join / etc tbar config.tcl]]} {
+	source [file join / etc tbar config.tcl]
+} elseif {[file exists [file join . config.tcl]]} {
+	source [file join . config.tcl]
 }
+
+
+
 
 # creating font
 set geekosphere::tbar::conf(font,sysFont) [font create -family $geekosphere::tbar::conf(font,name) \

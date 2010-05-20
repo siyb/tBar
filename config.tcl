@@ -3,7 +3,7 @@
 #
 
 # the path to the widget directory
-#setWidgetPath "widget"
+#setWidgetPath ""
 
 # the color of the bar
 setBarColor black

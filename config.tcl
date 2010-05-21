@@ -99,6 +99,8 @@ addText " | " "red"
 # -gc / -graphicscolor - the color of the graph
 # -showwhat - if showwhat is 0, used memory will be displayed,
 #		if showwhat is 1, free memory will be displayed
+# -noswap - will prevent the swappart of the widget to be diplayed (memory only)
+#		setting this to 1 will disable swap
 #
 addWidget memory 5 -gc blue -bc | -showwhat 0
 addText " | " "red"

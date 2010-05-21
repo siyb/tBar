@@ -22,7 +22,7 @@ namespace eval geekosphere::tbar::widget::memory {
 		if {[set sys($w,showWhat) [getOption "-showwhat" $args]] eq ""} { error "Specify showwhat using the -showwhat option" }
 		set sys($w,originalCommand) ${w}_
 		set sys(memData) [parseMemfile $sys(memFile)]
-		
+		set sys($w,useSwap) [string is false -strict [getOption "-noswap" $args]]
 		frame $w
 		
 		#
@@ -39,19 +39,21 @@ namespace eval geekosphere::tbar::widget::memory {
 		#
 		# Swap
 		#
-		pack [label ${w}.swap] -side left
-		
-		pack [statusBar ${w}.swapstatus \
-			-ta [string trimright [dict get $sys(memData) "SwapTotal"] "kB"] \
-			-bc "|" \
-		] -side left
+		if {$sys($w,useSwap)} {
+			pack [label ${w}.swap] -side left
+			
+			pack [statusBar ${w}.swapstatus \
+				-ta [string trimright [dict get $sys(memData) "SwapTotal"] "kB"] \
+				-bc "|" \
+			] -side left
+		}
 		
 		if {$sys($w,showWhat)} {
 			${w}.memory configure -text "FreeMem: "
-			${w}.swap configure -text "FreeSwap: "
+			if {$sys($w,useSwap)} { ${w}.swap configure -text "FreeSwap: " }
 		} else {
 			${w}.memory configure -text "UsedMem: "
-			${w}.swap configure -text "UsedSwap: "
+			if {$sys($w,useSwap)} { ${w}.swap configure -text "UsedSwap: " }
 		}
 		
 		# rename widgets so that it will not receive commands
@@ -81,6 +83,8 @@ namespace eval geekosphere::tbar::widget::memory {
 	proc updateWidget {w} {
 		variable sys
 		set sys(memData) [parseMemfile $sys(memFile)]
+		
+		# MEMORY
 		# free
 		if {$sys($w,showWhat)} {
 			set swap [string trimright [dict get $sys(memData) "SwapFree"] "kB"]
@@ -90,8 +94,21 @@ namespace eval geekosphere::tbar::widget::memory {
 			set swap [usedSwap]
 			set memory [usedMem]
 		}
-		${w}.swapstatus update $swap
 		${w}.memorystatus update $memory
+		
+		# SWAP
+		if {$sys($w,useSwap)} {
+			# free
+			if {$sys($w,showWhat)} {
+				set swap [string trimright [dict get $sys(memData) "SwapFree"] "kB"]
+			# used
+			} else {
+				set swap [usedSwap]
+			}
+			${w}.swapstatus update $swap
+		}
+		
+		
 	}
 	
 	proc action {w args} {
@@ -115,6 +132,9 @@ namespace eval geekosphere::tbar::widget::memory {
 						changeGraphicColor $w $value
 					}
 					"-showwhat" {
+						if {[isInitialized $w]} { error "Showwhat cannot be modified after widget has been initialized" }
+					}
+					"-noswap" {
 						if {[isInitialized $w]} { error "Showwhat cannot be modified after widget has been initialized" }
 					}
 					"-font" {
@@ -173,35 +193,43 @@ namespace eval geekosphere::tbar::widget::memory {
 	proc changeForegroundColor {w color} {
 		variable sys
 		${w}.memory configure -fg $color
-		${w}.swap configure -fg $color
-		${w}.swapstatus configure -fg $color
 		${w}.memorystatus configure -fg $color
+		if {$sys($w,useSwap)} {
+			${w}.swap configure -fg $color
+			${w}.swapstatus configure -fg $color
+		}
 	}
 	
 	proc changeBackgroundColor {w color} {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
 		${w}.memory configure -bg $color
-		${w}.swap configure -bg $color
-		${w}.swapstatus configure -bg $color
 		${w}.memorystatus configure -bg $color
+		if {$sys($w,useSwap)} {
+			${w}.swap configure -bg $color
+			${w}.swapstatus configure -bg $color
+		}
 	}
 	
 	proc changeGraphicColor {w color} {
-		${w}.swapstatus configure -gc $color
-		${w}.memorystatus configure -gc $color	
+		variable sys
+		${w}.memorystatus configure -gc $color
+		if {$sys($w,useSwap)} { ${w}.swapstatus configure -gc $color }
 	}
  	
 	proc changeBarcharacter {w character} {
 		variable sys
 		${w}.memorystatus configure -bc $character
-		${w}.memorystatus configure -bc $character
+		if {$sys($w,useSwap)} { ${w}.swapstatus configure -bc $character }
 	}
 	
 	proc changeFont {w font} {
+		variable sys
 		${w}.memory configure -font $font
-		${w}.swap configure -font $font
-		${w}.swapstatus configure -font $font
 		${w}.memorystatus configure -font $font
+		if {$sys($w,useSwap)} {
+			${w}.swap configure -font $font
+			${w}.swapstatus configure -font $font
+		}
 	}
 }

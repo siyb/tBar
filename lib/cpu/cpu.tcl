@@ -219,26 +219,36 @@ namespace eval geekosphere::tbar::widget::cpu {
 				puts "There seem to be multiple temperature monitors installed on your system, defaulting to ${fileName}" 
 			}
 			if {$fnl < 1} { continue }
+			
 			# return fileName and modifier
 			return [list $fileName [dict get $sys(thermal) [lindex [split $item "."] 0].mod]]
 		}
+		error "thermal source could not be determined, perhaps your system is not configured correctly"
+		return 0
 	}
 	
 	# get mhz of cpu $device
 	proc getMHz {device} {
 		variable sys
-		return [::tcl::mathfunc::round [lindex [dict get $sys(general) "cpuMHz"] $device]]
+		if {[set mhz [lindex [dict get $sys(general) "cpuMHz"] $device]] eq ""} {
+			error "unable to determine cpu MHz, please check if you specified the correct device"
+		}
+		return [::tcl::mathfunc::round $mhz]
 	}
 	
 	# get cache of cpu $device
 	proc getCacheSize {device} {
 		variable sys
-		return [lindex [dict get $sys(general) "cachesize"] $device]
+		if {[set cache [lindex [dict get $sys(general) "cachesize"] $device]] eq ""} {
+			error "unable to determine cpu cache size, please check if you specified the correct device"
+		}
+		return 
 	}
 	
 	# gets the temperature
 	proc getTemperature {} {
 		variable sys
+		if {$sys(thermalSource) == 0} { return "N/A" }
 		set mod [lindex $sys(thermalSource) 1]
 		set data [set data [read [set fl [open [lindex $sys(thermalSource) 0] r]]]]
 		close $fl
@@ -259,6 +269,9 @@ namespace eval geekosphere::tbar::widget::cpu {
 		# load of the cpu specified by -device
 		} else {
 			set deviceData [lsearch -inline -index 0 $sys(statData) "cpu$sys($w,device)"]
+		}
+		if {$deviceData eq ""} {
+			error "unable to determine cpu load, please check if you specified the correct device"
 		}
 		set activeTime [expr {[lindex $deviceData 1] + [lindex $deviceData 2] + [lindex $deviceData 3] + [lindex $deviceData 5] + [lindex $deviceData 6] + [lindex $deviceData 7]}]
 		set idleTime [lindex $deviceData 4]

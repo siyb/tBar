@@ -94,6 +94,9 @@ namespace eval geekosphere::tbar::widget::network {
 			dict set returnDict "tx" [lindex $splitLine 8]
 			dict set returnDict "rx" [lindex $splitLine 0]
 		}
+		if {![dict exists $returnDict "tx"] || ![dict exists $returnDict "tx"]} { 
+			error "no tx / rx data, make sure that the device you specified exists"
+		}
 		return $returnDict
 	}
 	

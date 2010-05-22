@@ -224,7 +224,6 @@ namespace eval geekosphere::tbar::widget::cpu {
 			return [list $fileName [dict get $sys(thermal) [lindex [split $item "."] 0].mod]]
 		}
 		error "thermal source could not be determined, perhaps your system is not configured correctly"
-		return 0
 	}
 	
 	# get mhz of cpu $device
@@ -242,7 +241,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		if {[set cache [lindex [dict get $sys(general) "cachesize"] $device]] eq ""} {
 			error "unable to determine cpu cache size, please check if you specified the correct device"
 		}
-		return 
+		return $cache
 	}
 	
 	# gets the temperature

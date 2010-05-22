@@ -18,17 +18,14 @@ namespace eval geekosphere::tbar::util {
 		return $returnDict
 	}
 
-	# calculate position to a window
-	proc getNewWindowGeometry {windowRootX windowRootY newWindowWidth newWindowHeight} {
-		return [getNewWindowGeometry_ $windowRootX $windowRootY $newWindowWidth $newWindowHeight $geekosphere::tbar::conf(geom,height) $geekosphere::tbar::sys(screen,height) $geekosphere::tbar::sys(screen,width)]
-	}
-
 	# TODO: does not work for the left side of X axis (if window will be broader than left limit)
-	proc getNewWindowGeometry_ {windowRootX windowRootY newWindowWidth newWindowHeight bheight screenHeight screenWidth} {
+	proc getNewWindowGeometry {windowRootX windowRootY newWindowWidth newWindowHeight bheight screenHeight screenWidth} {
 		set posY [expr {$screenHeight - ($screenHeight - $windowRootY + $newWindowHeight)}]
-		# Y is outside the screen (top), display window below
+		# Y is outside the screen (top), display window below the bar
 		if {$posY < 0} {
 			set posY [expr {$bheight + $windowRootY}]
+			# if the new yPos is outside the screen (bottom), the window is to big to be displayed properly
+			if {[expr {$posY + $newWindowHeight}] > $screenHeight} { error "problem rendering the window. not enough space on the Y axis" }
 		}
 		# if the left boarder of the window to be displayed is completly within the screen
 		set posX [expr {$windowRootX + $newWindowWidth}]

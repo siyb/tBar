@@ -74,7 +74,10 @@ alignWidgets right
 # -hovercolor - calendar widget, hovercolor for days 
 # -clickedcolor - calendar widget, clickedcolor
 # -todaycolor - calendar widget, the color that will mark the current day
+# -command - when the calendar is opened, the output of -command will be
+#		used instead of the native widget, e.g:
 #
+#			addWidget clock 1 -command [list exec cal]
 addWidget clock 1
 addText " | " "red"
 

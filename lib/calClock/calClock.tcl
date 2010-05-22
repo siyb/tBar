@@ -27,6 +27,8 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set sys($w,calcolor,hover) "yellow"
 		set sys($w,calcolor,clicked) "red"
 		set sys($w,calcolor,today)  "blue"
+		set sys($w,useCommand) 0
+		set sys($w,command) -1
 		frame ${w}
 		pack [label ${w}.clock] -side left
 		
@@ -70,6 +72,9 @@ namespace eval geekosphere::tbar::widget::calClock {
 					"-font" {
 						changeFont $w $value
 					}
+					"-command" {
+						changeCommand $w $value
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -101,13 +106,36 @@ namespace eval geekosphere::tbar::widget::calClock {
 	# TODO 1.x: add possibility to enter appointments (balloon stuff)
 	proc drawCalendarWindow {w} {
 		variable sys
-		set currentYear [clock format [clock seconds ] -format "%Y" ]
-		set currentMonth [clock format [clock seconds ] -format "%N" ]
 		set calWin ${w}.calendar
 		if {[winfo exists $calWin]} { 
 			destroy $calWin
 			return 
 		}
+		
+		# command rendering
+		if {$sys($w,useCommand)} { 
+			rederWithCommand $w $calWin
+		
+		# standard calendar
+		} else {
+			renderWithCalendar $w $calWin
+		}
+		
+		# hack to prevent flickering caused by update:
+		# 1) window will be handled by the geometry manager to position it first (size doesn't matter
+		# 2) updateing window 
+		# 3) positioning an resizing again
+		# If this is not done, the window will appear in the upper left corner of the screen and jump to its final position -> sucks
+		wm geometry $calWin [geekosphere::tbar::util::getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] 0 0 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+		wm overrideredirect $calWin 1
+		update
+		wm geometry $calWin [geekosphere::tbar::util::getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $calWin] [winfo reqheight $calWin] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+	}
+	
+	proc renderWithCalendar {w calWin} {
+		variable sys
+		set currentYear [clock format [clock seconds ] -format "%Y" ]
+		set currentMonth [clock format [clock seconds ] -format "%N" ]
 		toplevel $calWin -bg $sys($w,background)
 		pack [frame ${calWin}.navigate -bg $sys($w,background)]
 		pack [spinbox ${calWin}.navigate.month \
@@ -127,6 +155,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-activebackground	$sys($w,calcolor,hover) \
 			-from			[expr {$currentYear - 100}] \
 			-to				[expr {$currentYear + 100}] \
+			-width			12 \
 			-increment			1 \
 			-command			[list geekosphere::tbar::widget::calClock::updateWrapper $w $calWin]
 			
@@ -139,13 +168,11 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		# mark today
 		${calWin}.cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]
-		wm geometry $calWin [geekosphere::tbar::util::getNewWindowGeometry_ [winfo rootx $w]  [winfo rooty $w] 200 230 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
-		wm overrideredirect $calWin 1
 	}
 	
 	proc updateWrapper {w calWin} {
 		drawCalendar $w $calWin [${calWin}.navigate.year get] [${calWin}.navigate.month get]
-	}	
+	}
 	
 	proc drawCalendar {w calWin year month} {
 		variable sys
@@ -166,6 +193,18 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-year				$year \
 			-relief 			groove \
 		]
+	}
+	
+	proc rederWithCommand {w calWin} {
+		variable sys
+		toplevel $calWin -bg $sys($w,background)
+		pack [label ${calWin}.display \
+			-bg $sys($w,background) \
+			-fg $sys($w,foreground) \
+			-font [font create -family "nimbus mono"] \
+			-justify left \
+			-text [string map { " " "  " } [eval $sys($w,command)]]
+		] -fill both
 	}
 	
 	#
@@ -207,6 +246,12 @@ namespace eval geekosphere::tbar::widget::calClock {
 	
 	proc changeFont {w font} {
 		${w}.clock configure -font $font
+	}
+	
+	proc changeCommand {w command} {
+		variable sys
+		set sys($w,useCommand) 1
+		set sys($w,command) $command
 	}
 }
 

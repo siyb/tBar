@@ -12,7 +12,7 @@ proc cpu {w args} {
 	return $w
 }
 
-# TODO 1.x: add support for multiple thermal sources
+# TODO 1.2: add support for multiple thermal sources
 namespace import ::geekosphere::tbar::util*
 namespace eval geekosphere::tbar::widget::cpu {
 	

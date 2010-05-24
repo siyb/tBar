@@ -2,8 +2,10 @@ package require util
 
 package provide tbar 1.1
 
-# TODO 1.x: allow multiple widget of the same kind; addWidget clock 1; addWidget clock 1
-# TODO 1.x: implement error handler (-> bug report) and logger
+# TODO 1.2: freuqency scaling
+# TODO 1.2: stop update activities if screensaver is on
+# TODO 1.2: allow multiple widget of the same kind; addWidget clock 1; addWidget clock 1
+# TODO 1.2: implement error handler (-> bug report) and logger
 # TODO 1.x: add icon support for widgets
 namespace eval geekosphere::tbar {
 

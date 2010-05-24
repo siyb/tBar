@@ -54,6 +54,7 @@ namespace eval geekosphere::tbar::util {
 		}
 	}
 	
+	# returns the value of the specified option from the optionlist
 	proc getOption {option optionList} {
 		foreach {opt value} $optionList {
 			if {$opt eq $option} {
@@ -61,4 +62,45 @@ namespace eval geekosphere::tbar::util {
 			}
 		}
 	}
+	
+       # logger variables for global namespace
+	set logger(log,dolog) 1
+	set logger(log,level) "DEBUG"
+	set logger(gen,version) "-"
+	set logger(log,log2file) 1
+	set logger(log,logfile) ""
+
+	# a simple logging proc. any namespace that wishes to use this proc
+	# needs the following namespace variable array:
+	#
+	#       - logger(log,dolog), must be boolean, determines if logging is enabled or not
+	#       - logger(log,level), the loglevel
+	#       - logger(gen,version), the version of the script
+	#
+	proc geekosphere::tbar::util::log {level message} {
+		set namespace [uplevel 1 { namespace current }];# the namespace in which the logger proc was called
+		namespace upvar $namespace logger logger;# get the namespace specific vars (namespace that called the proc)
+
+		set mloglevel [getNumericLoglevel $level];# the level of the message
+		set gloglevel [getNumericLoglevel $logger(log,level)];# the global log level
+		if {$mloglevel == -1 || $gloglevel == -1} { return };# if one of the loglevels is unknow
+		if {$mloglevel < $gloglevel} { return };# check if message should be logged
+		if {$logger(log,dolog)} {
+			set message "[clock format [clock seconds] -format "%+"] | $level | ${namespace} ${logger(gen,version)}: ${message}"
+			puts $message
+			if {$logger(log,log2file)} {
+				set fl [open $logger(log,logfile) a+]; puts $fl $message; close $fl
+			}
+		}
+	}
+ 
+	# returns numeric loglevel
+	#
+	proc geekosphere::tbar::util::getNumericLoglevel {level} {
+		variable tools
+		set sl [lsearch -index 0 $logger(log,levels) $level]; # search the level in the level list
+		if {$sl == -1} { putlog "WARNING | Loglevel invalid! (${level})"; return -1}
+		return [lindex [split [lindex $logger(log,levels) $sl]] 1];# get the numeric value
+	}
+
 }

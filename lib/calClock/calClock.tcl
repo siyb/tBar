@@ -139,7 +139,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		wm geometry $calWin [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $calWin] [winfo reqheight $calWin] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
 	}
 	
-	# TODO 1.x: add possibility to enter appointments (balloon stuff)
+	# TODO 1.2: add possibility to enter appointments (balloon stuff)
 	proc renderWithCalendar {w calWin} {
 		variable sys
 		

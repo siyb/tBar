@@ -1,7 +1,7 @@
 package provide util 1.1
 
 namespace eval geekosphere::tbar::util {
-	namespace export parseProcFile getNewWindowGeometry generateComponentName
+	namespace export *
 	set sys(componentCounter) 0
 
 	# parses a procfile formatted like "item : value", spaces between : and strings is irrelevant
@@ -51,6 +51,14 @@ namespace eval geekosphere::tbar::util {
 	proc parseFirstInteger {string} {
 		foreach item [split $string] {
 			if {$item ne "" && [string is integer $item]} { return $item }
+		}
+	}
+	
+	proc getOption {option optionList} {
+		foreach {opt value} $optionList {
+			if {$opt eq $option} {
+				return $value
+			}
 		}
 	}
 }

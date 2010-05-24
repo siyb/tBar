@@ -2,8 +2,9 @@ package require util
 
 package provide tbar 1.1
 
-# TODO 1.x: remove args parameter at action proc of widgets (no list)
-# TODO 1.x move getOption to util
+# TODO 1.x: allow multiple widget of the same kind; addWidget clock 1; addWidget clock 1
+# TODO 1.x: implement error handler (-> bug report) and logger
+# TODO 1.x: add icon support for widgets
 namespace eval geekosphere::tbar {
 
 	#
@@ -61,8 +62,16 @@ namespace eval geekosphere::tbar {
 	# add a widget to the bar
 	proc addWidget {proc updateInterval args} {
 		variable sys
+		#if {[isWidgetAdded $proc] >= 0} { error "Adding a widget multiple times is not supported yet!" }
 		lappend sys(widget,list) $proc $updateInterval $args
 	}
+	
+	# returns >= 0 if widget has been added
+#	proc isWidgetAdded {proc} {
+#		variable sys
+#		puts $sys(widget,list)
+#		return [lsearch -index 0 $sys(widget,list) $proc]
+#	}
 
 	# load all widgets
 	proc loadWidgets {} {

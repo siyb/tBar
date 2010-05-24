@@ -12,13 +12,13 @@ proc calClock {w args} {
 	return $w
 }
 
+namespace import ::geekosphere::tbar::util*
 namespace eval geekosphere::tbar::widget::calClock {
 	
-	proc makeCalClock {w args} {
+	proc makeCalClock {w arguments} {
 		variable sys
 		
 		bind Label <Button-1> [namespace code [list actionHandler $w %W]]
-		
 		set sys($w,originalCommand) ${w}_
 		set sys($w,timeDateFormat) "%+"
 		
@@ -29,6 +29,10 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set sys($w,calcolor,today)  "blue"
 		set sys($w,useCommand) 0
 		set sys($w,command) -1
+		set sys($w,storedMonth) -1
+		set sys($w,storedYear) -1
+		set sys($w,cacheDate) 0
+		
 		frame ${w}
 		pack [label ${w}.clock] -side left
 		
@@ -36,7 +40,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		uplevel #0 rename $w ${w}_
 		
 		# run configuration
-		action $w configure [join $args]
+		action $w configure $arguments
 	}
 	
 	proc updateWidget {w} {
@@ -75,6 +79,9 @@ namespace eval geekosphere::tbar::widget::calClock {
 					"-command" {
 						changeCommand $w $value
 					}
+					"-cachedate" {
+						changeCacheDate $w $value
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -103,7 +110,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 	}
 
 	# create a calendar window
-	# TODO 1.x: add possibility to enter appointments (balloon stuff)
+
 	proc drawCalendarWindow {w} {
 		variable sys
 		set calWin ${w}.calendar
@@ -126,14 +133,16 @@ namespace eval geekosphere::tbar::widget::calClock {
 		# 2) updateing window 
 		# 3) positioning an resizing again
 		# If this is not done, the window will appear in the upper left corner of the screen and jump to its final position -> sucks
-		wm geometry $calWin [geekosphere::tbar::util::getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] 0 0 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+		wm geometry $calWin [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] 0 0 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
 		wm overrideredirect $calWin 1
 		update
-		wm geometry $calWin [geekosphere::tbar::util::getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $calWin] [winfo reqheight $calWin] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+		wm geometry $calWin [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $calWin] [winfo reqheight $calWin] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
 	}
 	
+	# TODO 1.x: add possibility to enter appointments (balloon stuff)
 	proc renderWithCalendar {w calWin} {
 		variable sys
+		
 		set currentYear [clock format [clock seconds ] -format "%Y" ]
 		set currentMonth [clock format [clock seconds ] -format "%N" ]
 		toplevel $calWin -bg $sys($w,background)
@@ -161,17 +170,34 @@ namespace eval geekosphere::tbar::widget::calClock {
 			
 		] -side right -fill x -expand 1
 
-		${calWin}.navigate.year set $currentYear
-		${calWin}.navigate.month set $currentMonth
+		if {$sys($w,storedYear) != -1 && $sys($w,storedMonth) != -1 && $sys($w,cacheDate)} {
+			${calWin}.navigate.year set $sys($w,storedYear)
+			${calWin}.navigate.month set $sys($w,storedMonth)
+		} else {
+			${calWin}.navigate.year set $currentYear
+			${calWin}.navigate.month set $currentMonth
+		}
 		
-		drawCalendar $w $calWin $currentYear $currentMonth
-		
-		# mark today
-		${calWin}.cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]
+		# render calendar with current date if no month and year have been stored or if caching is disabled
+		if {($sys($w,storedYear) == -1 && $sys($w,storedMonth) == -1) || !$sys($w,cacheDate)} {
+			drawCalendar $w $calWin $currentYear $currentMonth
+			
+		# otherwise render calendar with stored values
+		} else {
+			drawCalendar $w $calWin $sys($w,storedYear) $sys($w,storedMonth)
+		}
+	}
+	
+	proc setStoredDate {w year month} {
+		variable sys
+		set sys($w,storedYear) $year
+		set sys($w,storedMonth) $month
 	}
 	
 	proc updateWrapper {w calWin} {
-		drawCalendar $w $calWin [${calWin}.navigate.year get] [${calWin}.navigate.month get]
+		set year [${calWin}.navigate.year get]; set month [${calWin}.navigate.month get]
+		drawCalendar $w $calWin $year $month
+		setStoredDate $w $year $month
 	}
 	
 	proc drawCalendar {w calWin year month} {
@@ -181,7 +207,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		}
 		pack [calwid ${calWin}.cal \
 			-font				{ helvetica 10 bold } \
-			-dayfont			{Arial 10 bold } \
+			-dayfont			{ Arial 10 bold } \
 			-background		$sys($w,background)\
 			-foreground		$sys($w,foreground) \
 			-activebackground	$sys($w,calcolor,hover) \
@@ -193,6 +219,9 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-year				$year \
 			-relief 			groove \
 		]
+		
+		# mark today
+		${calWin}.cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]
 	}
 	
 	proc rederWithCommand {w calWin} {
@@ -252,6 +281,11 @@ namespace eval geekosphere::tbar::widget::calClock {
 		variable sys
 		set sys($w,useCommand) 1
 		set sys($w,command) $command
+	}
+	
+	proc changeCacheDate {w cache} {
+		variable sys
+		set sys($w,cacheDate) $cache
 	}
 }
 

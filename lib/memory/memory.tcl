@@ -12,17 +12,17 @@ proc memory {w args} {
 	return $w
 }
 
+namespace import ::geekosphere::tbar::util*
 namespace eval geekosphere::tbar::widget::memory {
 	
 	set sys(memFile) "/proc/meminfo"
 	
-	
-	proc makeMemory {w args} {
+	proc makeMemory {w arguments} {
 		variable sys
-		if {[set sys($w,showWhat) [getOption "-showwhat" $args]] eq ""} { error "Specify showwhat using the -showwhat option" }
+		if {[set sys($w,showWhat) [getOption "-showwhat" $arguments]] eq ""} { error "Specify showwhat using the -showwhat option" }
 		set sys($w,originalCommand) ${w}_
 		set sys(memData) [parseMemfile $sys(memFile)]
-		set sys($w,useSwap) [string is false -strict [getOption "-noswap" $args]]
+		set sys($w,useSwap) [string is false -strict [getOption "-noswap" $arguments]]
 		frame $w
 		
 		#
@@ -60,19 +60,10 @@ namespace eval geekosphere::tbar::widget::memory {
 		uplevel #0 rename $w ${w}_
 
 		# run configuration
-		action $w configure [join $args]
+		action $w configure $arguments
 		
 		# mark the widget as initialized
 		set sys($w,initialized) 1
-	}
-	
-	proc getOption {option options} {
-		foreach {opt value} [join $options] {
-			if {$opt eq $option} {
-				return $value
-			}
-		}
-		return ""
 	}
 	
 	proc isInitialized {w} {

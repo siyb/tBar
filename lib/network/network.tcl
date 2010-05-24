@@ -1,6 +1,7 @@
 package provide network 1.1
 
 package require statusBar
+package require util
 
 proc network {w args} {
 	geekosphere::tbar::widget::network::makeNetwork $w $args
@@ -11,13 +12,15 @@ proc network {w args} {
 	return $w
 }
 
+namespace import ::geekosphere::tbar::util::*
 namespace eval geekosphere::tbar::widget::network {
 	set sys(netInfo) "/proc/net/dev"
 
-	proc makeNetwork {w args} {
+	proc makeNetwork {w arguments} {
+
 		variable sys
-		if {[set sys($w,device) [getOption -device $args]] eq ""} { error "Specify a device using the -device option." }
-		if {[set sys($w,updateInterval) [getOption -updateinterval $args]] eq ""} { error "Specify an update interval using the -updateinterval option." }
+		if {[set sys($w,device) [getOption "-device" $arguments]] eq ""} { error "Specify a device using the -device option." }
+		if {[set sys($w,updateInterval) [getOption "-updateinterval" $arguments]] eq ""} { error "Specify an update interval using the -updateinterval option." }
 
 		set sys($w,originalCommand) ${w}_
 		# create traffic holder for each device
@@ -31,7 +34,7 @@ namespace eval geekosphere::tbar::widget::network {
 		uplevel #0 rename $w ${w}_
 
 		# run configuration
-		action $w configure [join $args]
+		action $w configure $arguments
 		
 		set sys($w,initialized) 1
 	}
@@ -39,15 +42,6 @@ namespace eval geekosphere::tbar::widget::network {
 	proc isInitialized {w} {
 		variable sys
 		return [info exists sys($w,initialized)]
-	}
-
-	proc getOption {option options} {
-		foreach {opt value} [join $options] {
-			if {$opt eq $option} {
-				return $value
-			}
-		}
-		return ""
 	}
 	
 	proc updateWidget {w} {

@@ -42,9 +42,6 @@ if {[info exists geekosphere::tbar::sys(config)] && [file exists $geekosphere::t
 	source [file join . config.tcl]
 }
 
-
-
-
 # creating font
 set geekosphere::tbar::conf(font,sysFont) [font create -family $geekosphere::tbar::conf(font,name) \
 		-size $geekosphere::tbar::conf(font,size) \

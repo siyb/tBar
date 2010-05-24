@@ -13,9 +13,10 @@ proc cpu {w args} {
 }
 
 # TODO 1.x: add support for multiple thermal sources
-# TODO 1.1: add functionality to show load for all CPU
+namespace import ::geekosphere::tbar::util*
 namespace eval geekosphere::tbar::widget::cpu {
-
+	
+	
 	#
 	# For all widgets this information is the same
 	#
@@ -38,7 +39,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 	set sys(stat) "/proc/stat"
 	set sys(statData) -1
 	
-	proc makeCpu {w args} {
+	proc makeCpu {w arguments} {
 		variable sys
 		
 		set sys($w,originalCommand) ${w}_
@@ -48,12 +49,12 @@ namespace eval geekosphere::tbar::widget::cpu {
 		
 		# cache general cpu information (which is static)
 		set sys(general) [geekosphere::tbar::util::parseProcFile $sys(cpuinfo) [list "processor" "cpuMHz" "cachesize"]]
-		if {[set device [getOption "-device" $args]] eq ""} { error "Specify a device using the -device option." }
-		set sys($w,showMhz) [string is true -strict [getOption "-showMhz" $args]]
-		set sys($w,showCache) [string is true -strict [getOption "-showCache" $args]]
-		set sys($w,showLoad) [string is true -strict [getOption "-showLoad" $args]]
-		set sys($w,showTemperature) [string is true -strict [getOption "-showTemperature" $args]]
-		set sys($w,showTotalLoad) [string is true -strict [getOption "-showTotalLoad" $args]]
+		if {[set device [getOption "-device" $arguments]] eq ""} { error "Specify a device using the -device option." }
+		set sys($w,showMhz) [string is true -strict [getOption "-showMhz" $arguments]]
+		set sys($w,showCache) [string is true -strict [getOption "-showCache" $arguments]]
+		set sys($w,showLoad) [string is true -strict [getOption "-showLoad" $arguments]]
+		set sys($w,showTemperature) [string is true -strict [getOption "-showTemperature" $arguments]]
+		set sys($w,showTotalLoad) [string is true -strict [getOption "-showTotalLoad" $arguments]]
 		set sys($w,device) $device
 		set sys($w,cpu,mhz) [getMHz $sys($w,device)]
 		set sys($w,cpu,cache) [getCacheSize $sys($w,device)]
@@ -96,8 +97,8 @@ namespace eval geekosphere::tbar::widget::cpu {
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_
 
-	# run configuration
-		action $w configure [join $args]
+		# run configuration
+		action $w configure $arguments
 		
 		# mark the widget as initialized
 		set sys($w,initialized) 1
@@ -131,15 +132,6 @@ namespace eval geekosphere::tbar::widget::cpu {
 			${w}.load.barChart pushValue $load
 			${w}.load.barChart update
 		}
-	}
-	
-	proc getOption {option options} {
-		foreach {opt value} [join $options] {
-			if {$opt eq $option} {
-				return $value
-			}
-		}
-		return ""
 	}
 	
 	proc action {w args} {

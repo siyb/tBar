@@ -74,11 +74,13 @@ alignWidgets right
 # -hovercolor - calendar widget, hovercolor for days 
 # -clickedcolor - calendar widget, clickedcolor
 # -todaycolor - calendar widget, the color that will mark the current day
+# -cachedate - if set to 1, the calendar will remember month and year you
+#		navigated to.
 # -command - when the calendar is opened, the output of -command will be
 #		used instead of the native widget, e.g:
 #
 #			addWidget clock 1 -command [list exec cal]
-addWidget clock 1
+addWidget clock 1 -cachedate 1
 addText " | " "red"
 
 # Displays network information

@@ -18,3 +18,4 @@ package ifneeded statusBar 1.1 [list source [file join $dir statusBar/statusBar.
 package ifneeded tbar 1.1 [list source [file join $dir tbar/tbar.tcl]]
 package ifneeded txt 1.1 [list source [file join $dir txt/txt.tcl]]
 package ifneeded util 1.1 [list source [file join $dir util/util.tcl]]
+package ifneeded logger 1.0 [list source [file join $dir util/logger.tcl]]

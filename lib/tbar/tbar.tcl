@@ -1,14 +1,19 @@
 package require util
+package require logger
 
 package provide tbar 1.1
 
-# TODO 1.2: freuqency scaling
+# TODO 1.2: frequency scaling
 # TODO 1.2: stop update activities if screensaver is on
 # TODO 1.2: allow multiple widget of the same kind; addWidget clock 1; addWidget clock 1
 # TODO 1.2: implement error handler (-> bug report) and logger
 # TODO 1.x: add icon support for widgets
+namespace import geekosphere::tbar::util::*
 namespace eval geekosphere::tbar {
-
+	
+	# setting loglevel, can be overridden by userconfig
+	setGlobalLogLevel "DEBUG"
+	
 	#
 	# Config (use config.tcl to make changes!)
 	#
@@ -46,6 +51,7 @@ namespace eval geekosphere::tbar {
 	proc init {} {
 		variable conf
 		variable sys
+		initLogger;# init logger for this namespace
 		wm manage $sys(bar,toplevel)
 		wm client $sys(bar,toplevel) "tbar"
 		wm geometry $sys(bar,toplevel) 0x0+$conf(geom,xpos)+$conf(geom,ypos)
@@ -209,7 +215,12 @@ namespace eval geekosphere::tbar {
 		set conf(widget,path) $path
 	}
 
+	proc setLogLevel {level} {
+		setGlobalLogLevel $level
+	}
+
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
-	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath
+	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
+	setLogLevel
 }
 

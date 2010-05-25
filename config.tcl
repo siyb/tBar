@@ -48,6 +48,17 @@ positionBar top
 # widget alignment, might be left or right
 alignWidgets right
 
+
+# set loglevel for application, from sorted from least to most verbose.
+# defaults to "DEBUG" if not specified
+# "FATAL" 
+# "ERROR" 
+# "WARNING" 
+# "INFO" 
+# "DEBUG" 
+# "TRACE" 
+setLogLevel "DEBUG"
+
 #
 # Widgets
 #

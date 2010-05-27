@@ -98,7 +98,7 @@ namespace eval geekosphere::tbar::widget::network {
 	proc calculateNetspeed {last current interval} {
 		variable conf
 		set difference [expr {$current * 1.0 - $last}]
-		if {$difference < 0} { return "N/A" }
+		if {$difference < 0} { return 0 }
 		return [expr {$difference/$interval / 1024}]
 	}
 	

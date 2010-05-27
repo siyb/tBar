@@ -1,6 +1,7 @@
 1. Installation
 
 	- Install Tcl/Tk 8.5 or higher
+	- Install libtk-img
 	- Run: make install (or: make DESTFILE=myfile install)
 	- Modify /etc/tbar/config.tcl to fit your needs or create ~/.tbar/ and copy /etc/tbar/config.tcl there, to have a user specific config
 	- Run: tbar	
@@ -13,7 +14,8 @@
 
 3. Acknowledgement
 
-	- Thanks to Jaafar Mejri aka Jaf (http://wiki.tcl.tk/13498) for his contibution to the program (calendar widget)
+	- Thanks to Jaafar Mejri aka Jaf (http://wiki.tcl.tk/13498) for his contibution to the program (calendar widget: http://wiki.tcl.tk/13497)
+	- Thanks to David Easton (http://wiki.tcl.tk/10511) for his contribution to the program (image resizer: http://wiki.tcl.tk/11196)
 	- Thanks to Farhad Shahbazi-Firooz <farhad@shahbazi.at> for creating an Arch Linux pkgbuild
 
 4. Contact

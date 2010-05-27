@@ -3,10 +3,10 @@ package require logger
 
 package provide tbar 1.1
 
+# TODO 1.2: notification area
 # TODO 1.2: frequency scaling
 # TODO 1.2: stop update activities if screensaver is on
 # TODO 1.2: allow multiple widget of the same kind; addWidget clock 1; addWidget clock 1
-# TODO 1.2: implement error handler (-> bug report) and logger
 # TODO 1.x: add icon support for widgets
 namespace import geekosphere::tbar::util::logger::*
 namespace import geekosphere::tbar::util::*

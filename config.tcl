@@ -77,6 +77,25 @@ setLogLevel "DEBUG"
 # on a per widget basis though.
 #
 
+# Notification on customizable events
+#
+# -fg / -foreground - the text color
+# -bg / -background - the background color
+# -notifyAt - the expression which will be evaluated in order to
+#		determine if a notification should be send. If the expression
+#		is not true any more, image and text will be removed from the
+#		notification area
+# -image - the image to be displayed in the widget once an event occurs
+# -imageDimensions - the dimension of the image, will be resized
+#		must be given in the form heightXwidth, eg 10X10
+# -text - the text to be displayed in the widget once an event occurs
+#		will be overridden by the -image option
+# -width - the width of the widget (use with caution)
+# -height - the height of the widget (use with caution)
+#
+#addWidget 0.5 notify -image "/home/user/someimage" -imageDimensions 10X10 -notifyAt {[file exists "/home/user/somefile"]}
+#addText " | " "red"
+
 # Displays the time
 #
 # -fg / -foreground - the text color
@@ -91,6 +110,7 @@ setLogLevel "DEBUG"
 #		used instead of the native widget, e.g:
 #
 #			addWidget clock 1 -command [list exec cal]
+#
 addWidget clock 1 -cachedate 1
 addText " | " "red"
 

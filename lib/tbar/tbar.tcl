@@ -8,6 +8,7 @@ package provide tbar 1.1
 # TODO 1.2: allow multiple widget of the same kind; addWidget clock 1; addWidget clock 1
 # TODO 1.2: implement error handler (-> bug report) and logger
 # TODO 1.x: add icon support for widgets
+namespace import geekosphere::tbar::util::logger::*
 namespace import geekosphere::tbar::util::*
 namespace eval geekosphere::tbar {
 	
@@ -40,7 +41,7 @@ namespace eval geekosphere::tbar {
 	#
 
 	# Variables holding system relevant information
-	set sys(bar,version) 1.0
+	set sys(bar,version) 1.2
 	set sys(bar,toplevel) .
 	set sys(widget,list) [list]
 	set sys(screen,width) 0
@@ -87,12 +88,13 @@ namespace eval geekosphere::tbar {
 		variable conf
 		foreach {widget updateInterval settingsList} $sys(widget,list) {
 			if {[catch {
-				if {![file exists $conf(widget,path)]} { puts "Widget path does not exists, use setWidgetPath to set it correctly, if not set it will default to \$installDir/usr/share/tbar/"; exit }
+				log "INFO" "Attempting to load Widget: $widget Updateinterval: $updateInterval Settings: $settingsList"
+				if {![file exists $conf(widget,path)]} { log "ERROR" "Widget path does not exists, use setWidgetPath to set it correctly, if not set it will default to \$installDir/usr/share/tbar/"; exit }
 				uplevel #0 source [file join $conf(widget,path) ${widget}.tcl]
 				geekosphere::tbar::widget::${widget}::init $settingsList
 				if {$updateInterval > 0} { updateWidget $widget $updateInterval }
 			} err]} {
-				puts $::errorInfo
+				log "ERROR" "Failed loading widget $widget: $::errorInfo"
 			}
 		}
 	}
@@ -115,6 +117,67 @@ namespace eval geekosphere::tbar {
 	proc getWidgetAlignment {} {
 		variable conf
 		return $conf(widgets,position)
+	}
+
+	# writes bugreports
+	proc saveBugreport {message} {
+		variable sys
+		set timeStamp [clock format [clock seconds] -format "%+"]
+		set bugreportPath [file join $::env(HOME) .tbar]
+		if {![file exists $bugreportPath]} { return }
+		set file [string map {" " _} [file join $bugreportPath BUGREPORT_${timeStamp}]]
+		set fl [open $file a+]
+		puts $fl "
+Bugreport
+
+DATE/TIME: [clock format [clock seconds] -format "%+"]]
+VERSION: $sys(bar,version)
+HOSTNAME: [info hostname]
+EXECUTABLE: [info nameofexecutable]
+SCRIPT: [info script]
+
+SYSTEM:
+-------
+TCL:          [info patchlevel]
+OS:           $::tcl_platform(os)
+OSVersion:    $::tcl_platform(osVersion)
+Threaded:     $::tcl_platform(threaded)
+Machine:      $::tcl_platform(machine)
+
+PACKAGES:
+---------"
+		foreach item [info loaded] {
+			puts $fl "$item"
+		}
+			puts $fl "
+SETTINGS:
+---------"
+
+		foreach {item value} [array get geekosphere::tbar::conf] {
+			puts $fl "$item ---> $value"
+		}
+
+		puts $fl "
+WIDGETS:
+-------"
+
+		foreach sysArray [getSysArrays] {
+			puts $fl "\n${sysArray}\n"
+			foreach {item value} [array get $sysArray] {
+				puts $fl "$item --> $value"
+			}
+		}
+
+		puts $fl "
+ERRORINFO:
+----------
+$::errorInfo
+
+ERRORCODE:
+----------
+$::errorCode"
+		close $fl
+		log "INFO" "Bugreport written to $file"
 	}
 
 	# CONFIG PROCS
@@ -222,5 +285,10 @@ namespace eval geekosphere::tbar {
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
 	setLogLevel
+}
+initLogger
+proc bgerror {message} {
+	geekosphere::tbar::saveBugreport $message   
+	log "ERROR" "Background error encountered ${::errorInfo}"
 }
 

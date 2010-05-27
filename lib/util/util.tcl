@@ -63,5 +63,16 @@ namespace eval geekosphere::tbar::util {
 		}
 	}
 	
+	# gets sys array from all widget libraries
+	proc getSysArrays  {} {
+		set returnList [list]
+		foreach ns [namespace children ::geekosphere::tbar::widget] {
+			if {[info exists ${ns}::sys]} {
+				lappend returnList ${ns}::sys
+			}
+		}
+		return $returnList
+	}
+	
 	namespace export *
 }

@@ -3,15 +3,15 @@ package require logger
 
 package provide tbar 1.1
 
-# TODO 1.2: notification area
+# TODO 1.2: allow users to assign events to any widget
 # TODO 1.2: frequency scaling
 # TODO 1.2: stop update activities if screensaver is on
-# TODO 1.2: allow multiple widget of the same kind; addWidget clock 1; addWidget clock 1
-# TODO 1.x: add icon support for widgets
+# TODO 1.2: add icon support for widgets
 namespace import geekosphere::tbar::util::logger::*
 namespace import geekosphere::tbar::util::*
 namespace eval geekosphere::tbar {
-	
+	initLogger;# init logger for this namespace
+
 	# setting loglevel, can be overridden by userconfig
 	setGlobalLogLevel "DEBUG"
 	
@@ -43,7 +43,7 @@ namespace eval geekosphere::tbar {
 	# Variables holding system relevant information
 	set sys(bar,version) 1.2
 	set sys(bar,toplevel) .
-	set sys(widget,list) [list]
+	set sys(widget,dict) [dict create]
 	set sys(screen,width) 0
 	set sys(screen,height) 0
 
@@ -52,7 +52,6 @@ namespace eval geekosphere::tbar {
 	proc init {} {
 		variable conf
 		variable sys
-		initLogger;# init logger for this namespace
 		wm manage $sys(bar,toplevel)
 		wm client $sys(bar,toplevel) "tbar"
 		wm geometry $sys(bar,toplevel) 0x0+$conf(geom,xpos)+$conf(geom,ypos)
@@ -69,30 +68,44 @@ namespace eval geekosphere::tbar {
 	}
 
 	# add a widget to the bar
+	set sys(widget,counter) 0
 	proc addWidget {proc updateInterval args} {
 		variable sys
-		#if {[isWidgetAdded $proc] >= 0} { error "Adding a widget multiple times is not supported yet!" }
-		lappend sys(widget,list) $proc $updateInterval $args
+		incr sys(widget,counter)
+		log "WARNING" "From version 1.2 onwards, using this procedure to add widgets to the bar is _DEPRECATED_! Use addWidgetToBar instead. (widget: $proc)"
+		if {[dict exists $sys(widget,dict) $sys(widget,counter)]} { error "A widget named $name already exists" }
+		dict set sys(widget,dict) $sys(widget,counter) widgetName $proc 
+		dict set sys(widget,dict) $sys(widget,counter) updateInterval $updateInterval
+		dict set sys(widget,dict) $sys(widget,counter) arguments $args
+		return $sys(widget,counter)
 	}
 	
-	# returns >= 0 if widget has been added
-#	proc isWidgetAdded {proc} {
-#		variable sys
-#		puts $sys(widget,list)
-#		return [lsearch -index 0 $sys(widget,list) $proc]
-#	}
+	# add a widget to the bar
+	proc addWidgetToBar {proc name updateInterval args} {
+		variable sys
+		if {[dict exists $sys(widget,dict) $name]} { error "A widget named $name already exists" }
+		dict set sys(widget,dict) $name widgetName $proc 
+		dict set sys(widget,dict) $name updateInterval $updateInterval
+		dict set sys(widget,dict) $name arguments $args
+	}
 
 	# load all widgets
 	proc loadWidgets {} {
 		variable sys
 		variable conf
-		foreach {widget updateInterval settingsList} $sys(widget,list) {
+		dict for {key value} $sys(widget,dict) {
+			puts "KEY: $key VALUE: $value"
+			set widget [dict get $sys(widget,dict) $key widgetName]
+			set updateInterval [dict get $sys(widget,dict) $key updateInterval]
+			set settingsList [dict get $sys(widget,dict) $key arguments]
 			if {[catch {
 				log "INFO" "Attempting to load Widget: $widget Updateinterval: $updateInterval Settings: $settingsList"
 				if {![file exists $conf(widget,path)]} { log "ERROR" "Widget path does not exists, use setWidgetPath to set it correctly, if not set it will default to \$installDir/usr/share/tbar/"; exit }
 				uplevel #0 source [file join $conf(widget,path) ${widget}.tcl]
-				geekosphere::tbar::widget::${widget}::init $settingsList
-				if {$updateInterval > 0} { updateWidget $widget $updateInterval }
+				
+				set path [geekosphere::tbar::util::generateComponentName]
+				geekosphere::tbar::wrapper::${widget}::init $path $settingsList
+				if {$updateInterval > 0} { updateWidget $path $widget $updateInterval }
 			} err]} {
 				log "ERROR" "Failed loading widget $widget: $::errorInfo"
 			}
@@ -100,17 +113,9 @@ namespace eval geekosphere::tbar {
 	}
 
 	# a recursive proc that handles widget updates by calling the widget's update procedure
-	proc updateWidget {widget interval} {
-		geekosphere::tbar::widget::${widget}::update
-		after [expr { $interval * 1000 }] [namespace code [list updateWidget $widget $interval]]
-	}
-
-	# gets the update interval for the specified widget
-	proc getUpdateInterval {searchWidget} {
-		variable sys
-		foreach {widget updateInterval settingsList} $sys(widget,list) {
-			if {$searchWidget eq $widget} { return $updateInterval }
-		}
+	proc updateWidget {path widget interval} {
+		geekosphere::tbar::wrapper::${widget}::update $path
+		after [expr { $interval * 1000 }] [namespace code [list updateWidget $path $widget $interval]]
 	}
 
 	# returns the way how widgets are to be aligned in the bar
@@ -281,11 +286,17 @@ $::errorCode"
 	proc setLogLevel {level} {
 		setGlobalLogLevel $level
 	}
+	
+	proc addEventTo {widgetName event command} {
+	
+	}
 
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
-	setLogLevel
+	setLogLevel addWidgetToBar
 }
+
+# GLOBAL NAMESPACE!
 initLogger
 proc bgerror {message} {
 	geekosphere::tbar::saveBugreport $message   

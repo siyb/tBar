@@ -64,11 +64,13 @@ setLogLevel "DEBUG"
 #
 # Widgets will be loaded in the order specified here and will
 # appear according to alignWidgets in the bar. The first parameter is the widget to load,
-# the second parameter is the update interval in seconds. If the interval is > 0, updates
-# will be made every $interval seconds. The third parameter is a list of options and
+# The second parameter is the name you want to identify this certain widget by. 
+# You can use this identifier to add events to the widgets, which can be used to execute commands.
+# The third parameter is the update interval in seconds. If the interval is > 0, updates
+# will be made every $interval seconds. The fourth parameter is a list of options and
 # corresponding values, the options are explained in the comments.
 #
-# 	addWidget <widgetName> <updateInterval> <optionList>
+# 	addWidgetToBar <widgetName> <name> <updateInterval> <optionList>
 #
 # You might have notices, that not all options of the widgets are supplied
 # here by default. This is due to the widget creation code, that will use some
@@ -93,7 +95,7 @@ setLogLevel "DEBUG"
 # -width - the width of the widget (use with caution)
 # -height - the height of the widget (use with caution)
 #
-#addWidget 0.5 notify -image "/home/user/someimage" -imageDimensions 10X10 -notifyAt {[file exists "/home/user/somefile"]}
+#addWidgetToBar notify notify1 1 -image "/home/user/someimage" -imageDimensions 10X10 -notifyAt {[file exists "/home/user/somefile"]}
 #addText " | " "red"
 
 # Displays the time
@@ -109,9 +111,9 @@ setLogLevel "DEBUG"
 # -command - when the calendar is opened, the output of -command will be
 #		used instead of the native widget, e.g:
 #
-#			addWidget clock 1 -command [list exec cal]
+#			addWidgetToBar clock 1 -command [list exec cal]
 #
-addWidget clock 1 -cachedate 1
+addWidgetToBar clock clock1 1 -cachedate 1
 addText " | " "red"
 
 # Displays network information
@@ -124,7 +126,7 @@ addText " | " "red"
 #		as the update interval specified as second parameter, 
 #		in order to give correct results)
 #
-addWidget network 1 -device eth1 -updateinterval 1
+addWidgetToBar network network1 1 -device eth1 -updateinterval 1
 addText " | " "red"
 
 # Displays memory and swap information
@@ -138,7 +140,7 @@ addText " | " "red"
 # -noswap - will prevent the swappart of the widget to be diplayed (memory only)
 #		setting this to 1 will disable swap
 #
-addWidget memory 5 -gc blue -bc | -showwhat 0
+addWidgetToBar memory memory1 5 -gc blue -bc | -showwhat 0
 addText " | " "red"
 
 # Cpu information
@@ -164,7 +166,7 @@ addText " | " "red"
 # 		represents the load of the complete system (all cpus), rather than
 #		the load of the device specified by the -device option.
 #
-addWidget cpu 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
+addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 
 # Display any text in a widget, for simple stuff use the addText convenience
 # procedure, which creates a pre defined text widget.
@@ -178,4 +180,4 @@ addWidget cpu 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 # -command - a command whose output will be directed to the widget
 #		every $interval seconds
 #
-#addWidget text 1 -command [list exec uptime]
+#addWidgetToBar text text1 1 -command [list exec uptime]

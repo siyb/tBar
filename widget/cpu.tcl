@@ -1,21 +1,19 @@
 package require cpu
 
-namespace eval geekosphere::tbar::widget::cpu {
+namespace eval geekosphere::tbar::wrapper::cpu {
 	
-	proc init {settingsList} {
-		variable sys
-		set sys(path) [geekosphere::tbar::util::generateComponentName]
-		pack [cpu $sys(path) \
+	proc init {path settingsList} {
+		pack [cpu $path \
 			-fg $geekosphere::tbar::conf(color,text) \
 			-bg $geekosphere::tbar::conf(color,background) \
 			-height $geekosphere::tbar::conf(geom,height) \
 			-font $geekosphere::tbar::conf(font,sysFont) \
 			{*}$settingsList
 		] -side $geekosphere::tbar::conf(widgets,position)
+		return $path
 	}
 	
-	proc update {} {
-		variable sys
-		$sys(path) update
+	proc update {path} {
+		$path update
 	}
 }

@@ -17,7 +17,6 @@ namespace eval geekosphere::tbar::widget::calClock {
 	
 	proc makeCalClock {w arguments} {
 		variable sys
-		
 		bind Label <Button-1> [namespace code [list actionHandler $w %W]]
 		set sys($w,originalCommand) ${w}_
 		set sys($w,timeDateFormat) "%+"

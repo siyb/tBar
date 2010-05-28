@@ -15,6 +15,7 @@ proc notify {w args} {
 	return $w
 }
 
+# TODO 1.2: allow user to add onclick events
 namespace import ::geekosphere::tbar::util*
 namespace eval geekosphere::tbar::widget::notify {
 	

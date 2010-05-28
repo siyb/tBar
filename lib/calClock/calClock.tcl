@@ -17,7 +17,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 	
 	proc makeCalClock {w arguments} {
 		variable sys
-		bind Label <Button-1> [namespace code [list actionHandler $w %W]]
+		
 		set sys($w,originalCommand) ${w}_
 		set sys($w,timeDateFormat) "%+"
 		
@@ -34,6 +34,9 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		frame ${w}
 		pack [label ${w}.clock] -side left
+		
+		# bindings
+		bind ${w}.clock <Button-1> [namespace code [list actionHandler $w %W]]
 		
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_
@@ -102,14 +105,10 @@ namespace eval geekosphere::tbar::widget::calClock {
 
 	proc actionHandler {w invokerWindow} {
 		variable sys
-		
-		if {"$invokerWindow" eq "${w}.clock"} {
-			drawCalendarWindow $w
-		}
+		drawCalendarWindow $w
 	}
 
 	# create a calendar window
-
 	proc drawCalendarWindow {w} {
 		variable sys
 		set calWin ${w}.calendar

@@ -3,7 +3,6 @@ package require logger
 
 package provide tbar 1.1
 
-# TODO 1.2: allow users to assign events to any widget
 # TODO 1.2: frequency scaling
 # TODO 1.2: stop update activities if screensaver is on
 # TODO 1.2: add icon support for widgets
@@ -77,6 +76,7 @@ namespace eval geekosphere::tbar {
 		dict set sys(widget,dict) $sys(widget,counter) widgetName $proc 
 		dict set sys(widget,dict) $sys(widget,counter) updateInterval $updateInterval
 		dict set sys(widget,dict) $sys(widget,counter) arguments $args
+		dict set sys(widget,dict) $sys(widget,counter) path [geekosphere::tbar::util::generateComponentName]
 		return $sys(widget,counter)
 	}
 	
@@ -87,27 +87,39 @@ namespace eval geekosphere::tbar {
 		dict set sys(widget,dict) $name widgetName $proc 
 		dict set sys(widget,dict) $name updateInterval $updateInterval
 		dict set sys(widget,dict) $name arguments $args
+		dict set sys(widget,dict) $name path [geekosphere::tbar::util::generateComponentName]
 	}
-
+	
 	# load all widgets
 	proc loadWidgets {} {
 		variable sys
 		variable conf
 		dict for {key value} $sys(widget,dict) {
-			puts "KEY: $key VALUE: $value"
 			set widget [dict get $sys(widget,dict) $key widgetName]
 			set updateInterval [dict get $sys(widget,dict) $key updateInterval]
 			set settingsList [dict get $sys(widget,dict) $key arguments]
+			set path [dict get $sys(widget,dict) $key path]
 			if {[catch {
 				log "INFO" "Attempting to load Widget: $widget Updateinterval: $updateInterval Settings: $settingsList"
 				if {![file exists $conf(widget,path)]} { log "ERROR" "Widget path does not exists, use setWidgetPath to set it correctly, if not set it will default to \$installDir/usr/share/tbar/"; exit }
 				uplevel #0 source [file join $conf(widget,path) ${widget}.tcl]
-				
-				set path [geekosphere::tbar::util::generateComponentName]
 				geekosphere::tbar::wrapper::${widget}::init $path $settingsList
+				makeBindings $key
 				if {$updateInterval > 0} { updateWidget $path $widget $updateInterval }
 			} err]} {
 				log "ERROR" "Failed loading widget $widget: $::errorInfo"
+			}
+		}
+	}
+	
+	proc makeBindings {widgetName} {
+		variable sys
+		if {![info exists sys(widget,events,$widgetName)]} { return };# no events -> no need to continue
+		set path [dict get $sys(widget,dict) $widgetName path]
+		
+		foreach {event command} $sys(widget,events,$widgetName) {
+			foreach child [returnNestedChildren ${path}] {
+				bind ${child} $event +$command
 			}
 		}
 	}
@@ -287,13 +299,16 @@ $::errorCode"
 		setGlobalLogLevel $level
 	}
 	
-	proc addEventTo {widgetName event command} {
-	
+	proc addEventTo {widgetName event args} {
+		variable sys
+		# dict lappend does not work with nested dicts yet, using an array instead of ugly hacking
+		lappend sys(widget,events,$widgetName) $event $args
+		log "INFO" "Event ${event} added to ${widgetName}, invoking ${args}"
 	}
 
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
-	setLogLevel addWidgetToBar
+	setLogLevel addWidgetToBar addEventTo
 }
 
 # GLOBAL NAMESPACE!

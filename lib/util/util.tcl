@@ -74,5 +74,15 @@ namespace eval geekosphere::tbar::util {
 		return $returnList
 	}
 	
+	# returns all children of a window recursivly (also nested children)
+	proc returnNestedChildren {window {clist ""}} {
+		if {$clist eq ""} { set clist [list] }
+		foreach child [winfo children $window] {
+			lappend clist $child
+			set clist [returnNestedChildren $child $clist]
+		}
+		return $clist
+	}
+	
 	namespace export *
 }

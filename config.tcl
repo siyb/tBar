@@ -78,6 +78,20 @@ setLogLevel "DEBUG"
 # to create the widgets, so that your theme looks consistent. You may still change the colors
 # on a per widget basis though.
 #
+# If you wish to add custom events to your widgets, you may use addEventTo:
+#
+#	addEventTo <widgetName> <event> <command>
+#
+# widgetName is the name of the widget as specified in your addWidgetToBar line, event is
+# the event that triggers the command. The command is the potion that will be executed.
+# Command can be any valid tcl command. If you use exec to spawn a new process, please
+# remember to move the process to the background, if you don't tbar will be non responsive
+# for the time the new process is running!
+#
+# The following event will open urxvt containing running htop when cpu1 widget is leftclicked:
+#
+#	addEventTo cpu1 <Button-1> exec /usr/bin/urxvt -e htop &
+#
 
 # Notification on customizable events
 #
@@ -167,6 +181,7 @@ addText " | " "red"
 #		the load of the device specified by the -device option.
 #
 addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
+#addEventTo cpu1 <Button-1> exec /usr/bin/urxvt -e htop &
 
 # Display any text in a widget, for simple stuff use the addText convenience
 # procedure, which creates a pre defined text widget.

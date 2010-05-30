@@ -342,16 +342,8 @@ namespace eval geekosphere::tbar::widget::cpu {
 			-font $sys($w,font) \
 			-justify left
 		]
-		
-		# hack to prevent flickering caused by update:
-		# 1) window will be handled by the geometry manager to position it first (size doesn't matter
-		# 2) updateing window 
-		# 3) positioning an resizing again
-		# If this is not done, the window will appear in the upper left corner of the screen and jump to its final position -> sucks
-		wm geometry $freqWindow [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] 0 0 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
-		wm overrideredirect $freqWindow 1
-		update
-		wm geometry $freqWindow [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $freqWindow] [winfo reqheight $freqWindow] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+
+		positionWindowRelativly $freqWindow $w
 	}
 	
 	proc cpuSpeedstepInfo {w} {

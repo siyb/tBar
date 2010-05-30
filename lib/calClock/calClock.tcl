@@ -126,15 +126,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 			renderWithCalendar $w $calWin
 		}
 		
-		# hack to prevent flickering caused by update:
-		# 1) window will be handled by the geometry manager to position it first (size doesn't matter
-		# 2) updateing window 
-		# 3) positioning an resizing again
-		# If this is not done, the window will appear in the upper left corner of the screen and jump to its final position -> sucks
-		wm geometry $calWin [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] 0 0 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
-		wm overrideredirect $calWin 1
-		update
-		wm geometry $calWin [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $calWin] [winfo reqheight $calWin] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+		positionWindowRelativly $calWin $w
 	}
 	
 	# TODO 1.2: add possibility to enter appointments (balloon stuff)

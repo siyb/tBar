@@ -18,6 +18,18 @@ namespace eval geekosphere::tbar::util {
 		return $returnDict
 	}
 
+	proc positionWindowRelativly {windowToPosition w} {
+		# hack to prevent flickering caused by update:
+		# 1) window will be handled by the geometry manager to position it first (size doesn't matter
+		# 2) updateing window 
+		# 3) positioning an resizing again
+		# If this is not done, the window will appear in the upper left corner of the screen and jump to its final position -> sucks
+		wm geometry $windowToPosition [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] 0 0 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+		wm overrideredirect $windowToPosition 1
+		update
+		wm geometry $windowToPosition [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $windowToPosition] [winfo reqheight $windowToPosition] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+	}
+
 	# TODO: does not work for the left side of X axis (if window will be broader than left limit)
 	proc getNewWindowGeometry {windowRootX windowRootY newWindowWidth newWindowHeight bheight screenHeight screenWidth} {
 		set posY [expr {$screenHeight - ($screenHeight - $windowRootY + $newWindowHeight)}]

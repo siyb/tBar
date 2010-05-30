@@ -114,7 +114,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		#
 		# Gather data
 		#
-		if {$sys(thermalSource) == -1} {
+		if {$sys(thermalSource) == -1 && $sys($w,showTemperature)} {
 			set sys(thermalSource) [determineThermalsource]
 		}
 		
@@ -239,7 +239,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 	# gets the temperature
 	proc getTemperature {} {
 		variable sys
-		if {$sys(thermalSource) == 0} { return "N/A" }
+		if {$sys(thermalSource) <= 0} { return "N/A" }
 		set mod [lindex $sys(thermalSource) 1]
 		set data [set data [read [set fl [open [lindex $sys(thermalSource) 0] r]]]]
 		close $fl

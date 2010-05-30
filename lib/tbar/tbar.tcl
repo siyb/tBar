@@ -62,7 +62,10 @@ namespace eval geekosphere::tbar {
 
 	# adds text to widget
 	proc addText {text color} {
-		addWidget text -1 -text $text -fg $color
+		variable sys
+		incr sys(widget,counter)
+		addWidgetToBar text $sys(widget,counter) -1 -text $text -fg $color
+		return $sys(widget,counter)
 	}
 
 	# add a widget to the bar

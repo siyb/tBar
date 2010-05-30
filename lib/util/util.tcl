@@ -84,5 +84,19 @@ namespace eval geekosphere::tbar::util {
 		return $clist
 	}
 	
+	proc createPipe {args} {
+		set channel [open |$args r]
+		set pid [pid $channel]
+		fconfigure $channel -blocking 0
+		dict set returnDict channel $channel
+		dict set returnDict pid $pid
+		return $returnDict
+	}
+	
+	proc closePipe {pipeDict} {
+		catch { exec kill [dict get $fifoDict pid] }
+		close [dict get $fifoDict channel]
+	}
+	
 	namespace export *
 }

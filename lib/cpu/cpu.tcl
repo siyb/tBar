@@ -2,6 +2,7 @@ package provide cpu 1.1
 
 package require barChart
 package require util
+package require logger
 
 proc cpu {w args} {
 	geekosphere::tbar::widget::cpu::makeCpu $w $args
@@ -39,6 +40,20 @@ namespace eval geekosphere::tbar::widget::cpu {
 	set sys(stat) "/proc/stat"
 	set sys(statData) -1
 	
+	#
+	# cpu speedstepping
+	#
+	
+	# static stuff
+	dict set sys(speedstep,files) directory "/sys/devices/system/cpu/%s/cpufreq/"
+	dict set sys(speedstep,files) minFreq "cpuinfo_min_freq"
+	dict set sys(speedstep,files) maxFreq "cpuinfo_max_freq"
+	dict set sys(speedstep,files) driver "scaling_driver"
+	dict set sys(speedstep,files) availGovs "scaling_available_governors"
+	dict set sys(speedstep,files) availFreqs "scaling_available_frequencies"
+	dict set sys(speedstep,files) currGov "scaling_governor"
+	dict set sys(speedstep,files) currFreq "scaling_cur_freq"
+	
 	proc makeCpu {w arguments} {
 		variable sys
 		
@@ -55,8 +70,9 @@ namespace eval geekosphere::tbar::widget::cpu {
 		set sys($w,showLoad) [string is true -strict [getOption "-showLoad" $arguments]]
 		set sys($w,showTemperature) [string is true -strict [getOption "-showTemperature" $arguments]]
 		set sys($w,showTotalLoad) [string is true -strict [getOption "-showTotalLoad" $arguments]]
+		set sys($w,useSpeedStep) [string is true -strict [getOption "-useSpeedstep" $arguments]]
 		set sys($w,device) $device
-		set sys($w,cpu,mhz) [getMHz $sys($w,device)]
+		set sys($w,cpu,mhz) 0
 		set sys($w,cpu,cache) [getCacheSize $sys($w,device)]
 		
 		set sys($w,cpu,totalTime) 0
@@ -94,6 +110,12 @@ namespace eval geekosphere::tbar::widget::cpu {
 			pack [barChart ${w}.load.barChart -textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,load) -width 100] -side left -fill both
 		}
 		
+		if {$sys($w,useSpeedStep)} {
+			foreach window [returnNestedChildren $w] {
+				bind $window <Button-1> [namespace code [list displayFreqInfo $w]]
+			}
+		}
+		
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_
 
@@ -102,6 +124,8 @@ namespace eval geekosphere::tbar::widget::cpu {
 		
 		# mark the widget as initialized
 		set sys($w,initialized) 1
+		
+		initLogger
 	}
 	
 	proc isInitialized {w} {
@@ -125,7 +149,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		# Updating gui
 		#
 		set sys($w,cpu,temperature) "[getTemperature] C°"
-		
+		set sys($w,cpu,mhz) [getMHz $w $sys($w,device)]
 		set load [getCpuLoad $w]
 		set sys($w,cpu,load) $load
 		if {$sys($w,showLoad)} {
@@ -175,6 +199,9 @@ namespace eval geekosphere::tbar::widget::cpu {
 					"-showTemperature" {
 						if {[isInitialized $w]} { error "showTemperature cannot be changed after widget initialization" }
 					}
+					"-useSpeedstep" {
+						if {[isInitialized $w]} { error "useSpeedstep cannot be changed after widget initialization" }
+					}
 					"-font" {
 						changeFont $w $value
 					}
@@ -219,10 +246,16 @@ namespace eval geekosphere::tbar::widget::cpu {
 	}
 	
 	# get mhz of cpu $device
-	proc getMHz {device} {
+	proc getMHz {w device} {
 		variable sys
-		if {[set mhz [lindex [dict get $sys(general) "cpuMHz"] $device]] eq ""} {
-			error "unable to determine cpu MHz, please check if you specified the correct device"
+		# without speedstepping
+		if {!$sys($w,useSpeedStep) || ![isCpuFreqAvailable $w]} {
+			if {[set mhz [lindex [dict get $sys(general) "cpuMHz"] $device]] eq ""} {
+				error "unable to determine cpu MHz, please check if you specified the correct device"
+			}
+		# with speedstepping
+		} else {
+			set mhz [expr [getFrequency $w] / 1000];# convert khz in mhz
 		}
 		return [::tcl::mathfunc::round $mhz]
 	}
@@ -286,6 +319,111 @@ namespace eval geekosphere::tbar::widget::cpu {
 	}
 	
 	#
+	# CPU Frequency Scaling
+	#
+	
+	proc displayFreqInfo {w} {
+		variable sys
+		set freqWindow ${w}.freq
+		if {[winfo exists $freqWindow]} { 
+			destroy $freqWindow
+			return 
+		}
+		
+		toplevel $freqWindow
+		set displayText ""
+		dict for {item value} [cpuSpeedstepInfo $w] {
+			append displayText "${item}: ${value}\n"
+		}
+		pack [label ${freqWindow}.display \
+			-text $displayText \
+			-fg $sys($w,foreground) \
+			-bg $sys($w,background) \
+			-font $sys($w,font) \
+			-justify left
+		]
+		
+		# hack to prevent flickering caused by update:
+		# 1) window will be handled by the geometry manager to position it first (size doesn't matter
+		# 2) updateing window 
+		# 3) positioning an resizing again
+		# If this is not done, the window will appear in the upper left corner of the screen and jump to its final position -> sucks
+		wm geometry $freqWindow [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] 0 0 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+		wm overrideredirect $freqWindow 1
+		update
+		wm geometry $freqWindow [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $freqWindow] [winfo reqheight $freqWindow] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+	}
+	
+	proc cpuSpeedstepInfo {w} {
+		dict set rdict Available [isCpuFreqAvailable $w]
+		dict set rdict CurrentGov [getGovernor $w]
+		dict set rdict AvailGov [getAvailableGovernors $w]
+		dict set rdict CurrentFreq [getFrequency $w]
+		dict set rdict MaxFreq [getMaxFrequency $w]
+		dict set rdict MinFreq [getMinFrequency $w]
+		dict set rdict SupportedFreq [getSupportedFrequencies $w]
+		return $rdict
+	}
+	
+	proc formatSpeedstepPath {w} {
+		variable sys
+		return [format [dict get $sys(speedstep,files) directory] "cpu$sys($w,device)"]
+	}
+	
+	proc getFreqFile {w type} {
+		variable sys
+		return [file join [formatSpeedstepPath $w] [dict get $sys(speedstep,files) $type]]
+	}
+	
+	proc isCpuFreqAvailable {w} {
+		set check [list minFreq maxFreq driver availGovs availFreqs currGov]
+		foreach item $check {
+			set file [getFreqFile $w $item]
+			if {![file exists $file]} {
+				log "ERROR" "CPU Frequency Scaling not possible: ${item} not found -> $file"
+				return 0
+			}
+		}
+		return 1
+	}
+	
+	proc getFreqFileData {w type} {
+		set data [string trim [read [set fl [open [getFreqFile $w $type] r]]]]
+		close $fl
+		return $data
+	}
+	
+	proc getGovernor {w} {
+		variable sys
+		return [getFreqFileData $w currGov]
+	}
+	
+	proc getAvailableGovernors {w} {
+		variable sys
+		return [getFreqFileData $w availGovs]
+	}
+
+	proc getFrequency {w} {
+		variable sys
+		return [getFreqFileData $w currFreq]	
+	}
+	
+	proc getMaxFrequency {w} {
+		variable sys
+		return [getFreqFileData $w maxFreq]	
+	}
+	
+	proc getMinFrequency {w} {
+		variable sys
+		return [getFreqFileData $w minFreq]	
+	}
+	
+	proc getSupportedFrequencies {w} {
+		variable sys
+		return [getFreqFileData $w availFreqs]	
+	}
+	
+	#
 	# Widget configuration procs
 	#
 	
@@ -317,6 +455,9 @@ namespace eval geekosphere::tbar::widget::cpu {
 			${w}.load.label configure -bg $color
 			${w}.load.barChart configure -bg $color
 		}
+		
+		# for cpu freq info window
+		set sys($w,background) $color
 	}
 	
 	proc changeForegroundColor {w color} {
@@ -344,6 +485,9 @@ namespace eval geekosphere::tbar::widget::cpu {
 			${w}.load.label configure -fg $color
 			${w}.load.barChart configure -fg $color
 		}
+		
+		# for cpu freq info window
+		set sys($w,foreground) $color
 	}
 	
 	proc changeWidth {w width} {
@@ -391,5 +535,8 @@ namespace eval geekosphere::tbar::widget::cpu {
 			${w}.load.label configure -font $font
 			${w}.load.barChart configure -font $font
 		}
+		
+		# for cpu freq info window
+		set sys($w,font) $font
 	}
 }

@@ -179,8 +179,11 @@ addText " | " "red"
 # -showTotalLoad - if this option is enabled, the load displayed by the widget
 # 		represents the load of the complete system (all cpus), rather than
 #		the load of the device specified by the -device option.
+# -useSpeedstep - if this option is enabled and your kernel configuration / hw
+#		allows speedstepping, the cup widget will utilize speedstepping to
+#		obtain realtime cpu statistics and display you to them on demand
 #
-addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
+addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1 -useSpeedstep 1
 #addEventTo cpu1 <Button-1> exec /usr/bin/urxvt -e htop &
 
 # Display any text in a widget, for simple stuff use the addText convenience

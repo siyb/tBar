@@ -3,7 +3,6 @@ package require logger
 
 package provide tbar 1.1
 
-# TODO 1.2: frequency scaling
 # TODO 1.2: stop update activities if screensaver is on
 # TODO 1.2: add icon support for widgets
 namespace import geekosphere::tbar::util::logger::*

@@ -114,7 +114,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		#
 		# Gather data
 		#
-		if {$sys(thermalSource) == -1} {
+		if {$sys(thermalSource) == -1 && $sys($w,showTemperature)} {
 			set sys(thermalSource) [determineThermalsource]
 		}
 		

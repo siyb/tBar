@@ -12,7 +12,7 @@ proc cpu {w args} {
 	return $w
 }
 
-# TODO 1.x: add support for multiple thermal sources
+# TODO 1.2: add support for multiple thermal sources
 namespace import ::geekosphere::tbar::util*
 namespace eval geekosphere::tbar::widget::cpu {
 	
@@ -239,7 +239,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 	# gets the temperature
 	proc getTemperature {} {
 		variable sys
-		if {$sys(thermalSource) == 0} { return "N/A" }
+		if {$sys(thermalSource) <= 0} { return "N/A" }
 		set mod [lindex $sys(thermalSource) 1]
 		set data [set data [read [set fl [open [lindex $sys(thermalSource) 0] r]]]]
 		close $fl

@@ -28,7 +28,7 @@ namespace eval geekosphere::tbar::widget::network {
 		set sys($w,lastRx) 0
 
 		frame ${w}
-		pack [label ${w}.network -width 30 -anchor w] -side left -fill both
+		pack [label ${w}.network -anchor w] -side left -fill both
 
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_

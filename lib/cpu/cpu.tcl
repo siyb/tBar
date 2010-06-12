@@ -380,7 +380,9 @@ namespace eval geekosphere::tbar::widget::cpu {
 	}
 	
 	proc getFreqFileData {w type} {
-		set data [string trim [read [set fl [open [getFreqFile $w $type] r]]]]
+		set freqFile [getFreqFile $w $type] 
+		if {![file exists $freqFile]} { log "WARNING" "${freqFile} does not exist and therefore cannot be accessed."; return "N/A" }
+		set data [string trim [read [set fl [open $freqFile r]]]]
 		close $fl
 		return $data
 	}

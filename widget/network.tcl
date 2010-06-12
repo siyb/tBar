@@ -8,7 +8,7 @@ namespace eval geekosphere::tbar::wrapper::network {
 			-bg $geekosphere::tbar::conf(color,background) \
 			-font $geekosphere::tbar::conf(font,sysFont) \
 			{*}$settingsList
-		] -side $geekosphere::tbar::conf(widgets,position)
+		] -side $geekosphere::tbar::conf(widgets,position) -fill both
 		return $path
 	}
 	

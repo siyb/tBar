@@ -46,7 +46,7 @@ namespace eval geekosphere::tbar::widget::player {
 	proc createUiWrapper {w height} {
 		variable sys
 		resetUi $w
-		createUi $w [expr {$height - 4}]  [expr {$height / 3}]
+		createUi $w $height [expr {$height / 3}]
 	}
 	
 	proc createUi {w xy offset} {
@@ -123,15 +123,18 @@ namespace eval geekosphere::tbar::widget::player {
 					"-text" {
 						changeText $w $value
 					}
+					"-bindplay" {
+						${w}.player bind play <Button-1> $value
+					}
+					"-bindpause" {
+						${w}.player bind pause <Button-1> $value
+						${w}.player bind pause_fill <Button-1> $value
+					}
+					"-bindstop" {
+						${w}.player bind stop <Button-1> $value
+					}
 				}
 			}
-		} elseif {$command == "bindplay"} {
-			${w}.player bind play <Button-1> [list puts play]
-		} elseif {$command == "bindpause"} {
-			${w}.player bind pause <Button-1> [list puts pause]
-			${w}.player bind pause_fill <Button-1> [list puts pause]
-		} elseif {$command == "bindstop"} {
-			${w}.player bind stop <Button-1> [list puts stop]
 		} elseif {$command == "update"} {
 			updateWidget $w
 		} else {

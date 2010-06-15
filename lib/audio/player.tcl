@@ -9,49 +9,92 @@ proc player {w args} {
 	return $w
 }
 
+namespace import ::geekosphere::tbar::util::*
 namespace eval geekosphere::tbar::widget::player {
-	
+
 	proc makePlayer {w arguments} {
 		variable sys
 		set sys($w,originalCommand) ${w}_
-		set sys(playerCanvas) ${w}.player
+		set sys($w,playerCanvas) ${w}.player
+		set sys($w,time) ${w}.time
+		set sys($w,foreground) blue
+		
 		frame $w
-		pack [canvas $sys(playerCanvas)] -fill both
-		createButtons $w
+		pack [canvas $sys($w,playerCanvas) -confine false] -side left -fill both
+		pack [label $sys($w,time) -textvariable geekosphere::tbar::widget::player::displayTime] -side right -fill both
+		set geekosphere::tbar::widget::player::displayTime "Not playing"
+		
+		if {[set height [getOption "-height" $arguments]] eq ""} {
+			set sys($w,height) 12
+		} else {
+			set sys($w,height) $height
+		}
+		
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_
 		
 		# run configuration
 		action $w configure $arguments
 		
+		# create ui, after configuration
+		createUiWrapper $w $height
+		
 		# mark the widget as initialized
 		set sys($w,initialized) 1
 	}
 	
-	proc createButtons {w} {
+	proc createUiWrapper {w height} {
 		variable sys
-		set xy 10
-		set offset 10
-		createPlayButton $xy 0 0
-		createStopButton $xy [expr {$xy + $offset}] 0
-		createPauseButton $xy [expr {$xy*2 + $offset*2}] 0
+		resetUi $w
+		createUi $w [expr {$height - 4}]  [expr {$height / 3}]
 	}
 	
-	proc createPlayButton {xy startx starty} {
+	proc createUi {w xy offset} {
 		variable sys
-		$sys(playerCanvas) create polygon $startx $starty [expr {$startx +$xy}] [expr {($starty + $xy) / 2}] $startx $xy -fill black
+		# TODO: dirty shit ... clean up here
+		set secondEnd [expr {$xy + $offset}]
+		set thirdEnd [expr {$xy*2 + $offset*2}]
+		createPlayButton $w $xy 0 0
+		createStopButton $w $xy $secondEnd 0
+		createPauseButton $w $xy $thirdEnd 0
+		$sys($w,playerCanvas) configure -width [expr {$secondEnd + $thirdEnd}]
 	}
 	
-	proc createStopButton {xy startx starty} {
+	proc resetUi {w} {
 		variable sys
-		$sys(playerCanvas) create rectangle $startx $starty [expr {$startx + $xy}] [expr {$starty + $xy}] -fill black
+		$sys($w,playerCanvas) delete play stop pause pause_fill time
 	}
 	
-	proc createPauseButton {xy startx starty} {
+	proc createPlayButton {w xy startx starty} {
+		variable sys
+		$sys($w,playerCanvas) create polygon $startx $starty [expr {$startx +$xy}] [expr {($starty + $xy) / 2}] $startx $xy \
+			-fill $sys($w,foreground) \
+			-width 0 \
+			-tags [list play]
+	}
+	
+	proc createStopButton {w xy startx starty} {
+		variable sys
+		$sys($w,playerCanvas) create rectangle $startx $starty [expr {$startx + $xy}] [expr {$starty + $xy}] \
+			-fill $sys($w,foreground) \
+			-width 0 \
+			-tags [list stop]
+	}
+	
+	proc createPauseButton {w xy startx starty} {
 		variable sys
 		set part [expr {$xy / 3}]; # size of one part of the pause button (black blanc black)
-		$sys(playerCanvas) create rectangle $startx $starty [expr {$startx + $part}] [expr {$starty + $xy}] -fill black
-		$sys(playerCanvas) create rectangle [expr {($startx + $part *2)}] $starty [expr {$startx + $part * 3}] [expr {$starty + $xy}] -fill black
+		$sys($w,playerCanvas) create rectangle $startx $starty [expr {$startx + $part}] [expr {$starty + $xy}] \
+			-fill $sys($w,foreground) \
+			-width 0 \
+			-tags [list pause]
+		$sys($w,playerCanvas) create rectangle [expr {$startx + $part}] $starty [expr {$startx + $part * 2}] [expr {$starty + $xy}] \
+			-width 0 \
+			-tags [list pause_fill]
+		$sys($w,playerCanvas) create rectangle [expr {($startx + $part * 2)}] $starty [expr {$startx + $part * 3}] [expr {$starty + $xy}] \
+			-fill $sys($w,foreground) \
+			-width 0 \
+			-tags [list pause]
 	}
 	
 	proc action {w args} {
@@ -77,11 +120,18 @@ namespace eval geekosphere::tbar::widget::player {
 					"-width" {
 						changeWidth $w $value
 					}
+					"-text" {
+						changeText $w $value
+					}
 				}
 			}
 		} elseif {$command == "bindplay"} {
+			${w}.player bind play <Button-1> [list puts play]
 		} elseif {$command == "bindpause"} {
+			${w}.player bind pause <Button-1> [list puts pause]
+			${w}.player bind pause_fill <Button-1> [list puts pause]
 		} elseif {$command == "bindstop"} {
+			${w}.player bind stop <Button-1> [list puts stop]
 		} elseif {$command == "update"} {
 			updateWidget $w
 		} else {
@@ -101,19 +151,39 @@ namespace eval geekosphere::tbar::widget::player {
 	proc changeBackgroundColor {w color} {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
+		$sys($w,playerCanvas) configure -bg $color
+		$sys($w,playerCanvas) itemconfigure pause_fill -fill $color
+		$sys($w,time) configure -bg $color
 	}
 	
 	proc changeForegroundColor {w color} {
 		variable sys
+		set sys($w,foreground) $color
+		$sys($w,time) configure -fg $color
+		$sys($w,playerCanvas) itemconfigure pause -fill $color
+		$sys($w,playerCanvas) itemconfigure play -fill $color
+		$sys($w,playerCanvas) itemconfigure stop -fill $color
+		$sys($w,playerCanvas) itemconfigure time -fill $color
+	}
+	
+	proc changeText {w text} {
+		variable sys
+		$sys($w,playerCanvas) itemconfigure time -text $text
 	}
 	
 	proc changeFont {w font} {
 		variable sys
+		$sys($w,time) configure -font $font
+		set sys($w,font) $font
 	}
 	
 	proc changeHeight {w height} {
 		variable sys
 		$sys($w,originalCommand) configure -height $height
+		$sys($w,playerCanvas) configure -height $height
+		$sys($w,time) configure -height $height
+		createUiWrapper $w $height
+		set sys($w,height) $height
 	}
 	
 	proc changeWidth {w width} {

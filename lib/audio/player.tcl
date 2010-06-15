@@ -20,7 +20,7 @@ namespace eval geekosphere::tbar::widget::player {
 		set sys($w,foreground) blue
 		
 		frame $w
-		pack [canvas $sys($w,playerCanvas) -highlightthickness 0] -side left -fill both
+		pack [canvas $sys($w,playerCanvas) -highlightthickness 0] -side left
 		pack [label $sys($w,time) -textvariable geekosphere::tbar::widget::player::displayTime] -side right -fill both
 		set geekosphere::tbar::widget::player::displayTime "Not playing"
 		
@@ -46,7 +46,7 @@ namespace eval geekosphere::tbar::widget::player {
 	proc createUiWrapper {w height} {
 		variable sys
 		resetUi $w
-		createUi $w $height [expr {$height / 3}]
+		createUi $w $height [expr {$height / 2}]
 	}
 	
 	proc createUi {w xy offset} {

@@ -1,9 +1,24 @@
 #!/usr/bin/env wish8.5
-set appendDir [file normalize lib/]
-if {[file exists $appendDir]} {
-	lappend auto_path $appendDir
-}
 package require tbar
+package require logger
+namespace import geekosphere::tbar::logger*
+initLogger
+
+# extend library to user specific lib in /home/user/.tbar/lib
+set userLib [file join $::env(HOME) .tbar lib]
+if {[file exists $userLib]} {
+	lappend auto_path $userLib
+	log "DEBUG" "Extended library path to $auto_path"
+}
+
+# extend library to user specific widget in /home/user/.tbar/widget
+set userWidget [file join $::env(HOME) .tbar widget]
+if {[file exists $userWidget]} {
+	set geekosphere::tbar::conf(widget,path) [list $userWidget]
+	log "DEBUG" "Extended widget path to $geekosphere::tbar::conf(widget,path)"
+} else {
+	set geekosphere::tbar::conf(widget,path) [list]
+}
 
 # Importing some important commands to ease configuration creation
 namespace import geekosphere::tbar::*

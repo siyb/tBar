@@ -15,20 +15,19 @@ proc notify {w args} {
 	return $w
 }
 
-# TODO 1.2: allow user to add onclick events
 namespace import ::geekosphere::tbar::util*
 namespace eval geekosphere::tbar::widget::notify {
-	
+
 	proc makeNotify {w arguments} {
 		variable sys
 		set sys($w,originalCommand) ${w}_
-		
+
 		changeNotifyAt $w [getOption "-notifyAt" $arguments]
-		
+
 		# has -image?
 		if {[set imgp [getOption "-image" $arguments]] != ""} {
 			changeImage $w $imgp
-			
+
 			# should be scaled?
 			if {[set imgdim [getOption "-imageDimensions" $arguments]] != ""} {
 				changeImageDimensions $w $imgdim
@@ -40,22 +39,22 @@ namespace eval geekosphere::tbar::widget::notify {
 			set sys($w,image) -1
 			set sys($w,scaledImage) -1
 		}
-		
+
 		set sys($w,text) "N/A"
-		
+
 		frame $w
 		pack [label ${w}.displayLabel] -side left -fill both
-		
+
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_
-		
+
 		# run configuration
 		action $w configure $arguments
-		
+
 		# mark the widget as initialized
 		set sys($w,initialized) 1
 	}
-	
+
 	proc action {w args} {
 		variable sys
 		set args [join $args]
@@ -99,7 +98,7 @@ namespace eval geekosphere::tbar::widget::notify {
 			error "Command ${command} not supported"
 		}
 	}
-	
+
 	proc updateWidget {w} {
 		variable sys
 		if {[expr $sys($w,notifyAt)]} {
@@ -119,38 +118,38 @@ namespace eval geekosphere::tbar::widget::notify {
 			${w}.displayLabel configure -text ""
 		}
 	}
-	
+
 	#
 	# Widget configuration procs
 	#
-	
+
 	proc changeBackgroundColor {w color} {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
 		${w}.displayLabel configure -bg $color
 	}
-	
+
 	proc changeForegroundColor {w color} {
 		variable sys
 		${w}.displayLabel configure -fg $color
 	}
-	
+
 	proc changeFont {w font} {
 		variable sys
 		${w}.displayLabel configure -font $font
 	}
-	
+
 	proc changeHeight {w height} {
 		variable sys
 		$sys($w,originalCommand) configure -height $height
 		${w}.displayLabel configure -height $heigth
 	}
-	
+
 	proc changeWidth {w width} {
 		variable sys
 		$sys($w,originalCommand) configure -width $width
 	}
-	
+
 	proc changeImageDimensions {w dimensions} {
 		variable sys
 		if {$sys($w,image) == -1} { error "No image related with this widget using -image yet." }
@@ -159,30 +158,30 @@ namespace eval geekosphere::tbar::widget::notify {
 		# image has not been scaled before
 		set sys($w,scaledImage) [imageresize::resize $sys($w,image) [lindex $dimensions 1] [lindex $dimensions 0]]
 	}
-	
+
 	proc changeImage {w imagePath} {
 		variable sys
 		if {![file exists $imagePath]} { error "Image file $imageFile does not exists" }
 		set sys($w,imagePath) $imagePath
 		set sys($w,image) [image create photo -file $imagePath]
 	}
-	
+
 	proc changeText {w text} {
 		variable sys
 		set sys($w,text) $text
 	}
-	
+
 	proc changeNotifyAt {w expression} {
 		variable sys
 		if {$expression == ""} { error "Expression must not be empty" }
-		
+
 		if {[catch {
 			expr $expression
 		} err]} {
 			error "Invalid expression: $::errorInfo"
 		}
-		
+
 		set sys($w,notifyAt) $expression
 	}
-	
+
 }

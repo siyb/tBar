@@ -120,9 +120,6 @@ namespace eval geekosphere::tbar::widget::player {
 					"-width" {
 						changeWidth $w $value
 					}
-					"-text" {
-						changeText $w $value
-					}
 					"-bindplay" {
 						${w}.player bind play <Button-1> $value
 					}
@@ -167,11 +164,6 @@ namespace eval geekosphere::tbar::widget::player {
 		$sys($w,playerCanvas) itemconfigure play -fill $color
 		$sys($w,playerCanvas) itemconfigure stop -fill $color
 		$sys($w,playerCanvas) itemconfigure time -fill $color
-	}
-	
-	proc changeText {w text} {
-		variable sys
-		$sys($w,playerCanvas) itemconfigure time -text $text
 	}
 	
 	proc changeFont {w font} {

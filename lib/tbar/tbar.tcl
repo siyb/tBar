@@ -3,10 +3,10 @@ package require logger
 
 package provide tbar 1.1
 
-# TODO 1.x: mpd: now playing, time/elapsed time, play/pause/stop
+# TODO 1.2: mpd: now playing, time/elapsed time, play/pause/stop
 # TODO 1.2: static widgetpath on system!
-# TODO 1.2: make popup windows more customizable (e.g. let the user decide which and if calendar window appears) -> subwidget or something
-# TODO 1.2: stop update activities if screensaver is on
+# TODO 1.x: make popup windows more customizable (e.g. let the user decide which and if calendar window appears) -> subwidget or something
+# TODO 1.x: stop update activities if screensaver is on
 # TODO 1.2: add icon support for widgets
 namespace import geekosphere::tbar::util::logger::*
 namespace import geekosphere::tbar::util::*
@@ -14,7 +14,7 @@ namespace eval geekosphere::tbar {
 	initLogger;# init logger for this namespace
 
 	# setting loglevel, can be overridden by userconfig
-	setGlobalLogLevel "DEBUG"
+	setGlobalLogLevel "TRACE"
 	
 	#
 	# Config (use config.tcl to make changes!)
@@ -35,7 +35,6 @@ namespace eval geekosphere::tbar {
 	set conf(geom,ypos) 1031
 
 	set conf(widgets,position) "left"
-	set conf(widget,path) [file join / usr share tbar]
 
 	#
 	# Code
@@ -60,6 +59,7 @@ namespace eval geekosphere::tbar {
 		wm maxsize $sys(bar,toplevel) $conf(geom,width) $conf(geom,height)
 		$sys(bar,toplevel) configure -bg $conf(color,background)
 		wm overrideredirect $sys(bar,toplevel) 1
+		lappend conf(widget,path) [file join / usr share tbar]
 		loadWidgets
 	}
 
@@ -105,12 +105,25 @@ namespace eval geekosphere::tbar {
 			set settingsList [dict get $sys(widget,dict) $key arguments]
 			set path [dict get $sys(widget,dict) $key path]
 			if {[catch {
-				log "INFO" "Attempting to load Widget: $widget Updateinterval: $updateInterval Settings: $settingsList"
-				if {![file exists $conf(widget,path)]} { log "ERROR" "Widget path does not exists, use setWidgetPath to set it correctly, if not set it will default to \$installDir/usr/share/tbar/"; exit }
-				uplevel #0 source [file join $conf(widget,path) ${widget}.tcl]
-				geekosphere::tbar::wrapper::${widget}::init $path $settingsList
-				makeBindings $key
-				if {$updateInterval > 0} { updateWidget $path $widget $updateInterval }
+				log "INFO" "Attempting to load Widget: $widget Updateinterval: $updateInterval Settings: $settingsList | Searching in: $conf(widget,path)"
+				foreach widgetPath $conf(widget,path) {
+					log "TRACE" "Looping widgetPath: $widgetPath"
+					set widgetFile [file join $widgetPath ${widget}.tcl]
+					if {[file exists $widgetFile]} {
+						uplevel #0 source $widgetFile
+						geekosphere::tbar::wrapper::${widget}::init $path $settingsList
+						makeBindings $key
+						if {$updateInterval > 0} { updateWidget $path $widget $updateInterval }
+						log "INFO" "Widget $widget loaded from $widgetFile"
+						set loadSuccess 1
+					}
+				}
+				# check if widget could be found in $conf(widget,path) and inform user if not
+				if {[info exists loadSuccess]} {
+					unset loadSuccess
+				} else {
+					log "WARNING" "Widget $widget can not be found in: $conf(widget,path)"
+				}
 			} err]} {
 				log "ERROR" "Failed loading widget $widget: $::errorInfo"
 			}
@@ -293,11 +306,6 @@ $::errorCode"
 	proc setFontBold {status} {
 		variable conf
 		set conf(font,bold) $status
-	}
-	
-	proc setWidgetPath {path} {
-		variable conf
-		set conf(widget,path) $path
 	}
 
 	proc setLogLevel {level} {

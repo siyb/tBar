@@ -189,7 +189,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-text				"Import ICalendar" \
 			-command		{
 				geekosphere::tbar::widget::calClock::storeCalendarData [geekosphere::tbar::widget::calClock::drawImportDialog]
-				geekosphere::tbar::widget::calClock::importCalendarData
+				geekosphere::tbar::widget::calClock::importCalendarData $calWin
 			}
 		] -side bottom -fill x
 		

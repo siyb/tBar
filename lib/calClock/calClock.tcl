@@ -2,6 +2,7 @@ package provide calClock 1.1
 
 package require callib
 package require util
+package require logger
 
 proc calClock {w args} {
 	geekosphere::tbar::widget::calClock::makeCalClock $w $args
@@ -13,7 +14,9 @@ proc calClock {w args} {
 }
 
 namespace import ::geekosphere::tbar::util*
+namespace import ::geekosphere::tbar::util::logger*
 namespace eval geekosphere::tbar::widget::calClock {
+	initLogger
 	
 	proc makeCalClock {w arguments} {
 		variable sys
@@ -176,6 +179,15 @@ namespace eval geekosphere::tbar::widget::calClock {
 		} else {
 			drawCalendar $w $calWin $sys($w,storedYear) $sys($w,storedMonth)
 		}
+		
+		pack [button ${calWin}.importIcal  \
+			-background		$sys($w,background)\
+			-foreground		$sys($w,foreground) \
+			-activebackground	$sys($w,background) \
+			-activeforeground	$sys($w,foreground) \
+			-text				"Import ICalendar" \
+			-command		{ geekosphere::tbar::widget::calClock::importICalendarData [geekosphere::tbar::widget::calClock::drawImportDialog] }
+		] -side bottom -fill x
 	}
 	
 	proc setStoredDate {w year month} {
@@ -188,6 +200,27 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set year [${calWin}.navigate.year get]; set month [${calWin}.navigate.month get]
 		drawCalendar $w $calWin $year $month
 		setStoredDate $w $year $month
+	}
+	
+	proc drawImportDialog {} {
+		return [tk_getOpenFile \
+			-title "Choose ICalendar file" \
+			-initialdir $::env(HOME) \
+			-multiple false \
+			-filetypes {
+				{{Calendar Data Exchange ical} {.ical}}
+				{{Calendar Data Exchange ics} {.ics}}
+				{{Calendar Data Exchange ifb} {.ifb}}
+				{{Calendar Data Exchange icalendar} {.icalendar}}
+				{{All Files} {*}}
+			}]
+	}
+	
+	proc importICalendarData {path} {
+		if {$path eq ""} {
+			log "TRACE" "User cancelled import"
+			return
+		}
 	}
 	
 	proc drawCalendar {w calWin year month} {

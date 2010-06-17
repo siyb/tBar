@@ -3,6 +3,7 @@ package provide calClock 1.1
 package require callib
 package require util
 package require logger
+package require ical
 
 proc calClock {w args} {
 	geekosphere::tbar::widget::calClock::makeCalClock $w $args
@@ -131,7 +132,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		positionWindowRelativly $calWin $w
 	}
-	
+
 	# TODO 1.2: add possibility to enter appointments (balloon stuff)
 	proc renderWithCalendar {w calWin} {
 		variable sys
@@ -186,8 +187,14 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-activebackground	$sys($w,background) \
 			-activeforeground	$sys($w,foreground) \
 			-text				"Import ICalendar" \
-			-command		{ geekosphere::tbar::widget::calClock::importICalendarData [geekosphere::tbar::widget::calClock::drawImportDialog] }
+			-command		{
+				geekosphere::tbar::widget::calClock::storeCalendarData [geekosphere::tbar::widget::calClock::drawImportDialog]
+				geekosphere::tbar::widget::calClock::importCalendarData
+			}
 		] -side bottom -fill x
+		
+
+		importCalendarData $calWin
 	}
 	
 	proc setStoredDate {w year month} {
@@ -216,10 +223,89 @@ namespace eval geekosphere::tbar::widget::calClock {
 			}]
 	}
 	
-	proc importICalendarData {path} {
-		if {$path eq ""} {
-			log "TRACE" "User cancelled import"
+	proc storeCalendarData {icalFile} {
+		if {$icalFile eq ""} { log "TRACE" "User cancelled import"; return }
+		if {![file exists $icalFile]} { error "ICalfile does not exist, this should not happen" }
+		set tbarHome [file join $::env(HOME) .tbar]
+		if {![file exists $tbarHome]} { log "WARNING" "You can't import ical data if you don't have a .tbar directory in you homedir"; return }
+		if {![file isdirectory $tbarHome]} { error "$tbarHome is a file and not a directory!" }
+		file copy -force $icalFile [file join $tbarHome calendar.ics];# copy and overwrite old ical imports (only one import can prevail!!!)
+	}
+	
+	proc importCalendarData {calWin} {
+		set tbarHome [file join $::env(HOME) .tbar]
+		set calendarFile [file join $tbarHome calendar.ics]
+		if {![file exists $calendarFile]} { log "INFO" "No calendar data to import ;)"; return }
+		set data [read [set fl [open $calendarFile r]]]; close $fl
+		set icalTree [ical::cal2tree $data]
+		log "DEBUG" "Dumping icalTree:\n [ical::dump $icalTree]"
+		
+		# loop all children of root node
+		foreach node [$icalTree children -all root] {
+			set childNodeType [$icalTree get $node @type]
+			# looking for vevents
+			if {$childNodeType eq "vevent"} {
+				set eventDict [dict create]
+				foreach veventChildNode [$icalTree children -all $node] {
+					set value [$icalTree get $veventChildNode @value]
+					# handling items in vevent
+					switch [string tolower [$icalTree get $veventChildNode @type]] {
+						"uid" { dict set eventDict uid $value }
+						"organizer" { dict set eventDict organizer $value }
+						"summary" { dict set eventDict summary $value }
+						"description" {	dict set eventDict description $value }
+						"dtstart" {dict set eventDict dtstart $value }
+						"dtend" {	dict set eventDict dtend $value }
+						"dtstamp" { dict set eventDict dtstamp $value }
+					}
+				}
+				
+				markAppointmentInCalendar $calWin $eventDict
+			}
+		}
+	}
+	
+	proc markAppointmentInCalendar {calWin veventDict} {
+		if {![dict exists $veventDict dtstart] || ![dict exists $veventDict dtend] || ![dict exists $veventDict summary]} {
+			log "WARNING" "Malformed ICalendar entry, dtstart, dtend and summary required: $veventDict"
 			return
+		}
+		set dtStart [dateTimeParser [dict get $veventDict dtstart]]
+		set dtEnd [dateTimeParser [dict get $veventDict dtend]]
+		set summary [dict get $veventDict summary]
+		
+		set format "%e %N %Y 1 green { %H:%M:%S - $summary }"
+		set mark [eval list [clock format [dict get $dtStart sinceEpoch] -format $format]]
+		${calWin}.cal configure -mark $mark
+		log "DEBUG" "'$mark' has been added to the calendar"
+	}
+	
+	proc dateTimeParser {dateTime} {
+		set length [string length $dateTime]
+		set retDict [dict create]
+		
+		# floating: 19980118T230000
+		if {$length == 15} {
+			dict set retDict type 0
+			dict set retDict sinceEpoch [clock scan $dateTime -format "%Y%m%dT%H%M%S"]
+			
+		# utc: 19980119T070000Z
+		} elseif {$length == 16} {
+			dict set retDict type 1
+			dict set retDict sinceEpoch [clock scan $dateTime -format "%Y%m%dT%H%M%SZ"]
+			
+		# local: TZID=America/New_York:19980119T020000
+		} else {
+			error "Time/Date Format not supported yet: $dateTime"
+			set splitALL [split $dateTime "=:"]
+			if {[llength $splitALL] != 3} { error "LOCAL: Malformed date time: $dateTime" }
+			set splitDT [split [lindex $splitDT 2] "T"]
+			if {[llength $splitDT] != 2} { error "LOCAL: Malformed date time: $dateTime" }
+			
+			dict set retDict type 2
+			dict set retDict timeZone [lindex $splitALL 1]
+			dict set retDict date [lindex $splitDT 0] 
+			dict set retDict time [lindex $splitDT 1] 
 		}
 	}
 	
@@ -236,11 +322,12 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-activebackground	$sys($w,calcolor,hover) \
 			-clickedcolor		$sys($w,calcolor,clicked) \
 			-startsunday		0 \
-			-delay			1000 \
+			-delay			10 \
 			-daynames		{Su Mo Tu Wed Th Fr Sa} \
 			-month			$month \
-			-year				$year \
+			-year			$year \
 			-relief 			groove \
+			-balloon			true \
 		]
 		
 		# mark today

@@ -322,8 +322,7 @@
         # set active color
         $wname configure -background $calState($parent.activebackground)
         # trigger the balloon
-        # @fix by siyb: turned off balloon shit
-	#after $calState($parent.delay) [list callib::balloon_show $wname] 
+	after $calState($parent.delay) [list callib::balloon_show $wname] 
       }
 
     proc leave_proc {wname} {
@@ -377,8 +376,9 @@
         wm overrideredirect $top 1
         # create the message widget
         message $top.msg -text $message_str  -width 3i\
-                         -font $calState($parent.font)\
-                         -background yellow -foreground darkblue
+                         -font $calState($parent.font)
+	# TODO: allow different color scheme (yellow is just damn ugly)
+                        # -background yellow -foreground darkblue
         pack $top.msg
         # get the geometry data of the requester
         set wmx [expr [winfo rootx $wname]+[winfo width  $wname]]

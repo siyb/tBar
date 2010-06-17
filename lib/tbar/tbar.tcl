@@ -1,15 +1,15 @@
+package provide tbar 1.1
+
 package require util
 package require logger
 
-package provide tbar 1.1
-
+# TODO 1.2: fix pkg_mkIndex, try package require in all packages before package provide (namespace import issue)!
 # TODO 1.2: mpd: now playing, time/elapsed time, play/pause/stop
-# TODO 1.2: static widgetpath on system!
-# TODO 1.x: make popup windows more customizable (e.g. let the user decide which and if calendar window appears) -> subwidget or something
+# TODO 1.2: make popup windows more customizable (e.g. let the user decide which and if calendar window appears) -> subwidget or something
 # TODO 1.x: stop update activities if screensaver is on
 # TODO 1.2: add icon support for widgets
-namespace import geekosphere::tbar::util::logger::*
-namespace import geekosphere::tbar::util::*
+namespace import ::geekosphere::tbar::util::logger::*
+namespace import ::geekosphere::tbar::util::*
 namespace eval geekosphere::tbar {
 	initLogger;# init logger for this namespace
 

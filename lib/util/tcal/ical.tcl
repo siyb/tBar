@@ -4,7 +4,7 @@ package provide ical 0.1
 package require ical-semantics
 
 namespace eval ical {
-    variable debug 5
+    variable debug 0
 
     #The general property parameters defined by this memo
     # are defined by the following notation:
@@ -541,42 +541,3 @@ proc ical::cal2tree {str} {
     }
     return $tree
 }
-
-if {[info exists argv0] && ($argv0 == [info script])} {
-    set obj [list \
-		 "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//hacksw/handcal//NONSGML v1.0//EN\nBEGIN:VEVENT\nDTSTART:19970714T170000Z\nDTEND:19970715T035959Z\nSUMMARY:Bastille Day Party\nEND:VEVENT\nEND:VCALENDAR" \
-		 "BEGIN:VCALENDAR\nBEGIN:VEVENT\nUID:19970901T130000Z-123401@host.com\nDTSTAMP:19970901T1300Z\nDTSTART:19970903T163000Z\nDTEND:19970903T190000Z\nSUMMARY:Annual Employee Review\nCLASS:PRIVATE\nCATEGORIES:BUSINESS,HUMAN RESOURCES\nEND:VEVENT\nEND:VCALENDAR\n" \
-		 "BEGIN:VCALENDAR\nBEGIN:VFREEBUSY\nORGANIZER:MAILTO:jane_doe@host1.com\nATTENDEE:MAILTO:john_public@host2.com\nDTSTAMP:19970901T100000Z\nFREEBUSY;VALUE=PERIOD:19971015T050000Z/PT8H30M,\n 19971015T160000Z/PT5H30M,19971015T223000Z/PT6H30M\nURL:http://host2.com/pub/busy/jpublic-01.ifb\nCOMMENT:This iCalendar file contains busy time information for\n the next three months.\nEND:VFREEBUSY\nEND:VCALENDAR" \
-		 "BEGIN:VCALENDAR\nMETHOD:xyz\nVERSION:2.0\nPRODID:-//ABC Corporation//NONSGML My Product//EN\nBEGIN:VEVENT\nDTSTAMP:19970324T1200Z\nSEQUENCE:0\nUID:uid3@host1.com\nORGANIZER:MAILTO:jdoe@host1.com\nATTENDEE;RSVP=TRUE:MAILTO:jsmith@host1.com\nDTSTART:19970324T123000Z\nDTEND:19970324T210000Z\nCATEGORIES:MEETING,PROJECT\nCLASS:PUBLIC\nSUMMARY:Calendaring Interoperability Planning Meeting\nDESCRIPTION:Discuss how we can test c&s interoperability\n using iCalendar and other IETF standards.\nLOCATION:LDB Lobby\nATTACH;FMTTYPE=application/postscript:ftp://xyzCorp.com/pub/\n conf/bkgrnd.ps\nEND:VEVENT\nEND:VCALENDAR\n" \
-		 "BEGIN:VCALENDAR\nPRODID:-//RDU Software//NONSGML HandCal//EN\nVERSION:2.0\nBEGIN:VTIMEZONE\nTZID:US-Eastern\nBEGIN:STANDARD\nDTSTART:19981025T020000\nRDATE:19981025T020000\nTZOFFSETFROM:-0400\nTZOFFSETTO:-0500\nTZNAME:EST\nEND:STANDARD\nBEGIN:DAYLIGHT\nDTSTART:19990404T020000\nRDATE:19990404T020000\nTZOFFSETFROM:-0500\nTZOFFSETTO:-0400\nTZNAME:EDT\nEND:DAYLIGHT\nEND:VTIMEZONE\nBEGIN:VEVENT\nDTSTAMP:19980309T231000Z\nUID:guid-1.host1.com\nORGANIZER;ROLE=CHAIR:MAILTO:mrbig@host.com\nATTENDEE;RSVP=TRUE;ROLE=REQ-PARTICIPANT;CUTYPE=GROUP:\n MAILTO:employee-A@host.com\nDESCRIPTION:Project XYZ Review Meeting\nCATEGORIES:MEETING\nCLASS:PUBLIC\nCREATED:19980309T130000Z\nSUMMARY:XYZ Project Review\nDTSTART;TZID=US-Eastern:19980312T083000\nDTEND;TZID=US-Eastern:19980312T093000\nLOCATION:1CP Conference Room 4350\nEND:VEVENT\nEND:VCALENDAR\n" ]
-    set fd [open conference-example.ics]
-    lappend obj [read $fd]
-    close $fd
-
-    unset obj
-    set fd [open schedule.ics]
-    lappend obj [read $fd]
-    close $fd
-    unset obj
-
-    set fd [open test.ics]
-    lappend obj [read $fd]
-    close $fd
-    unset obj
-
-    set fd [open freebusy1.ifb]
-    lappend obj [read $fd]
-    close $fd
-    unset obj
-
-    set fd [open evolution.ics]
-    lappend obj [read $fd]
-    close $fd
-
-    foreach o $obj {
-	#puts "In: $o"
-	puts "Out: [ical::dump [ical::cal2tree $o]]"
-    }
-}
-
-return

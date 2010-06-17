@@ -1,4 +1,5 @@
 #!/usr/bin/env wish8.5
+package require Tk
 package require tbar
 package require logger
 namespace import geekosphere::tbar::logger*

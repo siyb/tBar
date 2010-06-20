@@ -1,6 +1,8 @@
 # Taken from: http://wiki.tcl.tk/13497
  package provide callib 0.3
 
+ package require util
+
  proc calwid {args} {
  ##############################################
  # provides api for creating calendar widgets #
@@ -373,6 +375,7 @@
         set top $parent.balloon
         catch {destroy $top}
         toplevel $top -borderwidth 1 -background black -relief flat
+	
         wm overrideredirect $top 1
         # create the message widget
         message $top.msg -text $message_str  -width 3i\
@@ -387,6 +390,8 @@
           [winfo reqwidth $top.msg]x[winfo reqheight $top.msg]+$wmx+$wmy
         # raise so that win is really on top
         raise $top
+		# position window relative to window
+	positionWindowRelativly $top $wname
       };# end balloon_show 
 
     proc balloon_dn {wname} {

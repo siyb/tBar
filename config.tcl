@@ -127,6 +127,23 @@ setLogLevel "DEBUG"
 addWidgetToBar clock clock1 1 -cachedate 1
 addText " | " "red"
 
+
+# An interface to mpd
+#
+# -fg / -foreground - the textcolor
+# -bg / -background - the background color
+# -height - adjust the height of the widget (buttons)
+# -width - adjust the width of the widgets
+#
+# The following widget options have already been set for the widget but can be overridden
+# so that the widget supports different players, this is dirty hacking though, please consider
+# writing a widget wrapper for this purpose.
+# -bindplay - a list of commands executed when Button-1 (mouse1) is invoked on play
+# -bindpause - a list of commands executed when Button-1 (mouse1) is invoked on pause
+# -bindstop - a list of commands executed when Button-1 (mouse1) is invoked on stop
+#addWidgetToBar mpd mpd1 0
+#addText " | " "red"
+
 # Displays network information
 #
 # -fg / -foreground - the text color
@@ -197,17 +214,3 @@ addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 #
 #addWidgetToBar text text1 1 -command [list exec uptime]
 
-# An interface to mpd
-#
-# -fg / -foreground - the textcolor
-# -bg / -background - the background color
-# -height - adjust the height of the widget (buttons)
-# -width - adjust the width of the widgets
-#
-# The following widget options have already been set for the widget but can be overridden
-# so that the widget supports different players, this is dirty hacking though, please consider
-# writing a widget wrapper for this purpose.
-# -bindplay - a list of commands executed when Button-1 (mouse1) is invoked on play
-# -bindpause - a list of commands executed when Button-1 (mouse1) is invoked on pause
-# -bindstop - a list of commands executed when Button-1 (mouse1) is invoked on stop
-#addWidgetToBar mpd mpd1 0

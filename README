@@ -2,6 +2,7 @@
 
 	- Install Tcl/Tk 8.5 or higher
 	- Install libtk-img
+	- Install tcllib
 	- Run: make install (or: make DESTFILE=myfile install)
 	- Modify /etc/tbar/config.tcl to fit your needs or create ~/.tbar/ and copy /etc/tbar/config.tcl there, to have a user specific config
 	- Run: tbar	

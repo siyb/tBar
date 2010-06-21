@@ -6,7 +6,8 @@ install:
 	mkdir -p $(DESTDIR)/usr/lib/tbar/
 	mkdir -p $(DESTDIR)/usr/bin/
 	mkdir -p $(DESTDIR)/usr/share/man/man1/		
-
+	
+	#echo "lappend auto_path [file normalize lib/]; pkg_mkIndex -verbose lib/ */**" | tclsh
 	cp -r config.tcl $(DESTDIR)/etc/tbar/
 	cp -r tbar.tcl $(DESTDIR)/usr/bin/tbar
 	cp -r lib/* $(DESTDIR)/usr/lib/tbar/

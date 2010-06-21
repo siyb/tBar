@@ -187,14 +187,14 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-activebackground	$sys($w,background) \
 			-activeforeground	$sys($w,foreground) \
 			-text				"Import ICalendar" \
-			-command		{
-				geekosphere::tbar::widget::calClock::storeCalendarData [geekosphere::tbar::widget::calClock::drawImportDialog]
-				geekosphere::tbar::widget::calClock::importCalendarData $calWin
-			}
+			-command		 [list geekosphere::tbar::widget::calClock::importButtonProcedure $calWin] \
 		] -side bottom -fill x
 		
-
-		importCalendarData $calWin
+	}
+	
+	proc importButtonProcedure {calWin} {
+		geekosphere::tbar::widget::calClock::storeCalendarData [geekosphere::tbar::widget::calClock::drawImportDialog]
+		geekosphere::tbar::widget::calClock::importCalendarData $calWin
 	}
 	
 	proc setStoredDate {w year month} {
@@ -329,6 +329,8 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-relief 			groove \
 			-balloon			true \
 		]
+		# mark calendar appointments
+		importCalendarData $calWin
 		
 		# mark today
 		${calWin}.cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]

@@ -194,7 +194,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 	
 	proc importButtonProcedure {calWin} {
 		geekosphere::tbar::widget::calClock::storeCalendarData [geekosphere::tbar::widget::calClock::drawImportDialog]
-		geekosphere::tbar::widget::calClock::importCalendarData $calWin
+		geekosphere::tbar::widget::calClock::importCalendarData $calWin 1
 	}
 	
 	proc setStoredDate {w year month} {
@@ -232,35 +232,48 @@ namespace eval geekosphere::tbar::widget::calClock {
 		file copy -force $icalFile [file join $tbarHome calendar.ics];# copy and overwrite old ical imports (only one import can prevail!!!)
 	}
 	
-	proc importCalendarData {calWin} {
+	proc importCalendarData {calWin {newImport 0}} {
+		variable sys
 		set tbarHome [file join $::env(HOME) .tbar]
 		set calendarFile [file join $tbarHome calendar.ics]
 		if {![file exists $calendarFile]} { log "INFO" "No calendar data to import ;)"; return }
 		set data [read [set fl [open $calendarFile r]]]; close $fl
-		set icalTree [ical::cal2tree $data]
-		log "DEBUG" "Dumping icalTree:\n [ical::dump $icalTree]"
 		
-		# loop all children of root node
-		foreach node [$icalTree children -all root] {
-			set childNodeType [$icalTree get $node @type]
-			# looking for vevents
-			if {$childNodeType eq "vevent"} {
-				set eventDict [dict create]
-				foreach veventChildNode [$icalTree children -all $node] {
-					set value [$icalTree get $veventChildNode @value]
-					# handling items in vevent
-					switch [string tolower [$icalTree get $veventChildNode @type]] {
-						"uid" { dict set eventDict uid $value }
-						"organizer" { dict set eventDict organizer $value }
-						"summary" { dict set eventDict summary $value }
-						"description" {	dict set eventDict description $value }
-						"dtstart" {dict set eventDict dtstart $value }
-						"dtend" {	dict set eventDict dtend $value }
-						"dtstamp" { dict set eventDict dtstamp $value }
+		# create caltree if not present yet, this takes a LOOOOOOOOONG time
+		if {![info exists sys($calWin,icalTree)] || $newImport} {
+			set sys($calWin,icalTree) [ical::cal2tree $data]; # ical data tree
+			set sys($calWin,icalData) [list];# store ical data structs in list
+		
+			log "TRACE" "Dumping icalTree:\n [ical::dump $sys($calWin,icalTree)]"
+
+			# loop all children of root node
+			foreach node [$sys($calWin,icalTree) children -all root] {
+				set childNodeType [$sys($calWin,icalTree) get $node @type]
+				# looking for vevents
+				if {$childNodeType eq "vevent"} {
+					set eventDict [dict create]
+					foreach veventChildNode [$sys($calWin,icalTree) children -all $node] {
+						set value [$sys($calWin,icalTree) get $veventChildNode @value]
+						# handling items in vevent
+						switch [string tolower [$sys($calWin,icalTree) get $veventChildNode @type]] {
+							"uid" { dict set eventDict uid $value }
+							"organizer" { dict set eventDict organizer $value }
+							"summary" { dict set eventDict summary $value }
+							"description" {	dict set eventDict description $value }
+							"dtstart" {dict set eventDict dtstart $value }
+							"dtend" {	dict set eventDict dtend $value }
+							"dtstamp" { dict set eventDict dtstamp $value }
+						}
 					}
+					lappend sys($calWin,icalData) $eventDict
+					markAppointmentInCalendar $calWin $eventDict
 				}
-				
-				markAppointmentInCalendar $calWin $eventDict
+			}
+		
+		# mark calendar using cached data
+		} else {
+			foreach entry $sys($calWin,icalData) {
+				markAppointmentInCalendar $calWin $entry
 			}
 		}
 	}
@@ -329,8 +342,10 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-relief 			groove \
 			-balloon			true \
 		]
+		
+		# TODO: this is _very_slow with loads of appointments, circumvent redrawing!
 		# mark calendar appointments
-		importCalendarData $calWin
+		puts [time {importCalendarData $calWin }]
 		
 		# mark today
 		${calWin}.cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]

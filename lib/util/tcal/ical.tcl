@@ -2,9 +2,12 @@
 package provide ical 0.1
 
 package require ical-semantics
+package require util
 
+namespace import geekosphere::tbar::util::logger
 namespace eval ical {
     variable debug 0
+    initLogger
 
     #The general property parameters defined by this memo
     # are defined by the following notation:
@@ -156,7 +159,7 @@ proc ical::str2lines {str} {
 }
 
 proc ical::warning {err} {
-    puts stderr "Warning: $err"
+    log "TRACE" $err
 }
 
 # nvd

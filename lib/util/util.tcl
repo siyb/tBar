@@ -1,6 +1,11 @@
 package provide util 1.1
 
+package require logger
+
+namespace import ::geekosphere::tbar::util::logger*
 namespace eval geekosphere::tbar::util {
+	
+	::geekosphere::tbar::util::logger::initLogger
 	
 	set sys(componentCounter) 0
 
@@ -27,7 +32,12 @@ namespace eval geekosphere::tbar::util {
 		wm geometry $windowToPosition [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] 0 0 [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
 		wm overrideredirect $windowToPosition 1
 		update
-		wm geometry $windowToPosition [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $windowToPosition] [winfo reqheight $windowToPosition] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+		if {[catch {
+			wm geometry $windowToPosition [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $windowToPosition] [winfo reqheight $windowToPosition] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
+		}]} {
+			log "WARNING" "Unable to render window properly"
+			return -1
+		}
 	}
 
 	# TODO: does not work for the left side of X axis (if window will be broader than left limit)

@@ -116,7 +116,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 	proc drawCalendarWindow {w} {
 		variable sys
 		set calWin ${w}.calendar
-		if {[winfo exists $calWin]} { 
+		if {[winfo exists $calWin]} {
 			destroy $calWin
 			return 
 		}
@@ -175,6 +175,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		# render calendar with current date if no month and year have been stored or if caching is disabled
 		if {($sys($w,storedYear) == -1 && $sys($w,storedMonth) == -1) || !$sys($w,cacheDate)} {
 			drawCalendar $w $calWin $currentYear $currentMonth
+			setStoredDate $w $currentYear $currentMonth
 			
 		# otherwise render calendar with stored values
 		} else {
@@ -204,9 +205,23 @@ namespace eval geekosphere::tbar::widget::calClock {
 	}
 	
 	proc updateWrapper {w calWin} {
+		variable sys
 		set year [${calWin}.navigate.year get]; set month [${calWin}.navigate.month get]
-		drawCalendar $w $calWin $year $month
-		setStoredDate $w $year $month
+		set monthYear -1
+		
+		if {$year < $sys($w,storedYear)} {
+			set monthYear [${calWin}.cal prevyear]
+		} elseif {$year > $sys($w,storedYear)} {
+			set monthYear [${calWin}.cal nextyear]
+		}
+		if {$month < $sys($w,storedMonth)} {
+			set monthYear [${calWin}.cal prevmonth]
+		} elseif {$month > $sys($w,storedMonth)} {
+			set monthYear [${calWin}.cal nextmonth]
+		}
+		
+		if {$monthYear == -1} { return }
+		setStoredDate $w [lindex $monthYear 0] [lindex $monthYear 1]
 	}
 	
 	proc drawImportDialog {} {
@@ -306,7 +321,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		} elseif {$length == 16} {
 			dict set retDict type 1
 			dict set retDict sinceEpoch [clock scan $dateTime -format "%Y%m%dT%H%M%SZ"]
-			
+		# TODO: implement this datetime format!
 		# local: TZID=America/New_York:19980119T020000
 		} else {
 			error "Time/Date Format not supported yet: $dateTime"

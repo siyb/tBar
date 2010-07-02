@@ -615,16 +615,19 @@
                                 error "Problem with the priority value\n\
                                       most likely a non integer value \n\
                                       prio is \"$Mpri\""
-                                return
+				return
                               }
+			    # TODO 1.x: this check takes a long time, disabled.
+			    # Will need to find another way to do that
+			    #
                             # check that color is acceptable
-                            set er [catch {label .tmp -background $Mcol} result]
-                            destroy .tmp   
-                            if {$er} {
-                                error "Problem with the color value\n\
-                                      color is \"$Mcol\""
-                                return
-                              }
+                            #set er [catch {label .tmp -background $Mcol} result]
+                            #destroy .tmp   
+                            #if {$er} {
+                            #    error "Problem with the color value\n\
+                            #          color is \"$Mcol\""
+			    #   return
+                            # }
                             # all consistency checks went OK
                             # append mark to mark list
                             lappend calState($parent.mark) $val

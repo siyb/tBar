@@ -14,5 +14,9 @@ install:
 	cp -r widget/* $(DESTDIR)/usr/share/tbar/
 	
 	cp tbar.1.gz $(DESTDIR)/usr/share/man/man1/	
+
+starkit:
+	./mkstarpack.sh	
+
 uninstall:
 	rm -rf $(DESTDIR)/etc/tbar/ $(DESTDIR)/usr/bin/tbar $(DESTDIR)/usr/lib/tbar/ $(DESTDIR)/usr/share/tbar/ $(DESTDIR)/usr/share/man/man1/tbar.1.gz

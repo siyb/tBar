@@ -7,7 +7,7 @@ SDXURL='http://tclkit.googlecode.com/files/sdx-20100310.kit'
 SDXSHA1='be3de2bc770764e269707a97741e3699d61e878d'
 
 if [ -e tbar.kit ]; then
-  rm tbar.kit
+	rm tbar.kit
 fi
 
 pwd=`pwd`

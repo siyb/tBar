@@ -15,7 +15,7 @@ namespace eval geekosphere::tbar::util::logger {
 	dict append loggerSettings(levels) "TRACE" 0
 
 	# global loglevel
-	set loggerSettings(globalLevel) "DEBUG"
+	set loggerSettings(globalLevel) "TRACE"
 
 	# the global loglevel to be used
 	proc setGlobalLogLevel {level} {

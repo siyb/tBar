@@ -133,7 +133,6 @@ namespace eval geekosphere::tbar::widget::calClock {
 		positionWindowRelativly $calWin $w
 	}
 
-	# TODO 1.2: add possibility to enter appointments (balloon stuff)
 	proc renderWithCalendar {w calWin} {
 		variable sys
 		
@@ -148,8 +147,8 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-from			1 \
 			-to				12 \
 			-width			10 \
-			-increment			1 \
-			-command			[list geekosphere::tbar::widget::calClock::updateWrapper $w $calWin]
+			-increment		1 \
+			-command		[list geekosphere::tbar::widget::calClock::updateWrapper $w $calWin]
 		] -side left -fill x -expand 1
 		
 		pack [spinbox ${calWin}.navigate.year \
@@ -159,8 +158,8 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-from			[expr {$currentYear - 100}] \
 			-to				[expr {$currentYear + 100}] \
 			-width			12 \
-			-increment			1 \
-			-command			[list geekosphere::tbar::widget::calClock::updateWrapper $w $calWin]
+			-increment		1 \
+			-command		[list geekosphere::tbar::widget::calClock::updateWrapper $w $calWin]
 			
 		] -side right -fill x -expand 1
 
@@ -252,6 +251,8 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set tbarHome [file join $::env(HOME) .tbar]
 		set calendarFile [file join $tbarHome calendar.ics]
 		if {![file exists $calendarFile]} { log "INFO" "No calendar data to import ;)"; return }
+		
+		# TODO: check mimetype in order to prevent code injection
 		set data [read [set fl [open $calendarFile r]]]; close $fl
 		
 		# create caltree if not present yet, this takes a LOOOOOOOOONG time
@@ -321,6 +322,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		} elseif {$length == 16} {
 			dict set retDict type 1
 			dict set retDict sinceEpoch [clock scan $dateTime -format "%Y%m%dT%H%M%SZ"]
+		
 		# TODO: implement this datetime format!
 		# local: TZID=America/New_York:19980119T020000
 		} else {
@@ -360,7 +362,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		# TODO: this is _very_slow with loads of appointments, circumvent redrawing!
 		# mark calendar appointments
-		puts [time {importCalendarData $calWin }]
+		log "DEBUG" "Calendar loaded in: [time { importCalendarData $calWin }]"
 		
 		# mark today
 		${calWin}.cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]

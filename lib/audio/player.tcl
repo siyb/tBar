@@ -51,7 +51,6 @@ namespace eval geekosphere::tbar::widget::player {
 	
 	proc createUi {w xy offset} {
 		variable sys
-		# TODO: dirty shit ... clean up here
 		set secondEnd [expr {$xy + $offset}]
 		set thirdEnd [expr {$xy*2 + $offset*2}]
 		createPlayButton $w $xy 0 0

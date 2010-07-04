@@ -1,0 +1,46 @@
+.TH TBAR 1 "May 21, 2010" "Linux" "tbar manual"
+
+.SH NAME
+tBar \- a small taskbar written in TCL/TK
+
+.SH SYNOPSIS
+.B tbar
+.RB [ \--config
+.IR FILE
+.RB ]
+.RB [ \--widget
+.IR PATH
+.RB ]
+
+.SH DESCRIPTION
+.Pp
+\fBtBar\fP is a small taskbar application designed for leightweight window
+managers. It provides basic system monitoring facilities such as:
+.TP
+	* cpu temperature, load, frequency, cache
+.TP
+	* memory and swap usage
+.TP
+	* networking load
+	
+.SH OPTIONS
+.TP
+\fB\-\-config\fR \fIFILE\fR
+specifies a config file to use instead of the global / user configuration file
+
+.SH FILES
+.TP
+.I /etc/tbar/config.tcl
+global configuration file
+.TP
+.I ~/.tbar/config.tcl
+user specific config file
+
+.SH BUGS
+Send bug reports to <siyb@geekosphere.org>
+
+.SH SEE ALSO
+The project's website can be found at http://siyb.mount.at/tbar/
+
+.SH AUTHOR
+tBar was written by Patrick Sturm <siyb@geekosphere.org>

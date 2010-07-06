@@ -128,20 +128,18 @@ addWidgetToBar clock clock1 1 -cachedate 1
 addText " | " "red"
 
 
-# An interface to mpd
+# An interface to music players, need to be console controllable
 #
 # -fg / -foreground - the textcolor
 # -bg / -background - the background color
 # -height - adjust the height of the widget (buttons)
 # -width - adjust the width of the widgets
-#
-# The following widget options have already been set for the widget but can be overridden
-# so that the widget supports different players, this is dirty hacking though, please consider
-# writing a widget wrapper for this purpose.
-# -bindplay - a list of commands executed when Button-1 (mouse1) is invoked on play
-# -bindpause - a list of commands executed when Button-1 (mouse1) is invoked on pause
-# -bindstop - a list of commands executed when Button-1 (mouse1) is invoked on stop
-#addWidgetToBar mpd mpd1 0
+# -bindplay - a list of tcl commands executed when Button-1 (mouse1) is invoked on play
+# -bindpause - a list of tcl commands executed when Button-1 (mouse1) is invoked on pause
+# -bindstop - a list of tcl commands executed when Button-1 (mouse1) is invoked on stop
+# -bindupdate - a list of tcl commands executed when an update is made, the output of the command
+#		will be displayed in the widget
+#addWidgetToBar player player1 1
 #addText " | " "red"
 
 # Displays network information

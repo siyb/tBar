@@ -1,6 +1,6 @@
 package require player
 
-namespace eval geekosphere::tbar::wrapper::mpd {
+namespace eval geekosphere::tbar::wrapper::player {
 
 	proc init {path settingsList} {
 		pack [player $path \
@@ -11,6 +11,7 @@ namespace eval geekosphere::tbar::wrapper::mpd {
 			-bindplay [list puts play] \
 			-bindpause [list puts pause] \
 			-bindstop [list puts stop] \
+			-bindupdate [list puts update] \
 			{*}$settingsList
 		] -side $geekosphere::tbar::conf(widgets,position) -fill both
 		return $path

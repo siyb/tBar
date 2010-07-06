@@ -21,8 +21,8 @@ namespace eval geekosphere::tbar::widget::player {
 		
 		frame $w
 		pack [canvas $sys($w,playerCanvas) -highlightthickness 0] -side left
-		pack [label $sys($w,time) -textvariable geekosphere::tbar::widget::player::displayTime] -side right -fill both
-		set geekosphere::tbar::widget::player::displayTime "Not playing"
+		pack [label $sys($w,time) -textvariable geekosphere::tbar::widget::player::displayTime($w)] -side right -fill both
+		set geekosphere::tbar::widget::player::displayTime($w) "Not playing"
 		
 		if {[set height [getOption "-height" $arguments]] eq ""} {
 			set sys($w,height) 12
@@ -119,7 +119,11 @@ namespace eval geekosphere::tbar::widget::player {
 					"-width" {
 						changeWidth $w $value
 					}
+					"-bindupdate" {
+						set sys($w,updateCommand) $value
+					}
 					"-bindplay" {
+					puts "play: $value"
 						${w}.player bind play <Button-1> $value
 					}
 					"-bindpause" {
@@ -140,7 +144,10 @@ namespace eval geekosphere::tbar::widget::player {
 	
 	proc updateWidget {w} {
 		variable sys
-
+		if {![info exists sys($w,updateCommand)]} {
+			set geekosphere::tbar::widget::player::displayTime($w) "N/A"
+		}
+		set geekosphere::tbar::widget::player::displayTime($w) [eval $sys($w,updateCommand)]
 	}
 	
 	#

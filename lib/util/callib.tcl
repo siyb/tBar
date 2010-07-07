@@ -576,6 +576,11 @@
                                 set calState($parent.progcallback) 1
                               } 
                           }
+			"-unmarkall" {
+				# @author SIYB
+				# unmarks all appointments
+				set calState($parent.mark) [list]
+			}
                         "-mark" {
                             if {$val == ""} {
                                 return $calState($parent.mark)

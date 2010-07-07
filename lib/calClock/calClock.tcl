@@ -100,12 +100,25 @@ namespace eval geekosphere::tbar::widget::calClock {
 		}
 	}
 	
+	#
+	# GENERAL PROCEDURES
+	#
+	
 	# gets the time and date according to the specified format
 	proc timeDate {w} {
 		variable sys
 		return [clock format [clock seconds] -format $sys($w,timeDateFormat)]
 	}
 	
+	proc calCallback {args} {
+		set year [lindex $args 0]
+		set month [lindex $args 1]
+		set day [lindex $args 2]
+		set dayString [lindex $args 3]
+		set column [lindex $args 4]
+		set row [lindex $args 5]
+		log "DEBUG" "Klicked: year: $year month: $month day: $day - $dayString column: $column row: $row"
+	}
 
 	proc actionHandler {w invokerWindow} {
 		variable sys
@@ -132,7 +145,24 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		positionWindowRelativly $sys($w,calWin) $w
 	}
-
+	
+	
+	#
+	# CALENDAR RENDERING PROCEDURES
+	#
+	
+	proc renderWithCommand {w} {
+		variable sys
+		toplevel $sys($w,calWin) -bg $sys($w,background)
+		pack [label $sys($w,calWin).display \
+			-bg $sys($w,background) \
+			-fg $sys($w,foreground) \
+			-font [font create -family "nimbus mono"] \
+			-justify left \
+			-text [string map { " " "  " } [eval $sys($w,command)]]
+		] -fill both
+	}
+	
 	proc renderWithCalendar {w} {
 		variable sys
 		
@@ -192,15 +222,53 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 	}
 	
-	proc importButtonProcedure {w} {
-		geekosphere::tbar::widget::calClock::storeCalendarData [geekosphere::tbar::widget::calClock::drawImportDialog]
-		geekosphere::tbar::widget::calClock::importCalendarData $w 1
+	proc drawCalendar {w year month} {
+		variable sys
+		if {[winfo exists $sys($w,calWin).cal]} {
+			destroy $sys($w,calWin).cal
+			return
+		}
+		pack [calwid $sys($w,calWin).cal \
+			-font				{ helvetica 10 bold } \
+			-dayfont			{ Arial 10 bold } \
+			-background		$sys($w,background)\
+			-foreground		$sys($w,foreground) \
+			-activebackground	$sys($w,calcolor,hover) \
+			-clickedcolor		$sys($w,calcolor,clicked) \
+			-startsunday		0 \
+			-delay			10 \
+			-daynames		{Su Mo Tu Wed Th Fr Sa} \
+			-month			$month \
+			-year			$year \
+			-relief 			groove \
+			-balloon			true \
+			-callback			geekosphere::tbar::widget::calClock::calCallback
+		]
+		
+		# TODO: this is _very_slow with loads of appointments, circumvent redrawing!
+		# mark calendar appointments
+		log "DEBUG" "Calendar loaded in: [time { importCalendarData $w }]"
+		
+		# mark today
+		$sys($w,calWin).cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]
 	}
 	
-	proc setStoredDate {w year month} {
+	proc renderImportDialog {} {
+		return [tk_getOpenFile \
+			-title "Choose ICalendar file" \
+			-initialdir $::env(HOME) \
+			-multiple false \
+			-filetypes {
+				{{Calendar Data Exchange ical} {.ical}}
+				{{Calendar Data Exchange ics} {.ics}}
+				{{Calendar Data Exchange ifb} {.ifb}}
+				{{Calendar Data Exchange icalendar} {.icalendar}}
+				{{All Files} {*}}
+			}]
+	}
+	
+	proc renderMakeCalendarEntry {w day month year} {
 		variable sys
-		set sys($w,storedYear) $year
-		set sys($w,storedMonth) $month
 	}
 	
 	proc updateWrapper {w} {
@@ -223,18 +291,19 @@ namespace eval geekosphere::tbar::widget::calClock {
 		setStoredDate $w [lindex $monthYear 0] [lindex $monthYear 1]
 	}
 	
-	proc drawImportDialog {} {
-		return [tk_getOpenFile \
-			-title "Choose ICalendar file" \
-			-initialdir $::env(HOME) \
-			-multiple false \
-			-filetypes {
-				{{Calendar Data Exchange ical} {.ical}}
-				{{Calendar Data Exchange ics} {.ics}}
-				{{Calendar Data Exchange ifb} {.ifb}}
-				{{Calendar Data Exchange icalendar} {.icalendar}}
-				{{All Files} {*}}
-			}]
+	proc setStoredDate {w year month} {
+		variable sys
+		set sys($w,storedYear) $year
+		set sys($w,storedMonth) $month
+	}
+	
+	#
+	# APPOINTMENT RELATED PROCEDURES (ICAL / MARKING)
+	#
+	
+	proc importButtonProcedure {w} {
+		geekosphere::tbar::widget::calClock::storeCalendarData [geekosphere::tbar::widget::calClock::renderImportDialog]
+		geekosphere::tbar::widget::calClock::importCalendarData $w 1
 	}
 	
 	proc storeCalendarData {icalFile} {
@@ -248,6 +317,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 	
 	proc importCalendarData {w {newImport 0}} {
 		variable sys
+		$sys($w,calWin).cal configure -unmarkall
 		set tbarHome [file join $::env(HOME) .tbar]
 		set calendarFile [file join $tbarHome calendar.ics]
 		if {![file exists $calendarFile]} { log "INFO" "No calendar data to import ;)"; return }
@@ -339,64 +409,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 			dict set retDict time [lindex $splitDT 1] 
 		}
 	}
-	
-	proc drawCalendar {w year month} {
-		variable sys
-		if {[winfo exists $sys($w,calWin).cal]} {
-			destroy $sys($w,calWin).cal
-			return
-		}
-		pack [calwid $sys($w,calWin).cal \
-			-font				{ helvetica 10 bold } \
-			-dayfont			{ Arial 10 bold } \
-			-background		$sys($w,background)\
-			-foreground		$sys($w,foreground) \
-			-activebackground	$sys($w,calcolor,hover) \
-			-clickedcolor		$sys($w,calcolor,clicked) \
-			-startsunday		0 \
-			-delay			10 \
-			-daynames		{Su Mo Tu Wed Th Fr Sa} \
-			-month			$month \
-			-year			$year \
-			-relief 			groove \
-			-balloon			true \
-			-callback			geekosphere::tbar::widget::calClock::calCallback
-		]
-		
-		# TODO: this is _very_slow with loads of appointments, circumvent redrawing!
-		# mark calendar appointments
-		log "DEBUG" "Calendar loaded in: [time { importCalendarData $w }]"
-		
-		# mark today
-		$sys($w,calWin).cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]
-	}
-	
-	proc calCallback {args} {
-		set year [lindex $args 0]
-		set month [lindex $args 1]
-		set day [lindex $args 2]
-		set dayString [lindex $args 3]
-		set column [lindex $args 4]
-		set row [lindex $args 5]
-		log "DEBUG" "Klicked: year: $year month: $month day: $day - $dayString column: $column row: $row"
-	}
-	
-	proc renderMakeCalendarEntry {w day month year} {
-		variable sys
-	}
-	
-	proc renderWithCommand {w} {
-		variable sys
-		toplevel $sys($w,calWin) -bg $sys($w,background)
-		pack [label $sys($w,calWin).display \
-			-bg $sys($w,background) \
-			-fg $sys($w,foreground) \
-			-font [font create -family "nimbus mono"] \
-			-justify left \
-			-text [string map { " " "  " } [eval $sys($w,command)]]
-		] -fill both
-	}
-	
+
 	#
 	# Widget configuration procs
 	#

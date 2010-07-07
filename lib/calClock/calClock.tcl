@@ -115,32 +115,32 @@ namespace eval geekosphere::tbar::widget::calClock {
 	# create a calendar window
 	proc drawCalendarWindow {w} {
 		variable sys
-		set calWin ${w}.calendar
-		if {[winfo exists $calWin]} {
-			destroy $calWin
+		set sys($w,calWin) ${w}.calendar
+		if {[winfo exists $sys($w,calWin)]} {
+			destroy $sys($w,calWin)
 			return 
 		}
 		
 		# command rendering
 		if {$sys($w,useCommand)} { 
-			rederWithCommand $w $calWin
+			renderWithCommand $w
 		
 		# standard calendar
 		} else {
-			renderWithCalendar $w $calWin
+			renderWithCalendar $w
 		}
 		
-		positionWindowRelativly $calWin $w
+		positionWindowRelativly $sys($w,calWin) $w
 	}
 
-	proc renderWithCalendar {w calWin} {
+	proc renderWithCalendar {w} {
 		variable sys
 		
 		set currentYear [clock format [clock seconds ] -format "%Y" ]
 		set currentMonth [clock format [clock seconds ] -format "%N" ]
-		toplevel $calWin -bg $sys($w,background)
-		pack [frame ${calWin}.navigate -bg $sys($w,background)]
-		pack [spinbox ${calWin}.navigate.month \
+		toplevel $sys($w,calWin) -bg $sys($w,background)
+		pack [frame $sys($w,calWin).navigate -bg $sys($w,background)]
+		pack [spinbox $sys($w,calWin).navigate.month \
 			-background		$sys($w,background)\
 			-foreground		$sys($w,foreground) \
 			-activebackground	$sys($w,calcolor,hover) \
@@ -148,10 +148,10 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-to				12 \
 			-width			10 \
 			-increment		1 \
-			-command		[list geekosphere::tbar::widget::calClock::updateWrapper $w $calWin]
+			-command		[list geekosphere::tbar::widget::calClock::updateWrapper $w]
 		] -side left -fill x -expand 1
 		
-		pack [spinbox ${calWin}.navigate.year \
+		pack [spinbox $sys($w,calWin).navigate.year \
 			-background		$sys($w,background)\
 			-foreground		$sys($w,foreground) \
 			-activebackground	$sys($w,calcolor,hover) \
@@ -159,42 +159,42 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-to				[expr {$currentYear + 100}] \
 			-width			12 \
 			-increment		1 \
-			-command		[list geekosphere::tbar::widget::calClock::updateWrapper $w $calWin]
+			-command		[list geekosphere::tbar::widget::calClock::updateWrapper $w]
 			
 		] -side right -fill x -expand 1
 
 		if {$sys($w,storedYear) != -1 && $sys($w,storedMonth) != -1 && $sys($w,cacheDate)} {
-			${calWin}.navigate.year set $sys($w,storedYear)
-			${calWin}.navigate.month set $sys($w,storedMonth)
+			$sys($w,calWin).navigate.year set $sys($w,storedYear)
+			$sys($w,calWin).navigate.month set $sys($w,storedMonth)
 		} else {
-			${calWin}.navigate.year set $currentYear
-			${calWin}.navigate.month set $currentMonth
+			$sys($w,calWin).navigate.year set $currentYear
+			$sys($w,calWin).navigate.month set $currentMonth
 		}
 		
 		# render calendar with current date if no month and year have been stored or if caching is disabled
 		if {($sys($w,storedYear) == -1 && $sys($w,storedMonth) == -1) || !$sys($w,cacheDate)} {
-			drawCalendar $w $calWin $currentYear $currentMonth
+			drawCalendar $w $currentYear $currentMonth
 			setStoredDate $w $currentYear $currentMonth
 			
 		# otherwise render calendar with stored values
 		} else {
-			drawCalendar $w $calWin $sys($w,storedYear) $sys($w,storedMonth)
+			drawCalendar $w $sys($w,storedYear) $sys($w,storedMonth)
 		}
 		
-		pack [button ${calWin}.importIcal  \
+		pack [button $sys($w,calWin).importIcal  \
 			-background		$sys($w,background)\
 			-foreground		$sys($w,foreground) \
 			-activebackground	$sys($w,background) \
 			-activeforeground	$sys($w,foreground) \
 			-text				"Import ICalendar" \
-			-command		 [list geekosphere::tbar::widget::calClock::importButtonProcedure $calWin] \
+			-command		 [list geekosphere::tbar::widget::calClock::importButtonProcedure $w] \
 		] -side bottom -fill x
 		
 	}
 	
-	proc importButtonProcedure {calWin} {
+	proc importButtonProcedure {w} {
 		geekosphere::tbar::widget::calClock::storeCalendarData [geekosphere::tbar::widget::calClock::drawImportDialog]
-		geekosphere::tbar::widget::calClock::importCalendarData $calWin 1
+		geekosphere::tbar::widget::calClock::importCalendarData $w 1
 	}
 	
 	proc setStoredDate {w year month} {
@@ -203,20 +203,20 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set sys($w,storedMonth) $month
 	}
 	
-	proc updateWrapper {w calWin} {
+	proc updateWrapper {w} {
 		variable sys
-		set year [${calWin}.navigate.year get]; set month [${calWin}.navigate.month get]
+		set year [$sys($w,calWin).navigate.year get]; set month [$sys($w,calWin).navigate.month get]
 		set monthYear -1
 		
 		if {$year < $sys($w,storedYear)} {
-			set monthYear [${calWin}.cal prevyear]
+			set monthYear [$sys($w,calWin).cal prevyear]
 		} elseif {$year > $sys($w,storedYear)} {
-			set monthYear [${calWin}.cal nextyear]
+			set monthYear [$sys($w,calWin).cal nextyear]
 		}
 		if {$month < $sys($w,storedMonth)} {
-			set monthYear [${calWin}.cal prevmonth]
+			set monthYear [$sys($w,calWin).cal prevmonth]
 		} elseif {$month > $sys($w,storedMonth)} {
-			set monthYear [${calWin}.cal nextmonth]
+			set monthYear [$sys($w,calWin).cal nextmonth]
 		}
 		
 		if {$monthYear == -1} { return }
@@ -246,7 +246,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		file copy -force $icalFile [file join $tbarHome calendar.ics];# copy and overwrite old ical imports (only one import can prevail!!!)
 	}
 	
-	proc importCalendarData {calWin {newImport 0}} {
+	proc importCalendarData {w {newImport 0}} {
 		variable sys
 		set tbarHome [file join $::env(HOME) .tbar]
 		set calendarFile [file join $tbarHome calendar.ics]
@@ -256,22 +256,22 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set data [read [set fl [open $calendarFile r]]]; close $fl
 		
 		# create caltree if not present yet, this takes a LOOOOOOOOONG time
-		if {![info exists sys($calWin,icalTree)] || $newImport} {
-			set sys($calWin,icalTree) [ical::cal2tree $data]; # ical data tree
-			set sys($calWin,icalData) [list];# store ical data structs in list
+		if {![info exists sys($w,icalTree)] || $newImport} {
+			set sys($w,icalTree) [ical::cal2tree $data]; # ical data tree
+			set sys($w,icalData) [list];# store ical data structs in list
 		
-			log "TRACE" "Dumping icalTree:\n [ical::dump $sys($calWin,icalTree)]"
+			log "TRACE" "Dumping icalTree:\n [ical::dump $sys($w,icalTree)]"
 
 			# loop all children of root node
-			foreach node [$sys($calWin,icalTree) children -all root] {
-				set childNodeType [$sys($calWin,icalTree) get $node @type]
+			foreach node [$sys($w,icalTree) children -all root] {
+				set childNodeType [$sys($w,icalTree) get $node @type]
 				# looking for vevents
 				if {$childNodeType eq "vevent"} {
 					set eventDict [dict create]
-					foreach veventChildNode [$sys($calWin,icalTree) children -all $node] {
-						set value [$sys($calWin,icalTree) get $veventChildNode @value]
+					foreach veventChildNode [$sys($w,icalTree) children -all $node] {
+						set value [$sys($w,icalTree) get $veventChildNode @value]
 						# handling items in vevent
-						switch [string tolower [$sys($calWin,icalTree) get $veventChildNode @type]] {
+						switch [string tolower [$sys($w,icalTree) get $veventChildNode @type]] {
 							"uid" { dict set eventDict uid $value }
 							"organizer" { dict set eventDict organizer $value }
 							"summary" { dict set eventDict summary $value }
@@ -281,20 +281,21 @@ namespace eval geekosphere::tbar::widget::calClock {
 							"dtstamp" { dict set eventDict dtstamp $value }
 						}
 					}
-					lappend sys($calWin,icalData) $eventDict
-					markAppointmentInCalendar $calWin $eventDict
+					lappend sys($w,icalData) $eventDict
+					markAppointmentInCalendar $w $eventDict
 				}
 			}
 		
 		# mark calendar using cached data
 		} else {
-			foreach entry $sys($calWin,icalData) {
-				markAppointmentInCalendar $calWin $entry
+			foreach entry $sys($w,icalData) {
+				markAppointmentInCalendar $w $entry
 			}
 		}
 	}
 	
-	proc markAppointmentInCalendar {calWin veventDict} {
+	proc markAppointmentInCalendar {w veventDict} {
+		variable sys
 		if {![dict exists $veventDict dtstart] || ![dict exists $veventDict dtend] || ![dict exists $veventDict summary]} {
 			log "WARNING" "Malformed ICalendar entry, dtstart, dtend and summary required: $veventDict"
 			return
@@ -305,7 +306,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		set format "%e %N %Y 1 green { %H:%M:%S - $summary }"
 		set mark [eval list [clock format [dict get $dtStart sinceEpoch] -format $format]]
-		${calWin}.cal configure -mark $mark
+		$sys($w,calWin).cal configure -mark $mark
 		log "DEBUG" "'$mark' has been added to the calendar"
 	}
 	
@@ -339,12 +340,13 @@ namespace eval geekosphere::tbar::widget::calClock {
 		}
 	}
 	
-	proc drawCalendar {w calWin year month} {
+	proc drawCalendar {w year month} {
 		variable sys
-		if {[winfo exists ${calWin}.cal]} {
-			destroy ${calWin}.cal
+		if {[winfo exists $sys($w,calWin).cal]} {
+			destroy $sys($w,calWin).cal
+			return
 		}
-		pack [calwid ${calWin}.cal \
+		pack [calwid $sys($w,calWin).cal \
 			-font				{ helvetica 10 bold } \
 			-dayfont			{ Arial 10 bold } \
 			-background		$sys($w,background)\
@@ -358,20 +360,35 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-year			$year \
 			-relief 			groove \
 			-balloon			true \
+			-callback			geekosphere::tbar::widget::calClock::calCallback
 		]
 		
 		# TODO: this is _very_slow with loads of appointments, circumvent redrawing!
 		# mark calendar appointments
-		log "DEBUG" "Calendar loaded in: [time { importCalendarData $calWin }]"
+		log "DEBUG" "Calendar loaded in: [time { importCalendarData $w }]"
 		
 		# mark today
-		${calWin}.cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]
+		$sys($w,calWin).cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]
 	}
 	
-	proc rederWithCommand {w calWin} {
+	proc calCallback {args} {
+		set year [lindex $args 0]
+		set month [lindex $args 1]
+		set day [lindex $args 2]
+		set dayString [lindex $args 3]
+		set column [lindex $args 4]
+		set row [lindex $args 5]
+		log "DEBUG" "Klicked: year: $year month: $month day: $day - $dayString column: $column row: $row"
+	}
+	
+	proc renderMakeCalendarEntry {w day month year} {
 		variable sys
-		toplevel $calWin -bg $sys($w,background)
-		pack [label ${calWin}.display \
+	}
+	
+	proc renderWithCommand {w} {
+		variable sys
+		toplevel $sys($w,calWin) -bg $sys($w,background)
+		pack [label $sys($w,calWin).display \
 			-bg $sys($w,background) \
 			-fg $sys($w,foreground) \
 			-font [font create -family "nimbus mono"] \

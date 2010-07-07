@@ -155,7 +155,7 @@
         # via bind
         for {set row 0} {$row<6} {incr row} {
           for {set col 0} {$col<7} {incr col} {
-              label $parent.$col$row -highlightthickness 2  
+              label $parent.$col$row -highlightthickness 2
               grid $parent.$col$row -padx 0 -pady 0 -ipadx 0 -ipady 0 \
                                     -row [expr {$row+2}] -column $col 
             };#END: col

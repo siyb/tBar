@@ -1,5 +1,6 @@
 package provide calClock 1.1
 
+#package require icalCalClock
 package require callib
 package require util
 package require logger

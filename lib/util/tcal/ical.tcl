@@ -3,6 +3,7 @@ package provide ical 0.1
 
 package require ical-semantics
 package require util
+package require logger
 
 namespace import geekosphere::tbar::util::logger
 namespace eval ical {

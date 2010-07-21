@@ -4,9 +4,10 @@ package require util
 package require logger
 
 # TODO 1.2: fix pkg_mkIndex, try package require in all packages before package provide (namespace import issue)!
-# TODO 1.2: make popup windows more customizable (e.g. let the user decide which and if calendar window appears) -> subwidget or something
-# TODO 1.x: stop update activities if screensaver is on
+# TODO 1.2: language files
 # TODO 1.2: add icon support for widgets
+# TODO 1.x: stop update activities if screensaver is on
+# TODO 1.X: make popup windows more customizable (e.g. let the user decide which and if calendar window appears) -> subwidget or something
 namespace import ::geekosphere::tbar::util::logger::*
 namespace import ::geekosphere::tbar::util::*
 namespace eval geekosphere::tbar {

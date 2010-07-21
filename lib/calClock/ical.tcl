@@ -1,4 +1,4 @@
-package provide icalCalClock
+package provide icalCalClock 1.0
 
 package require logger
 package require sqlite3
@@ -16,7 +16,7 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 		variable sys
 		sqlite3 $sys(dbName) $sys(databaseFile)
 		$sys(dbName) eval {
-			CREATE TABLE appointment(uid int, organizer text, summary text, description text, dtstart text, dtend text, dtstamp text, color string)
+			CREATE TABLE appointment(uid int unique not null, organizer text, summary text, description text, dtstart text, dtend text, dtstamp text, color string)
 		}
 		$sys(dbName) close
 	}
@@ -24,6 +24,9 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 	# get all ical entries
 	proc getICalEntries {} {
 		variable sys
+		if {![file exists $sys(databaseFile)]} {
+			return -1
+		}
 		set retList [list]
 		sqlite3 $sys(dbName) $sys(databaseFile)
 		$sys(dbName) eval {SELECT * FROM appointment} values {
@@ -43,7 +46,9 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 	# convert a ical file to database entries
 	proc ical2database {file} {
 		variable sys
-		
+		if {![file exists $sys(databaseFile)]} {;# create database if file is not present, TODO: perhaps make a better check here
+			mkDatabase
+		}
 		set data [read [set fl [open $file r]]]; close $fl
 		set data [ical::cal2tree $data]; # ical data tree
 		set eventList [list]
@@ -101,11 +106,11 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 		$sys(dbName) close
 	}
 	
-	namespace export *
+	#namespace export *
 	#file delete ~/.tbar/icaldata
 	#mkDatabase
 	#ical2database /home/siyb/ical.ics 
-	foreach entry [getICalEntries] {
-		puts "$entry\n\n"
-	}
+	#foreach entry [getICalEntries] {
+	#	puts "$entry\n\n"
+	#}
 }

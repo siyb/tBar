@@ -14,4 +14,4 @@ package ifneeded tbar 1.1 [list source [file join $dir tbar/tbar.tcl]]
 package ifneeded txt 1.1 [list source [file join $dir txt/txt.tcl]]
 package ifneeded util 1.1 [list source [file join $dir util/util.tcl]]
 package ifneeded player 1.0 [list source [file join $dir audio/player.tcl]]
-
+package ifneeded icalCalClock 1.0 [list source [file join $dir calClock/ical.tcl]]

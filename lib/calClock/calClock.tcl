@@ -5,6 +5,7 @@ package require callib
 package require util
 package require logger
 package require ical
+package require icalCalClock
 
 proc calClock {w args} {
 	geekosphere::tbar::widget::calClock::makeCalClock $w $args
@@ -313,55 +314,14 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set tbarHome [file join $::env(HOME) .tbar]
 		if {![file exists $tbarHome]} { log "WARNING" "You can't import ical data if you don't have a .tbar directory in you homedir"; return }
 		if {![file isdirectory $tbarHome]} { error "$tbarHome is a file and not a directory!" }
-		file copy -force $icalFile [file join $tbarHome calendar.ics];# copy and overwrite old ical imports (only one import can prevail!!!)
+		geekosphere::tbar::widget::calClock::ical::ical2database $icalFile
 	}
-	
 	proc importCalendarData {w {newImport 0}} {
 		variable sys
 		$sys($w,calWin).cal configure -unmarkall
-		set tbarHome [file join $::env(HOME) .tbar]
-		set calendarFile [file join $tbarHome calendar.ics]
-		if {![file exists $calendarFile]} { log "INFO" "No calendar data to import ;)"; return }
-		
-		# TODO: check mimetype in order to prevent code injection
-		set data [read [set fl [open $calendarFile r]]]; close $fl
-		
-		# create caltree if not present yet, this takes a LOOOOOOOOONG time
-		if {![info exists sys($w,icalTree)] || $newImport} {
-			set sys($w,icalTree) [ical::cal2tree $data]; # ical data tree
-			set sys($w,icalData) [list];# store ical data structs in list
-		
-			log "TRACE" "Dumping icalTree:\n [ical::dump $sys($w,icalTree)]"
-
-			# loop all children of root node
-			foreach node [$sys($w,icalTree) children -all root] {
-				set childNodeType [$sys($w,icalTree) get $node @type]
-				# looking for vevents
-				if {$childNodeType eq "vevent"} {
-					set eventDict [dict create]
-					foreach veventChildNode [$sys($w,icalTree) children -all $node] {
-						set value [$sys($w,icalTree) get $veventChildNode @value]
-						# handling items in vevent
-						switch [string tolower [$sys($w,icalTree) get $veventChildNode @type]] {
-							"uid" { dict set eventDict uid $value }
-							"organizer" { dict set eventDict organizer $value }
-							"summary" { dict set eventDict summary $value }
-							"description" {	dict set eventDict description $value }
-							"dtstart" {dict set eventDict dtstart $value }
-							"dtend" {	dict set eventDict dtend $value }
-							"dtstamp" { dict set eventDict dtstamp $value }
-						}
-					}
-					lappend sys($w,icalData) $eventDict
-					markAppointmentInCalendar $w $eventDict
-				}
-			}
-		
-		# mark calendar using cached data
-		} else {
-			foreach entry $sys($w,icalData) {
-				markAppointmentInCalendar $w $entry
-			}
+		if {[set calData [geekosphere::tbar::widget::calClock::ical::getICalEntries]] == -1} { return };# no calendar data to load
+		foreach entry $calData {
+			markAppointmentInCalendar $w $entry
 		}
 	}
 	

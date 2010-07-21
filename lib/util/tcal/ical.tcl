@@ -159,8 +159,7 @@ proc ical::str2lines {str} {
 }
 
 proc ical::warning {err} {
-puts $err
-    #::geekosphere::tbar::util::logger::log "TRACE" $err
+	::geekosphere::tbar::util::logger::log "TRACE" $err
 }
 
 # nvd

@@ -123,8 +123,9 @@ setLogLevel "DEBUG"
 #		used instead of the native widget, e.g:
 #
 #			addWidgetToBar clock 1 -command [list exec cal]
+# -ical - enable ical support (1)
 #
-addWidgetToBar clock clock1 1 -cachedate 1
+addWidgetToBar clock clock1 1 -cachedate 1 -ical 1
 addText " | " "red"
 
 

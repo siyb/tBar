@@ -1,11 +1,8 @@
 package provide calClock 1.1
 
-#package require icalCalClock
 package require callib
 package require util
 package require logger
-package require ical
-package require icalCalClock
 
 proc calClock {w args} {
 	geekosphere::tbar::widget::calClock::makeCalClock $w $args
@@ -23,6 +20,11 @@ namespace eval geekosphere::tbar::widget::calClock {
 	
 	proc makeCalClock {w arguments} {
 		variable sys
+		set sys($w,ical) 1
+		set sys($w,ical) [string is true -strict [getOption "-ical" $arguments]]
+		if {$sys($w,ical)} {
+			package require icalCalClock
+		}
 		
 		set sys($w,originalCommand) ${w}_
 		set sys($w,timeDateFormat) "%+"
@@ -37,6 +39,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set sys($w,storedMonth) -1
 		set sys($w,storedYear) -1
 		set sys($w,cacheDate) 0
+		set sys($w,withdrawn) 0
 		
 		frame ${w}
 		pack [label ${w}.clock] -side left
@@ -49,6 +52,13 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		# run configuration
 		action $w configure $arguments
+		
+		set sys($w,initialized) 1
+	}
+	
+	proc isInitialized {w} {
+		variable sys
+		return [info exists sys($w,initialized)]
 	}
 	
 	proc updateWidget {w} {
@@ -89,6 +99,9 @@ namespace eval geekosphere::tbar::widget::calClock {
 					}
 					"-cachedate" {
 						changeCacheDate $w $value
+					}
+					"-ical" {
+						if {[isInitialized $w]} { error "ical cannot be changed after widget initialization" }
 					}
 					default {
 						error "${opt} not supported"
@@ -213,23 +226,33 @@ namespace eval geekosphere::tbar::widget::calClock {
 			drawCalendar $w $sys($w,storedYear) $sys($w,storedMonth)
 		}
 		
-		pack [button $sys($w,calWin).importIcal  \
-			-background		$sys($w,background)\
-			-foreground		$sys($w,foreground) \
-			-activebackground	$sys($w,background) \
-			-activeforeground	$sys($w,foreground) \
-			-text				"Import ICalendar" \
-			-command		 [list geekosphere::tbar::widget::calClock::importButtonProcedure $w] \
-		] -side bottom -fill x
-		
+		if {$sys($w,ical)} {
+			pack [button $sys($w,calWin).importIcal  \
+				-background		$sys($w,background)\
+				-foreground		$sys($w,foreground) \
+				-activebackground	$sys($w,background) \
+				-activeforeground	$sys($w,foreground) \
+				-text				"Import ICalendar" \
+				-command		 [list geekosphere::tbar::widget::calClock::importButtonProcedure $w] \
+			] -side bottom -fill x
+		}
 	}
 	
 	proc drawCalendar {w year month} {
 		variable sys
-		if {[winfo exists $sys($w,calWin).cal]} {
-			destroy $sys($w,calWin).cal
+		if {[winfo exists $sys($w,calWin).cal] && !$sys($w,withdrawn)} {
+			#destroy $sys($w,calWin).cal
+			wm withdraw $sys($w,calWin).cal
+			set sys($w,withdrawn) 1
+			puts withdraw
+			return
+		} elseif {$sys($w,withdrawn)} {
+			wm iconify $$sys($w,calWin).cal
+			set sys($w,withdrawn) 0
+			puts iconify
 			return
 		}
+		
 		pack [calwid $sys($w,calWin).cal \
 			-font				{ helvetica 10 bold } \
 			-dayfont			{ Arial 10 bold } \
@@ -250,6 +273,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		# TODO: this is _very_slow with loads of appointments, circumvent redrawing!
 		# mark calendar appointments
 		log "DEBUG" "Calendar loaded in: [time { importCalendarData $w }]"
+		puts imported
 		
 		# mark today
 		$sys($w,calWin).cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]
@@ -267,10 +291,6 @@ namespace eval geekosphere::tbar::widget::calClock {
 				{{Calendar Data Exchange icalendar} {.icalendar}}
 				{{All Files} {*}}
 			}]
-	}
-	
-	proc renderMakeCalendarEntry {w day month year} {
-		variable sys
 	}
 	
 	proc updateWrapper {w} {
@@ -304,11 +324,14 @@ namespace eval geekosphere::tbar::widget::calClock {
 	#
 	
 	proc importButtonProcedure {w} {
+		variable sys
+		if {!$sys($w,ical)} { return }
 		geekosphere::tbar::widget::calClock::storeCalendarData [geekosphere::tbar::widget::calClock::renderImportDialog]
-		geekosphere::tbar::widget::calClock::importCalendarData $w 1
+		geekosphere::tbar::widget::calClock::importCalendarData $w
 	}
 	
 	proc storeCalendarData {icalFile} {
+		variable sys
 		if {$icalFile eq ""} { log "TRACE" "User cancelled import"; return }
 		if {![file exists $icalFile]} { error "ICalfile does not exist, this should not happen" }
 		set tbarHome [file join $::env(HOME) .tbar]
@@ -316,8 +339,10 @@ namespace eval geekosphere::tbar::widget::calClock {
 		if {![file isdirectory $tbarHome]} { error "$tbarHome is a file and not a directory!" }
 		geekosphere::tbar::widget::calClock::ical::ical2database $icalFile
 	}
-	proc importCalendarData {w {newImport 0}} {
+	
+	proc importCalendarData {w} {
 		variable sys
+		if {!$sys($w,ical)} { return }
 		$sys($w,calWin).cal configure -unmarkall
 		if {[set calData [geekosphere::tbar::widget::calClock::ical::getICalEntries]] == -1} { return };# no calendar data to load
 		foreach entry $calData {
@@ -327,6 +352,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 	
 	proc markAppointmentInCalendar {w veventDict} {
 		variable sys
+		if {!$sys($w,ical)} { return }
 		if {![dict exists $veventDict dtstart] || ![dict exists $veventDict dtend] || ![dict exists $veventDict summary]} {
 			log "WARNING" "Malformed ICalendar entry, dtstart, dtend and summary required: $veventDict"
 			return
@@ -342,6 +368,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 	}
 	
 	proc dateTimeParser {dateTime} {
+		variable sys
 		set length [string length $dateTime]
 		set retDict [dict create]
 		

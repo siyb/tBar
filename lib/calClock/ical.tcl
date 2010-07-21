@@ -105,12 +105,4 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 		}
 		$sys(dbName) close
 	}
-	
-	#namespace export *
-	#file delete ~/.tbar/icaldata
-	#mkDatabase
-	#ical2database /home/siyb/ical.ics 
-	#foreach entry [getICalEntries] {
-	#	puts "$entry\n\n"
-	#}
 }

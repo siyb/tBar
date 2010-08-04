@@ -118,6 +118,7 @@
         # clean up after destruction of the widget
         # TODO unset the associated array elements 
         # TODO implement a cleanup proc to take care of cleaning up
+	# TODO: SIYB - > check if we need something to cleanup for tbar widgets
         bind $holder <Destroy> "+ rename $holder {}"
         # return the name of the new widget
         return $holder

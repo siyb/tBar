@@ -357,45 +357,14 @@ namespace eval geekosphere::tbar::widget::calClock {
 			log "WARNING" "Malformed ICalendar entry, dtstart, dtend and summary required: $veventDict"
 			return
 		}
-		set dtStart [dateTimeParser [dict get $veventDict dtstart]]
-		set dtEnd [dateTimeParser [dict get $veventDict dtend]]
+		set dtStart [dict get $veventDict dtstart]
+		set dtEnd [dict get $veventDict dtend]
 		set summary [dict get $veventDict summary]
 		
 		set format "%e %N %Y 1 green { %H:%M:%S - $summary }"
-		set mark [eval list [clock format [dict get $dtStart sinceEpoch] -format $format]]
+		set mark [eval list [clock format $dtStart -format $format]]
 		$sys($w,calWin).cal configure -mark $mark
 		log "DEBUG" "'$mark' has been added to the calendar"
-	}
-	
-	proc dateTimeParser {dateTime} {
-		variable sys
-		set length [string length $dateTime]
-		set retDict [dict create]
-		
-		# floating: 19980118T230000
-		if {$length == 15} {
-			dict set retDict type 0
-			dict set retDict sinceEpoch [clock scan $dateTime -format "%Y%m%dT%H%M%S"]
-			
-		# utc: 19980119T070000Z
-		} elseif {$length == 16} {
-			dict set retDict type 1
-			dict set retDict sinceEpoch [clock scan $dateTime -format "%Y%m%dT%H%M%SZ"]
-		
-		# TODO: implement this datetime format!
-		# local: TZID=America/New_York:19980119T020000
-		} else {
-			error "Time/Date Format not supported yet: $dateTime"
-			set splitALL [split $dateTime "=:"]
-			if {[llength $splitALL] != 3} { error "LOCAL: Malformed date time: $dateTime" }
-			set splitDT [split [lindex $splitDT 2] "T"]
-			if {[llength $splitDT] != 2} { error "LOCAL: Malformed date time: $dateTime" }
-			
-			dict set retDict type 2
-			dict set retDict timeZone [lindex $splitALL 1]
-			dict set retDict date [lindex $splitDT 0] 
-			dict set retDict time [lindex $splitDT 1] 
-		}
 	}
 
 	#

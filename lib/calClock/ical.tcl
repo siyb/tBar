@@ -95,8 +95,8 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 			set organizer [dict get $icalEntryDict organizer]
 			set summary [dict get $icalEntryDict summary]
 			set description [dict get $icalEntryDict description]
-			set dtstart [dict get $icalEntryDict dtstart]
-			set dtend [dict get $icalEntryDict dtend]
+			set dtstart [dict get [dateTimeParser [dict get $icalEntryDict dtstart]] sinceEpoch]
+			set dtend [dict get [dateTimeParser [dict get $icalEntryDict dtend]] sinceEpoch]
 			set dtstamp [dict get $icalEntryDict dtstamp]
 			sqlite3 $sys(dbName) $sys(databaseFile)
 			$sys(dbName) eval {
@@ -104,5 +104,44 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 			}			
 		}
 		$sys(dbName) close
+	}
+	
+	# date/time parser that will create a consitent format from ical
+	proc dateTimeParser {dateTime} {
+		variable sys
+		set length [string length $dateTime]
+		set retDict [dict create]
+		
+		# floating: 19980118T230000
+		if {$length == 15} {
+			dict set retDict type 0
+			dict set retDict sinceEpoch [clock scan $dateTime -format "%Y%m%dT%H%M%S"]
+			
+		# utc: 19980119T070000Z
+		} elseif {$length == 16} {
+			dict set retDict type 1
+			dict set retDict sinceEpoch [clock scan $dateTime -format "%Y%m%dT%H%M%SZ"]
+		
+		# TODO: implement this datetime format!
+		# local: TZID=America/New_York:19980119T020000
+		} else {
+			error "Time/Date Format not supported yet: $dateTime"
+			set splitALL [split $dateTime "=:"]
+			if {[llength $splitALL] != 3} { error "LOCAL: Malformed date time: $dateTime" }
+			set splitDT [split [lindex $splitDT 2] "T"]
+			if {[llength $splitDT] != 2} { error "LOCAL: Malformed date time: $dateTime" }
+			
+			dict set retDict type 2
+			dict set retDict timeZone [lindex $splitALL 1]
+			dict set retDict date [lindex $splitDT 0] 
+			dict set retDict time [lindex $splitDT 1] 
+		}
+	}
+	
+	# removes appointments that are older than the specified timestamp
+	proc removeOldAppointments {timestamp} {
+		variable sys
+		sqlite3 $sys(dbName) $sys(databaseFile)
+
 	}
 }

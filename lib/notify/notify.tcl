@@ -5,7 +5,7 @@ if {[catch { package require Img } err]} {
 }
 package require imageresize
 
-namespace import geekosphere::tbar::util::*
+catch { namespace import geekosphere::tbar::util::* }
 proc notify {w args} {
 	geekosphere::tbar::widget::notify::makeNotify $w $args
 
@@ -15,7 +15,7 @@ proc notify {w args} {
 	return $w
 }
 
-namespace import ::geekosphere::tbar::util*
+#namespace import ::geekosphere::tbar::util*
 namespace eval geekosphere::tbar::widget::notify {
 
 	proc makeNotify {w arguments} {

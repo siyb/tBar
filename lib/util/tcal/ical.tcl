@@ -1,4 +1,3 @@
-# a parser for rfc2445 iCalendar files
 package provide ical 0.1
 
 package require ical-semantics

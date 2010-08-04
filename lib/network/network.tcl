@@ -12,7 +12,7 @@ proc network {w args} {
 	return $w
 }
 
-namespace import ::geekosphere::tbar::util::*
+catch {namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::network {
 	set sys(netInfo) "/proc/net/dev"
 

@@ -9,6 +9,8 @@ essential:
 	gzip -c tbar.1 >> tbar.1.gz
 	cp tbar.1.gz $(DESTDIR)/usr/share/man/man1/
 
+	echo "pkg_mkIndex -verbose -direct lib/ */* */*/*" | tclsh
+
 install: clean essential
 	mkdir -p $(DESTDIR)/usr/share/tbar/
 	mkdir -p $(DESTDIR)/usr/lib/tbar/
@@ -25,4 +27,4 @@ uninstall:
 	rm -rf $(DESTDIR)/etc/tbar/ $(DESTDIR)/usr/bin/tbar $(DESTDIR)/usr/lib/tbar/ $(DESTDIR)/usr/share/tbar/ $(DESTDIR)/usr/share/man/man1/tbar.1.gz
 
 clean:
-	rm -f tbar.1.gz tbar.kit
+	rm -f tbar.1.gz tbar.kit lib/pkgIndex.tcl

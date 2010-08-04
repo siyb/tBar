@@ -9,7 +9,7 @@ proc player {w args} {
 	return $w
 }
 
-namespace import ::geekosphere::tbar::util::*
+catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::player {
 
 	proc makePlayer {w arguments} {

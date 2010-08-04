@@ -13,8 +13,10 @@ proc calClock {w args} {
 	return $w
 }
 
-namespace import ::geekosphere::tbar::util*
-namespace import ::geekosphere::tbar::util::logger*
+catch {
+	namespace import ::geekosphere::tbar::util*
+	namespace import ::geekosphere::tbar::util::logger*
+}
 namespace eval geekosphere::tbar::widget::calClock {
 	initLogger
 	

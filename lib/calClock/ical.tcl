@@ -3,8 +3,8 @@ package provide icalCalClock 1.0
 package require logger
 package require sqlite3
 package require ical
+catch { namespace import ::geekosphere::tbar::util::logger* }
 namespace eval geekosphere::tbar::widget::calClock::ical {
-	namespace import ::geekosphere::tbar::util::logger*
 	::geekosphere::tbar::util::logger::initLogger
 	
 	variable sys

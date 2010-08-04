@@ -234,10 +234,11 @@ namespace eval geekosphere::tbar::widget::calClock {
 		variable sys
 		if {[winfo exists $sys($w,calWin).cal]} {
 			destroy $sys($w,calWin).cal
+			unset $sys($w,calWidget)
 			return
 		}
 		
-		pack [calwid $sys($w,calWin).cal \
+		set sys($w,calWidget) [calwid $sys($w,calWin).cal \
 			-font				{ helvetica 10 bold } \
 			-dayfont			{ Arial 10 bold } \
 			-background		$sys($w,background)\
@@ -253,6 +254,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 			-balloon			true \
 			-callback			geekosphere::tbar::widget::calClock::calCallback
 		]
+		pack $sys($w,calWidget)
 		
 		if {$sys($w,ical)} {
 			pack [button $sys($w,calWin).importIcal  \
@@ -270,7 +272,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 				-activebackground	$sys($w,background) \
 				-activeforeground	$sys($w,foreground) \
 				-text				"Clean Old Appointments" \
-				-command		 [list geekosphere::tbar::widget::calClock::ical::removeOldAppointments [clock seconds]] \
+				-command		 [list geekosphere::tbar::widget::calClock::removeOldAppointments $w] \
 			] -side top -fill x
 		
 			# TODO: this is _very_slow with loads of appointments, circumvent redrawing!
@@ -280,6 +282,21 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		# mark today
 		$sys($w,calWin).cal configure -mark [eval list [clock format [clock seconds ] -format "%e %N %Y 1 $sys($w,calcolor,today) { Today }" ]]
+	}
+	
+	proc removeOldAppointments {w} {
+		variable sys
+		set dayValue [clock scan [clock format [clock seconds] -format "%d%m%Y"] -format "%d%m%Y"];# seconds since epoch for "this day"
+		geekosphere::tbar::widget::calClock::ical::removeOldAppointments $dayValue
+		if {[info exists sys($w,calWidget)]} {
+			set newMarks [list]
+			foreach mark [$sys($w,calWidget) getmarks] {
+				set dayValueMark [clock scan "[lindex $mark 0] [lindex $mark 1] [lindex $mark 2]" -format "%e %N %Y"]
+				if {$dayValueMark < $dayValue} { continue }
+				lappend newMarks $mark
+			}
+		}
+		$sys($w,calWidget) setmarks $newMarks
 	}
 	
 	proc renderImportDialog {} {
@@ -467,7 +484,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 	proc importCalendarData {w} {
 		variable sys
 		if {!$sys($w,ical)} { return }
-		$sys($w,calWin).cal configure -unmarkall
+		$sys($w,calWin).cal unmarkall
 		if {[set calData [geekosphere::tbar::widget::calClock::ical::getICalEntries]] == -1} { return };# no calendar data to load
 		foreach entry $calData {
 			markAppointmentInCalendar $w $entry

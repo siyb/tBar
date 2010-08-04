@@ -424,7 +424,7 @@
         # statement along with the possible subcommands
         set commList [list "nextmonth" "prevmonth" \
                            "nextyear"  "prevyear"  \
-                           "configure"]
+                           "configure" "unmarkall" "getmarks" "setmarks"]
         # extract the first word in args, this must be in the commList
         set command [lindex $args 0]
         if {[lsearch -exact $commList $command] == -1} {
@@ -580,11 +580,6 @@
                                 set calState($parent.progcallback) 1
                               } 
                           }
-			"-unmarkall" {
-				# @author SIYB
-				# unmarks all appointments
-				set calState($parent.mark) [list]
-			}
                         "-mark" {
                             if {$val == ""} {
                                 return $calState($parent.mark)
@@ -761,7 +756,20 @@
                 set calState($parent.clicked) {}  
                 update_cal $parent  
                 return [list $calState($parent.year) $calState($parent.month)]
-              }   
+              }
+	      "getmarks" {
+		return $calState($parent.mark)
+	       }
+	       "setmarks" {
+		set calState($parent.mark) {*}$args
+		update_cal $parent
+	       }
+		"unmarkall" {
+				# @author SIYB
+				# unmarks all appointments
+				set calState($parent.mark) [list]
+				update_cal $parent
+		}
             default {
                 error "You should never have reached this point\n\
                        The state of the widget might be mangled\n\

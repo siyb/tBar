@@ -108,6 +108,9 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 	
 	proc icalMakeEntry {uid dtstart dtend summary} {
 		variable sys
+		if {![file exists $sys(databaseFile)]} {;# create database if file is not present, TODO: perhaps make a better check here
+			mkDatabase
+		}
 		sqlite3 $sys(dbName) $sys(databaseFile)
 		$sys(dbName) eval {
 				INSERT INTO appointment (`uid`, `organizer`, `summary`, `description`, `dtstart`, `dtend`, `dtstamp`, `color`) VALUES ($uid, "", $summary, "", $dtstart, $dtend, "", 'blue');

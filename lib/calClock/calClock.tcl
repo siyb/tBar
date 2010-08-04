@@ -265,7 +265,6 @@ namespace eval geekosphere::tbar::widget::calClock {
 				-text				"Import ICalendar" \
 				-command		 [list geekosphere::tbar::widget::calClock::importButtonProcedure $w] \
 			] -side top -fill x
-			# TODO: update calendar as well asap this is clicked! (wrapper that called removeOldAppointments and removes them from gui as well)
 			pack [button $sys($w,calWin).cleanOld \
 				-background		$sys($w,background) \
 				-foreground		$sys($w,foreground) \
@@ -440,15 +439,14 @@ namespace eval geekosphere::tbar::widget::calClock {
 				-activebackground	$sys($w,background) \
 				-activeforeground	$sys($w,foreground) \
 				-text				"Ok" \
-				-command		 [list geekosphere::tbar::widget::calClock::addCalendarEntry $w ${w}.mkappointment $year $month $day]
+				-command		 [list geekosphere::tbar::widget::calClock::addCalendarEntry $w $year $month $day]
 		] -side left -fill x
 	}
 	
-	# TODO: loose appointmentWindow parameter, since W is already supplied
-	proc addCalendarEntry {w appointmentWindow year month day} {
-		set summary [${appointmentWindow}.summary.e get]
-		set start "[${appointmentWindow}.time1.hour get]:[${appointmentWindow}.time1.minute get]:[${appointmentWindow}.time1.second get]"
-		set stop "[${appointmentWindow}.time2.hour get]:[${appointmentWindow}.time2.minute get]:[${appointmentWindow}.time2.second get]"
+	proc addCalendarEntry {w year month day} {
+		set summary [${w}.mkappointment.summary.e get]
+		set start "[${w}.mkappointment.time1.hour get]:[${w}.mkappointment.time1.minute get]:[${w}.mkappointment.time1.second get]"
+		set stop "[${w}.mkappointment.time2.hour get]:[${w}.mkappointment.time2.minute get]:[${w}.mkappointment.time2.second get]"
 		set uid "$year:$month:$day:${start}:${stop}[clock microseconds]";# this should be unique enough ;)
 		if {$summary eq ""} {
 			return
@@ -461,7 +459,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		geekosphere::tbar::widget::calClock::ical::icalMakeEntry $uid $startDB $stopDB $summary
 		markAppointmentInCalendarRaw $w $startDB $summary
-		destroy $appointmentWindow
+		destroy ${w}.mkappointment
 	}
 	
 	proc importButtonProcedure {w} {

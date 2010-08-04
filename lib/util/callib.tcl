@@ -757,19 +757,23 @@
                 update_cal $parent  
                 return [list $calState($parent.year) $calState($parent.month)]
               }
-	      "getmarks" {
-		return $calState($parent.mark)
-	       }
-	       "setmarks" {
-		set calState($parent.mark) {*}$args
-		update_cal $parent
-	       }
-		"unmarkall" {
-				# @author SIYB
-				# unmarks all appointments
-				set calState($parent.mark) [list]
-				update_cal $parent
-		}
+
+"getmarks" {
+	# @author siyb
+	# very .....
+	return $calState($parent.mark)
+}
+"setmarks" {
+	# .... dirty ......
+	set calState($parent.mark) {*}$args
+	update_cal $parent
+}
+"unmarkall" {
+	# .... shit
+	set calState($parent.mark) [list]
+	update_cal $parent
+}
+
             default {
                 error "You should never have reached this point\n\
                        The state of the widget might be mangled\n\

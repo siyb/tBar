@@ -106,6 +106,15 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 		$sys(dbName) close
 	}
 	
+	proc icalMakeEntry {uid dtstart dtend summary} {
+		variable sys
+		sqlite3 $sys(dbName) $sys(databaseFile)
+		$sys(dbName) eval {
+				INSERT INTO appointment (`uid`, `organizer`, `summary`, `description`, `dtstart`, `dtend`, `dtstamp`, `color`) VALUES ($uid, "", $summary, "", $dtstart, $dtend, "", 'blue');
+		}	
+		$sys(dbName) close
+	}
+	
 	# removes appointments that are older than the specified timestamp
 	proc removeOldAppointments {timestamp} {
 		variable sys

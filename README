@@ -1,13 +1,14 @@
 1. Installation
 
 	Normal installation:
+	--------------------
 	- Install Tcl/Tk 8.5 or higher, libtk-img, tcllib and libsqlite3-tcl
 	- Run: make install (or: make DESTFILE=myfile install)
 	- Modify /etc/tbar/config.tcl to fit your needs or create ~/.tbar/ and copy /etc/tbar/config.tcl there, to have a user specific config
 	- Run: tbar
 
 	- To uninstall run: make uninstall, make sure to specify DESTFILE if you have done so in the install
-	
+
 2. User specific widgets and libraries
 
 	From version 1.2 onwards, users are able to integrate custom libraries and widgets using folders located in their userland.
@@ -25,10 +26,12 @@
 
 4. Acknowledgement
 
-	- Thanks to Jaafar Mejri aka Jaf (http://wiki.tcl.tk/13498) for his contibution to the program (calendar widget: http://wiki.tcl.tk/13497)
+	- Thanks to Jaafar Mejri aka Jaf (http://wiki.tcl.tk/13498) for his contribution to the program (calendar widget: http://wiki.tcl.tk/13497)
 	- Thanks to David Easton (http://wiki.tcl.tk/10511) for his contribution to the program (image resizer: http://wiki.tcl.tk/11196)
 	- Thanks to Farhad Shahbazi-Firooz <farhad@shahbazi.at> for creating an Arch Linux pkgbuild
 	- Thanks to Thomas Sader for creating the starkit build script
+	- Thanks to Colin McCormack (http://wiki.tcl.tk/3650) for his contribution to the program (ical library: http://wiki.tcl.tk/_repo/tcal/)
+
 5. Contact
 
 	Website: http://siyb.mount.at/tbar

@@ -23,8 +23,6 @@ cp tclkit tclkitcpy
 ./tclkitcpy sdx.kit wrap tbar.kit -runtime ./tclkit
 cd $pwd
 mv /tmp/tbar.kit ./
-rm /tmp/tclkit
-rm /tmp/tclkitcpy
-rm /tmp/sdx.kit
+rm /tmp/tclkit /tmp/tclkitcpy /tmp/sdx.kit
 rm -rf /tmp/tbar.vfs
 echo "Use ./tbar.kit to execute"

@@ -106,6 +106,7 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 		$sys(dbName) close
 	}
 	
+	# make a single entry, used by gui to make new appointments
 	proc icalMakeEntry {uid dtstart dtend summary} {
 		variable sys
 		if {![file exists $sys(databaseFile)]} {;# create database if file is not present, TODO: perhaps make a better check here

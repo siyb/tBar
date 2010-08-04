@@ -432,7 +432,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set summary [${appointmentWindow}.summary.e get]
 		set start "[${appointmentWindow}.time1.hour get]:[${appointmentWindow}.time1.minute get]:[${appointmentWindow}.time1.second get]"
 		set stop "[${appointmentWindow}.time2.hour get]:[${appointmentWindow}.time2.minute get]:[${appointmentWindow}.time2.second get]"
-		set uid "${start}${stop}[clock microseconds]";# this should be unique enough ;)
+		set uid "$year:$month:$day:${start}:${stop}[clock microseconds]";# this should be unique enough ;)
 		if {$summary eq ""} {
 			return
 		}

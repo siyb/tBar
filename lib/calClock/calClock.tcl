@@ -228,13 +228,22 @@ namespace eval geekosphere::tbar::widget::calClock {
 		
 		if {$sys($w,ical)} {
 			pack [button $sys($w,calWin).importIcal  \
-				-background		$sys($w,background)\
+				-background		$sys($w,background) \
 				-foreground		$sys($w,foreground) \
 				-activebackground	$sys($w,background) \
 				-activeforeground	$sys($w,foreground) \
 				-text				"Import ICalendar" \
 				-command		 [list geekosphere::tbar::widget::calClock::importButtonProcedure $w] \
-			] -side bottom -fill x
+			] -side top -fill x
+			pack [button $sys($w,calWin).cleanOld \
+				-background		$sys($w,background) \
+				-foreground		$sys($w,foreground) \
+				-activebackground	$sys($w,background) \
+				-activeforeground	$sys($w,foreground) \
+				-text				"Clean Old Appointments" \
+				-command		 [list geekosphere::tbar::widget::calClock::ical::removeOldAppointments [clock seconds]] \
+			] -side top -fill x
+			
 		}
 	}
 	

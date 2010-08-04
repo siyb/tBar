@@ -106,6 +106,16 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 		$sys(dbName) close
 	}
 	
+	# removes appointments that are older than the specified timestamp
+	proc removeOldAppointments {timestamp} {
+		variable sys
+		sqlite3 $sys(dbName) $sys(databaseFile)
+		$sys(dbName) eval {
+			DELETE FROM appointment WHERE `dtstart` < $timestamp
+		}
+		$sys(dbName) close
+	}
+	
 	# date/time parser that will create a consitent format from ical
 	proc dateTimeParser {dateTime} {
 		variable sys
@@ -136,12 +146,5 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 			dict set retDict date [lindex $splitDT 0] 
 			dict set retDict time [lindex $splitDT 1] 
 		}
-	}
-	
-	# removes appointments that are older than the specified timestamp
-	proc removeOldAppointments {timestamp} {
-		variable sys
-		sqlite3 $sys(dbName) $sys(databaseFile)
-
 	}
 }

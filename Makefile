@@ -1,5 +1,5 @@
 prefix = $(DESTDIR)
-deploy=tbar1.2
+deploy=tbar_1.2_kit
 essential: pkgindex
 	mkdir -p $(DESTDIR)/etc/tbar/
 	mkdir -p $(DESTDIR)/usr/share/man/man1/
@@ -23,7 +23,12 @@ install: clean essential
 starkit: clean pkgindex
 	mkdir $(deploy)
 	starkit/mkstarkit.sh
+
 	cp tbar.kit $(deploy)/tbar
+	cp README $(deploy)
+	cp LICENSE $(deploy)
+	cp starkit/Makefile $(deploy)
+
 	gzip -c tbar.1 >> $(deploy)/tbar.1.gz
 	cp -r config.tcl $(deploy)
 	tar -cf $(deploy).tar $(deploy)

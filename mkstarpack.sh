@@ -12,7 +12,6 @@ fi
 
 pwd=`pwd`
 cp -R ./ /tmp/tbar.vfs
-
 cd /tmp
 wget -O tclkit.gz $TCLKITURL
 gunzip tclkit

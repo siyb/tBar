@@ -4,7 +4,7 @@ essential:
 	mkdir -p $(DESTDIR)/etc/tbar/
 	mkdir -p $(DESTDIR)/usr/share/man/man1/
 	mkdir -p $(DESTDIR)/usr/bin/
-	
+
 	cp -r config.tcl $(DESTDIR)/etc/tbar/
 	gzip -c tbar.1 >> tbar.1.gz
 	cp tbar.1.gz $(DESTDIR)/usr/share/man/man1/
@@ -14,7 +14,7 @@ essential:
 install: clean essential
 	mkdir -p $(DESTDIR)/usr/share/tbar/
 	mkdir -p $(DESTDIR)/usr/lib/tbar/
-	
+
 	cp -r tbar.tcl $(DESTDIR)/usr/bin/tbar
 	cp -r lib/* $(DESTDIR)/usr/lib/tbar/
 	cp -r widget/* $(DESTDIR)/usr/share/tbar/

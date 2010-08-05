@@ -61,6 +61,7 @@ namespace eval geekosphere::tbar {
 		$sys(bar,toplevel) configure -bg $conf(color,background)
 		wm overrideredirect $sys(bar,toplevel) 1
 		lappend conf(widget,path) [file join / usr share tbar]
+		lappend conf(widget,path) [file join widget]
 		loadWidgets
 	}
 
@@ -117,6 +118,7 @@ namespace eval geekosphere::tbar {
 						if {$updateInterval > 0} { updateWidget $path $widget $updateInterval }
 						log "INFO" "Widget $widget loaded from $widgetFile"
 						set loadSuccess 1
+						break
 					}
 				}
 				# check if widget could be found in $conf(widget,path) and inform user if not

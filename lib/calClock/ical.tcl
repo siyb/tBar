@@ -3,9 +3,9 @@ package provide icalCalClock 1.0
 package require logger
 package require sqlite3
 package require ical
-catch { namespace import ::geekosphere::tbar::util::logger* }
+catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::widget::calClock::ical {
-	::geekosphere::tbar::util::logger::initLogger
+	initLogger
 	
 	variable sys
 	set sys(dbName) "icaldata"

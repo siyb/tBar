@@ -14,7 +14,7 @@ proc cpu {w args} {
 }
 
 # TODO 1.2: add support for multiple thermal sources
-catch { namespace import ::geekosphere::tbar::util* }
+catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::cpu {
 	
 	

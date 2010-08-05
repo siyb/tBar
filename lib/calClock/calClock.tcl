@@ -14,8 +14,8 @@ proc calClock {w args} {
 }
 
 catch {
-	namespace import ::geekosphere::tbar::util*
-	namespace import ::geekosphere::tbar::util::logger*
+	namespace import ::geekosphere::tbar::util::*
+	namespace import ::geekosphere::tbar::util::logger::*
 }
 namespace eval geekosphere::tbar::widget::calClock {
 	initLogger

@@ -2,7 +2,7 @@
 package require Tk
 package require tbar
 package require logger
-namespace import geekosphere::tbar::logger*
+namespace import ::geekosphere::tbar::util::logger::*
 initLogger
 
 # extend library to user specific lib in /home/user/.tbar/lib

@@ -2,10 +2,10 @@ package provide util 1.1
 
 package require logger
 
-catch { namespace import ::geekosphere::tbar::util::logger* }
+catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::util {
 	
-	::geekosphere::tbar::util::logger::initLogger
+	initLogger
 	
 	set sys(componentCounter) 0
 

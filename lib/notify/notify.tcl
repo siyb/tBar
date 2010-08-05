@@ -3,9 +3,9 @@ package require util
 if {[catch { package require Img } err]} {
 	error "You need to install libtk-img in order to be able to use the notify widget"
 }
+
 package require imageresize
 
-catch { namespace import geekosphere::tbar::util::* }
 proc notify {w args} {
 	geekosphere::tbar::widget::notify::makeNotify $w $args
 
@@ -15,7 +15,7 @@ proc notify {w args} {
 	return $w
 }
 
-#namespace import ::geekosphere::tbar::util*
+catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::notify {
 
 	proc makeNotify {w arguments} {

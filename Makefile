@@ -1,5 +1,7 @@
 prefix = $(DESTDIR)
-deploy=tbar_1.2_kit
+deploy=tbar_1.2rc1_kit
+all: install
+
 essential: pkgindex
 	mkdir -p $(DESTDIR)/etc/tbar/
 	mkdir -p $(DESTDIR)/usr/share/man/man1/
@@ -32,9 +34,10 @@ starkit: clean pkgindex
 	gzip -c tbar.1 >> $(deploy)/tbar.1.gz
 	cp -r config.tcl $(deploy)
 	tar -cf $(deploy).tar $(deploy)
+	gzip --best $(deploy).tar
 	
 uninstall:
 	rm -rf $(DESTDIR)/etc/tbar/ $(DESTDIR)/usr/bin/tbar $(DESTDIR)/usr/lib/tbar/ $(DESTDIR)/usr/share/tbar/ $(DESTDIR)/usr/share/man/man1/tbar.1.gz
 
 clean:
-	rm -rf tbar.1.gz tbar.kit lib/pkgIndex.tcl $(deploy) $(deploy).tar
+	rm -rf tbar.1.gz tbar.kit lib/pkgIndex.tcl $(deploy) $(deploy).tar.gz

@@ -1,4 +1,4 @@
-package provide calClock 1.1
+package provide calClock 1.2
 
 package require callib
 package require util

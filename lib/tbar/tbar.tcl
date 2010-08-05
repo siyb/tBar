@@ -1,4 +1,4 @@
-package provide tbar 1.1
+package provide tbar 1.2
 
 package require util
 package require logger

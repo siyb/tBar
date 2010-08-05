@@ -1,4 +1,4 @@
-package provide util 1.1
+package provide util 1.2
 
 package require logger
 

@@ -1,4 +1,4 @@
-package provide memory 1.1
+package provide memory 1.2
 
 package require statusBar
 package require util

@@ -1,4 +1,4 @@
-package provide cpu 1.1
+package provide cpu 1.2
 
 package require barChart
 package require util

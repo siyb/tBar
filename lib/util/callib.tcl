@@ -1,5 +1,5 @@
 # Taken from: http://wiki.tcl.tk/13497
- package provide callib 0.3
+ package provide callib 0.4
 
  package require util
 

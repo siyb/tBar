@@ -1,5 +1,8 @@
 #!/bin/sh
 
+# This script can be used to build a tbar starkit. Please check the settings
+# section and adjust the settings if required.
+
 #
 # SETTINGS
 #

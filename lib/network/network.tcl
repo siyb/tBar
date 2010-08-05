@@ -1,4 +1,4 @@
-package provide network 1.1
+package provide network 1.2
 
 package require statusBar
 package require util

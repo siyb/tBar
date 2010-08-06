@@ -22,22 +22,22 @@ namespace eval geekosphere::tbar::widget::cpu {
 	# For all widgets this information is the same
 	#
 	# cpu thermal information
-	dict set sys(thermal) sys.dir "/sys/class/thermal/" 
+	dict set sys(thermal) sys.dir [file join / sys class thermal]
 	dict set sys(thermal) sys.file "temp" 
 	dict set sys(thermal) sys.mod "1000"
-	dict set sys(thermal) core.dir "/sys/devices/platform/" 
+	dict set sys(thermal) core.dir [file join / sys devices platform]
 	dict set sys(thermal) core.file "temp1_input" 
 	dict set sys(thermal) core.mod "1000"
-	dict set sys(thermal) proc.dir "/proc/acpi/thermal_zone/" 
+	dict set sys(thermal) proc.dir [file join / proc acpi thermal_zone]
 	dict set sys(thermal) proc.file "temperature" 
 	dict set sys(thermal) proc.mod "-1"
 	set sys(thermalSource) -1
 	set sys(cpu,temperature) "N/A"
 	# cpu general info
-	set sys(cpuinfo) "/proc/cpuinfo"
+	set sys(cpuinfo) [file join / proc cpuinfo]
 	set sys(general) -1
 	# stat info
-	set sys(stat) "/proc/stat"
+	set sys(stat) [file join / proc stat]
 	set sys(statData) -1
 	
 	#
@@ -45,7 +45,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 	#
 	
 	# static stuff
-	dict set sys(speedstep,files) directory "/sys/devices/system/cpu/%s/cpufreq/"
+	dict set sys(speedstep,files) directory [file join / sys devices system cpu %s cpufreq]
 	dict set sys(speedstep,files) minFreq "cpuinfo_min_freq"
 	dict set sys(speedstep,files) maxFreq "cpuinfo_max_freq"
 	dict set sys(speedstep,files) driver "scaling_driver"
@@ -232,6 +232,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 				continue
 			}
 			set fileName [glob -nocomplain -directory $dirName *[file separator]$fileName]
+			puts "FILENAME: $fileName"
 			set fnl [llength $fileName]
 			if {$fnl > 1} { 
 				set fileName [lindex $fileName 0]
@@ -272,7 +273,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 	# gets the temperature
 	proc getTemperature {} {
 		variable sys
-		if {$sys(thermalSource) <= 0} { return "N/A" }
+		if {$sys(thermalSource) == -1} { return "N/A" }
 		set mod [lindex $sys(thermalSource) 1]
 		set data [set data [read [set fl [open [lindex $sys(thermalSource) 0] r]]]]
 		close $fl

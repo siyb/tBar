@@ -15,7 +15,11 @@ proc memory {w args} {
 catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::memory {
 	
-	set sys(memFile) "/proc/meminfo"
+	if {$::tcl_platform(os) eq "Linux"} {
+		set sys(memFile) [file join / proc meminfo]
+	} else {
+		error "Memory widget does not support your OS ($::tcl_platform(os)) yet. Please report this issue to help improove the software."
+	}
 	
 	proc makeMemory {w arguments} {
 		variable sys

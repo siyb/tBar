@@ -14,7 +14,13 @@ proc network {w args} {
 
 catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::network {
-	set sys(netInfo) "/proc/net/dev"
+	
+	if {$::tcl_platform(os) eq "Linux"} {
+		set sys(netInfo) [file join / proc net dev]
+	} else {
+		error "Network widget does not support your OS ($::tcl_platform(os)) yet. Please report this issue to help improove the software."
+	}
+	
 
 	proc makeNetwork {w arguments} {
 

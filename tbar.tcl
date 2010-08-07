@@ -35,13 +35,9 @@ foreach {parameter value} $argv {
 			if {![file exists $value]} { puts "The config file you specifed does not exist"; exit }
 			set geekosphere::tbar::sys(config) $value
 		}
-		"--widget" {
-			set geekosphere::tbar::conf(widget,path) $value
-		}
 		"--help" {
 			puts "tBar help
 --config <path>			specify a config file to load
---widget <path>			specify the widget path"
 			exit
 		}
 	}

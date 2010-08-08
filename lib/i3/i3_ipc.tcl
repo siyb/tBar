@@ -48,7 +48,10 @@ namespace eval geekosphere::tbar::i3::ipc {
 
 	proc readInfo {} {
 		variable sys
-		set data [read $sys(info_socket)]
+		if {[catch {set data [read $sys(info_socket)]} err]} {
+			disconnect
+			log "ERROR" "Error reading socket, forcefully disconnected: $::errorInfo"
+		}
 		foreach message [separateData $data] {
 			set sys(info_reply) [i3queryDecode $message]
 		}
@@ -56,7 +59,10 @@ namespace eval geekosphere::tbar::i3::ipc {
 	
 	proc readEvent {} {
 		variable sys
-		set data [read $sys(event_socket)]
+		if {[catch {set data [read $sys(event_socket)]} err]} {
+			disconnect
+			log "ERROR" "Error reading socket, forcefully disconnected: $::errorInfo"
+		}
 		foreach message [separateData $data] {
 			set sys(event_reply) [i3queryDecode $message]
 		}
@@ -139,14 +145,16 @@ namespace eval geekosphere::tbar::i3::ipc {
 	
 	proc i3queryEncode {type message} {
 		variable sys
-		return [binary format a*nna* $sys(magic) [string length $message] $type $message]
+		return [binary format a6nna* $sys(magic) [string length $message] $type $message]
 	}
 	
+	# TODO 1.x: there is a bug somewhere here, we cannot trust "type" yet, do _not_ solely rely on it!
 	proc i3queryDecode {message} {
 		variable sys
-		binary scan $message a[string length $sys(magic)]nna* magic length type message
+		binary scan $message a6nna* magic length type message
 		if {$magic ne $sys(magic)} { error "Magic string mismatch." }
 		if {[string length $message] != $length} { error "Message length mismatch, was [string bytelength $message], should have been $length" }
+		if {$type < 0 || $type > 3} { log "ERROR" "Type code fuckup, type was: $type" }
 		return [list $type $message]
 	}
 	

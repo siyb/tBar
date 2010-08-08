@@ -39,7 +39,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 
 	proc disconnect {} {
 		variable sys
-		if {$sys(info_socket) != -1 $sys(reply_socket) != -1} { error "Connection has not been established" }
+		if {$sys(info_socket) != -1 || $sys(reply_socket) != -1} { error "Connection has not been established" }
 		close $sys(info_socket)
 		close $sys(reply_socket)
 		set sys(info_socket) -1
@@ -75,14 +75,14 @@ namespace eval geekosphere::tbar::i3::ipc {
 		flush $sys($socket)
 	}
 		
-	proc addInfoListener {procedure} {
+	proc addInfoListener {procedure info} {
 		variable sys
-		trace add variable sys(info_reply) write $procedure
+		trace add variable sys(info_reply) write "$procedure $info"
 	}
 	
-	proc addEventListener {procedure} {
+	proc addEventListener {procedure info} {
 		variable sys
-		trace add variable sys(event_reply) write $procedure
+		trace add variable sys(event_reply) write "$procedure $info"
 	}
 	
 	#
@@ -119,24 +119,12 @@ namespace eval geekosphere::tbar::i3::ipc {
 	# Subscription procs
 	#
 	
-	proc subscribeToWorkspaceFocus {} {
-		sendMessage event_socket 2 {[ "workspace", "focus" ]}
-	}
-	
-	proc subscribeToWorkspaceInit {} {
-		sendMessage event_socket 2 {[ "workspace", "init" ]}
-	}
-	
-	proc subscribeToWorkspaceEmpty {} {
-		sendMessage event_socket 2 {[ "workspace", "empty" ]}
-	}
-	
-	proc subscribeToWorkspaceUrgent {} {
-		sendMessage event_socket 2 {[ "workspace", "urgent" ]}
+	proc subscribeToWorkspace {} {
+		sendMessage event_socket 2 {[ "workspace" ]}
 	}
 	
 	proc subscribeToOutput {} {
-		sendMessage event_socket 2 {["output", "unspecified"]}
+		sendMessage event_socket 2 {["output"]}
 	}
 	
 	#
@@ -145,7 +133,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 	
 	proc i3queryEncode {type message} {
 		variable sys
-		return [binary format a6nna* $sys(magic) [string length $message] $type $message]
+		return [binary format a*nna* $sys(magic) [string length $message] $type $message]
 	}
 	
 	# TODO 1.x: there is a bug somewhere here, we cannot trust "type" yet, do _not_ solely rely on it!
@@ -162,15 +150,16 @@ namespace eval geekosphere::tbar::i3::ipc {
 		variable sys
 		set magic_len [string length $sys(magic)]
 		set marker 0
-		set starList [list]
+		set startList [list]
 		while {1} {
 			set start [string first $sys(magic) $data $marker]
 			if {$start == -1} { break }
 			set marker [expr {$magic_len + $start}]
-			log "TRACE" "start: $start"
+			log "DEBUG" "start: $start"
 			lappend startList $start
-			log "TRACE" "marker: $marker"
+			log "DEBUG" "marker: $marker"
 		}
+
 		set slLength [llength $startList]
 		set retList [list]
 		for {set i 0} {$i < $slLength} {incr i} {
@@ -179,17 +168,13 @@ namespace eval geekosphere::tbar::i3::ipc {
 			} else {
 				set message [string range $data [lindex $startList $i] end]
 			}
-			log "TRACE" "MESSAGE: $message"
+			log "DEBUG" "MESSAGE: $message"
 			lappend retList $message
 		}
 		return $retList
 	}
 	
-	namespace export \
-	connect disconnect addInfoListener addEventListener getEvent getInfo \
-	sendCommand \
-	getWorkspaces getOutputs \
-	subscribeToWorkspaceFocus subscribeToWorkspaceInit subscribeToWorkspaceEmpty subscribeToWorkspaceUrgent \
-	subscribeToOutput \
-	stripMessage
+	namespace export connect disconnect addInfoListener addEventListener \
+	getEvent getInfo sendCommand getWorkspaces getOutputs \
+	subscribeToOutput subscribeToWorkspace
 }

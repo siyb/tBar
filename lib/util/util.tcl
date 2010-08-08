@@ -120,5 +120,14 @@ namespace eval geekosphere::tbar::util {
 		close [dict get $fifoDict channel]
 	}
 	
+	# TODO: readmefile -> http://wiki.tcl.tk/17680
+	proc dictsort {dict args} {
+		set res [dict create]
+		foreach key [lsort {*}$args [dict keys $dict]] {
+			dict set res $key [dict get $dict $key] 
+		}
+		set res
+	}
+	
 	namespace export *
 }

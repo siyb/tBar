@@ -1,0 +1,224 @@
+package provide i3_workspace 1.0
+
+package require logger
+package require i3_ipc
+package require json
+
+proc i3_workspace {w args} {
+	geekosphere::tbar::widget::i3::workspace::makeI3Workspace $w $args
+
+	proc $w {args} {
+		geekosphere::tbar::widget::i3::workspace::action [string trim [dict get [info frame 0] proc] ::] $args
+	}
+	return $w
+}
+
+catch {
+	namespace import ::geekosphere::tbar::util::logger::*
+	namespace import ::geekosphere::tbar::i3::ipc::*
+}
+namespace eval geekosphere::tbar::widget::i3::workspace {
+	initLogger
+	
+	proc makeI3Workspace {w arguments} {
+		variable sys
+		
+		set sys($w,originalCommand) ${w}_
+		set sys($w,workspace) [dict create]
+		
+		pack [frame ${w}]
+		
+		
+		# rename widgets so that it will not receive commands
+		uplevel #0 rename $w ${w}_
+		
+		initIpc $w
+		
+		# run configuration
+		action $w configure $arguments
+	}
+	
+	# initialize i3 ipc stuff
+	proc initIpc {w} {
+		connect
+		addInfoListener geekosphere::tbar::widget::i3::workspace::infoCallback $w
+		addEventListener geekosphere::tbar::widget::i3::workspace::eventCallback $w
+		subscribeToWorkspace
+		getWorkspaces
+	}
+	
+	proc eventCallback {w args} {
+		set event [getEvent]
+		set type [lindex $event 0]
+		set message [lindex $event 1]
+		set eventDict [::json::json2dict $message]
+		log "DEBUG" "Type: $type Event: $eventDict"
+		
+		# command reply / subscribe reply
+		# TODO: dict exists is an ugly workaround for bug in i3_ipc, read comment above i3queryDecode
+		if {$type == 0 || $type == 2 || [dict exists $eventDict success]} {
+			if {[dict get $eventDict "success"] eq "false"} {
+				log "ERROR" "An unknow i3-ipc error has occured"
+			}
+		}
+		
+		# workspace / output events
+		# TODO: dict exists is an ugly workaround for bug in i3_ipc, read comment above i3queryDecode
+		if {$type == 1 || $type == 3 || [dict exists $eventDict change]} {
+			set state [dict get $eventDict "change"]
+			switch $state {
+				"focus" {
+					getWorkspaces
+				}
+				"init" {
+				}
+				"empty" {
+				}
+				"urgent" {
+					getWorkspaces
+				}
+				"unspecified" {
+					return
+				}
+				default {
+					error "Unsupported state: $state"
+				}
+			}
+		}
+	}
+	
+	proc infoCallback {w args} {
+		variable sys
+		set event [getInfo]
+		set type [lindex $event 0]
+		set message [lindex $event 1]
+		set eventDict [::json::json2dict $message]
+		log "INFO" "Type: $type Event: $eventDict"
+		
+		if {$type == 1} {
+			foreach workspace $eventDict {
+				addWorkspace $w $workspace
+				
+				if {[dict get $workspace focused] eq "true"} {
+					flagWorkspace $w $workspace +focus
+				} else {
+					flagWorkspace $w $workspace -focus
+				}
+				
+				if {[dict get $workspace urgent] eq "true"} {
+					flagWorkspace $w $workspace +urgent
+				} else {
+					flagWorkspace $w $workspace -urgent
+				}
+			}
+			updateDisplay $w
+			removeNonopenWorkspaces $w $eventDict
+		}
+	}
+	
+	#
+	# Workspace datastructure modificiation
+	#
+
+	proc flagWorkspace {w workspace kind} {
+		variable sys
+		set number [dict get $workspace num]
+		switch $kind {
+			"+urgent" {
+				dict set sys($w,workspace) $number urgent 1
+			}
+			"-urgent" {
+				dict set sys($w,workspace) $number urgent 0
+			}
+			"+focus" {
+				dict set sys($w,workspace) $number focus 1
+			}
+			"-focus" {
+				dict set sys($w,workspace) $number focus 0
+			}
+			default {
+				error "Flag unknown: $kind"
+			}
+		}
+	}
+	
+	proc removeNonopenWorkspaces {w workspaces} {
+		variable sys
+		dict for {workspace data} $sys($w,workspace) {
+			foreach activews $workspaces {
+				if {[dict get $activews num] == $workspace} {
+					set active 1
+					break
+				}
+			}
+			if {![info exists active]} {
+				dict remove $sys($w,workspace) $workspace
+				destroy ${w}.workspace${workspace}
+			} else {
+				unset active
+			}
+		}
+	}
+	
+	proc removeWorkspace {w id} {
+		variable sys
+		if {[dict exists $sys($w,workspace) $id]} {
+			dict remive sys($w,workspace) $id
+		}
+	}
+	
+	proc addWorkspace {w workspace} {
+		variable sys
+		set number [dict get $workspace num]
+		if {![dict exists $sys($w,workspace) $number]} {
+			dict set sys($w,workspace) $number focus 0
+			dict set sys($w,workspace) $number urgent 0
+		}
+	}
+
+	proc updateDisplay {w} {
+		variable sys
+		dict for {workspace flag} [::geekosphere::tbar::util::dictsort $sys($w,workspace)] {
+			if {[winfo exists ${w}.workspace${workspace}]} {
+				destroy ${w}.workspace${workspace}
+			}
+			
+			pack [button ${w}.workspace${workspace} \
+				-text $workspace \
+				-command [list sendCommand $workspace]
+			] -side left
+			
+			if {[dict get $sys($w,workspace) $workspace focus] == 1} {
+				${w}.workspace${workspace} configure -bg red
+			} elseif {[dict get $sys($w,workspace) $workspace urgent] == 1} {
+				${w}.workspace${workspace} configure -bg green
+			} else {
+				${w}.workspace${workspace} configure -bg blue
+			}
+		}
+	}
+	
+	proc action {w args} {
+		variable sys
+		set args [join $args]
+		set command [lindex $args 0]
+		set rest [lrange $args 1 end]
+		if {$command eq "configure"} {
+			foreach {opt value} $rest {
+				switch $opt {
+					default {
+						error "${opt} not supported"
+					}
+				}
+			}
+		} elseif {$command == "update"} {
+			updateWidget $w
+		} else {
+			error "Command ${command} not supported"
+		}
+	}
+
+	proc updateWidget {w} {
+		variable sys
+	}
+}

@@ -45,11 +45,11 @@ namespace eval geekosphere::tbar::i3::ipc {
 	}
 
 	proc readInfo {} {
-		puts info
 		variable sys
 		set data [read $sys(info_socket)]
 		foreach message [separateData $data] {
-			set sys(event_reply) $message
+			set sys(info_reply) $message
+			puts "-- $message ----- $sys(info_reply)"
 		}
 	}
 	
@@ -178,31 +178,3 @@ namespace eval geekosphere::tbar::i3::ipc {
 	subscribeToWorkspaceFocus subscribeToWorkspaceInit subscribeToWorkspaceEmpty subscribeToWorkspaceUrgent \
 	subscribeToOutput
 }
-
-proc foo {args} {
-	puts "ARGS: $args | Reply Info: [getInfo]"
-}
-
-proc bar {args} {
-	puts "ARGS: $args | Reply Event: [getEvent]"
-}
-
-#namespace import geekosphere::tbar::i3::ipc::*
-#connect
-#puts 1
-#addInfoListener foo
-#puts 2
-#addEventListener bar
-#puts 3
-#subscribeToWorkspaceFocus
-#puts 4
-#subscribeToWorkspaceInit
-#puts 5
-#subscribeToWorkspaceEmpty
-#puts 6
-#subscribeToWorkspaceUrgent
-#puts 7
-#getWorkspaces
-#puts 8
-#sendCommand 1
-#vwait a

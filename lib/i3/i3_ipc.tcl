@@ -2,7 +2,6 @@ package provide i3_ipc 1.0
 
 package require logger
 package require unix_sockets
-package require json
 
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::i3::ipc {
@@ -22,6 +21,9 @@ namespace eval geekosphere::tbar::i3::ipc {
 	# magic i3 ipc string
 	set sys(magic) "i3-ipc"
 	
+	#
+	# System relevant stuff
+	#
 	proc connect {} {
 		variable sys
 		if {$sys(info_socket) != -1 || $sys(event_socket) != -1} { error "Connection already established" }
@@ -48,8 +50,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 		variable sys
 		set data [read $sys(info_socket)]
 		foreach message [separateData $data] {
-			set sys(info_reply) $message
-			puts "-- $message ----- $sys(info_reply)"
+			set sys(info_reply) [i3queryDecode $message]
 		}
 	}
 	
@@ -57,7 +58,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 		variable sys
 		set data [read $sys(event_socket)]
 		foreach message [separateData $data] {
-			set sys(event_reply) $message
+			set sys(event_reply) [i3queryDecode $message]
 		}
 	}
 
@@ -67,46 +68,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 		puts $sys($socket) [i3queryEncode $type $message]
 		flush $sys($socket)
 	}
-	
-	proc i3queryEncode {type message} {
-		variable sys
-		return [binary format a*nna* $sys(magic) [string length $message] $type $message]
-	}
-	
-	proc i3queryDecode {message} {
-		variable sys
-		binary scan $message a6nna* magicstring length type msg
-		if {$magicstring ne $sys(magic) || [string length $message] != $length} { error "Received i3-ipc message in invalid format." }
-		return [list $type $message]
-	}
-	
-	proc separateData {data} {
-		variable sys
-		set magic_len [string length $sys(magic)]
-		set marker 0
-		set starList [list]
-		while {1} {
-			set start [string first $sys(magic) $data $marker]
-			if {$start == -1} { break }
-			set marker [expr {$magic_len + $start}]
-			log "TRACE" "start: $start"
-			lappend startList $start
-			log "TRACE" "marker: $marker"
-		}
-		set slLength [llength $startList]
-		set retList [list]
-		for {set i 0} {$i < $slLength} {incr i} {
-			if {[expr {$i + 1}] < $slLength} {
-				set message [string range $data [lindex $startList $i] [expr {[lindex $startList $i+1] - 1}]]
-			} else {
-				set message [string range $data [lindex $startList $i] end]
-			}
-			log "TRACE" "MESSAGE: $message"
-			lappend retList $message
-		}
-		return $retList
-	}
-	
+		
 	proc addInfoListener {procedure} {
 		variable sys
 		trace add variable sys(info_reply) write $procedure
@@ -171,10 +133,55 @@ namespace eval geekosphere::tbar::i3::ipc {
 		sendMessage event_socket 2 {["output", "unspecified"]}
 	}
 	
+	#
+	# Util
+	#
+	
+	proc i3queryEncode {type message} {
+		variable sys
+		return [binary format a*nna* $sys(magic) [string length $message] $type $message]
+	}
+	
+	proc i3queryDecode {message} {
+		variable sys
+		binary scan $message a[string length $sys(magic)]nna* magic length type message
+		if {$magic ne $sys(magic)} { error "Magic string mismatch." }
+		if {[string length $message] != $length} { error "Message length mismatch, was [string bytelength $message], should have been $length" }
+		return [list $type $message]
+	}
+	
+	proc separateData {data} {
+		variable sys
+		set magic_len [string length $sys(magic)]
+		set marker 0
+		set starList [list]
+		while {1} {
+			set start [string first $sys(magic) $data $marker]
+			if {$start == -1} { break }
+			set marker [expr {$magic_len + $start}]
+			log "TRACE" "start: $start"
+			lappend startList $start
+			log "TRACE" "marker: $marker"
+		}
+		set slLength [llength $startList]
+		set retList [list]
+		for {set i 0} {$i < $slLength} {incr i} {
+			if {[expr {$i + 1}] < $slLength} {
+				set message [string range $data [lindex $startList $i] [expr {[lindex $startList $i+1] - 1}]]
+			} else {
+				set message [string range $data [lindex $startList $i] end]
+			}
+			log "TRACE" "MESSAGE: $message"
+			lappend retList $message
+		}
+		return $retList
+	}
+	
 	namespace export \
 	connect disconnect addInfoListener addEventListener getEvent getInfo \
 	sendCommand \
 	getWorkspaces getOutputs \
 	subscribeToWorkspaceFocus subscribeToWorkspaceInit subscribeToWorkspaceEmpty subscribeToWorkspaceUrgent \
-	subscribeToOutput
+	subscribeToOutput \
+	stripMessage
 }

@@ -73,6 +73,14 @@ namespace eval geekosphere::tbar::i3::ipc {
 	}
 	
 	#
+	# Command
+	#
+	
+	proc sendCommand {command} {
+		sendMessage info_socket 0 $command
+	}
+	
+	#
 	# Information request procs
 	#
 	
@@ -120,34 +128,36 @@ namespace eval geekosphere::tbar::i3::ipc {
 	
 	namespace export \
 	connect disconnect addInfoListener addEventListener getEvent getInfo \
+	sendCommand \
 	getWorkspaces getOutputs \
 	subscribeToWorkspaceFocus subscribeToWorkspaceInit subscribeToWorkspaceEmpty subscribeToWorkspaceUrgent \
 	subscribeToOutput
 }
 
-proc foo {args} {
-	puts "ARGS: $args | Reply Info: [getInfo]"
-}
+#proc foo {args} {
+#	puts "ARGS: $args | Reply Info: [getInfo]"
+#}
 
-proc bar {args} {
-	puts "ARGS: $args | Reply Event: [getEvent]"
-}
+#proc bar {args} {
+#	puts "ARGS: $args | Reply Event: [getEvent]"
+#}
 
-namespace import geekosphere::tbar::i3::ipc::*
-connect
-puts 1
-addInfoListener foo
-puts 2
-addEventListener bar
-puts 3
-subscribeToWorkspaceFocus
-puts 4
-subscribeToWorkspaceInit
-puts 5
-subscribeToWorkspaceEmpty
-puts 6
-subscribeToWorkspaceUrgent
-puts 7
-getWorkspaces
-puts 8
-vwait a
+#namespace import geekosphere::tbar::i3::ipc::*
+#connect
+#puts 1
+#addInfoListener foo
+#puts 2
+#addEventListener bar
+#puts 3
+#subscribeToWorkspaceFocus
+#puts 4
+#subscribeToWorkspaceInit
+#puts 5
+#subscribeToWorkspaceEmpty
+#puts 6
+#subscribeToWorkspaceUrgent
+#puts 7
+#getWorkspaces
+#puts 8
+#sendCommand 1
+#vwait a

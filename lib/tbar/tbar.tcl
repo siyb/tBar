@@ -3,6 +3,7 @@ package provide tbar 1.2
 package require util
 package require logger
 
+# TODO 1.x: instead of throwing an error if a package (ie sqlite) can not be required, use the widget wrapper to test if package is available (catch) and remove corresponding parameter or widget
 # TODO 1.x: language files
 # TODO 1.x: add icon support for widgets
 # TODO 1.x: stop update activities if screensaver is on

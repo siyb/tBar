@@ -2,6 +2,7 @@ package provide i3_ipc 1.0
 
 package require logger
 package require unix_sockets
+package require json
 
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::i3::ipc {
@@ -17,6 +18,9 @@ namespace eval geekosphere::tbar::i3::ipc {
 	# reply variable, stores reply of i3
 	set sys(info_reply) ""
 	set sys(event_reply) ""
+	
+	# magic i3 ipc string
+	set sys(magic) "i3-ipc"
 	
 	proc connect {} {
 		variable sys
@@ -44,22 +48,63 @@ namespace eval geekosphere::tbar::i3::ipc {
 		puts info
 		variable sys
 		set data [read $sys(info_socket)]
-		set sys(info_reply) $data
-		return $data
+		foreach message [separateData $data] {
+			set sys(event_reply) $message
+		}
 	}
 	
 	proc readEvent {} {
 		variable sys
 		set data [read $sys(event_socket)]
-		set sys(event_reply) $data
-		return $data
+		foreach message [separateData $data] {
+			set sys(event_reply) $message
+		}
 	}
 
 	proc sendMessage {socket type message} {
 		variable sys
 		if {$type < 0 || $type > 3} { error "Message type invalid, must be between 0 and 3" }
-		puts $sys($socket) [binary format a*nna* "i3-ipc" [string length $message] $type $message]
+		puts $sys($socket) [i3queryEncode $type $message]
 		flush $sys($socket)
+	}
+	
+	proc i3queryEncode {type message} {
+		variable sys
+		return [binary format a*nna* $sys(magic) [string length $message] $type $message]
+	}
+	
+	proc i3queryDecode {message} {
+		variable sys
+		binary scan $message a6nna* magicstring length type msg
+		if {$magicstring ne $sys(magic) || [string length $message] != $length} { error "Received i3-ipc message in invalid format." }
+		return [list $type $message]
+	}
+	
+	proc separateData {data} {
+		variable sys
+		set magic_len [string length $sys(magic)]
+		set marker 0
+		set starList [list]
+		while {1} {
+			set start [string first $sys(magic) $data $marker]
+			if {$start == -1} { break }
+			set marker [expr {$magic_len + $start}]
+			log "TRACE" "start: $start"
+			lappend startList $start
+			log "TRACE" "marker: $marker"
+		}
+		set slLength [llength $startList]
+		set retList [list]
+		for {set i 0} {$i < $slLength} {incr i} {
+			if {[expr {$i + 1}] < $slLength} {
+				set message [string range $data [lindex $startList $i] [expr {[lindex $startList $i+1] - 1}]]
+			} else {
+				set message [string range $data [lindex $startList $i] end]
+			}
+			log "TRACE" "MESSAGE: $message"
+			lappend retList $message
+		}
+		return $retList
 	}
 	
 	proc addInfoListener {procedure} {
@@ -134,13 +179,13 @@ namespace eval geekosphere::tbar::i3::ipc {
 	subscribeToOutput
 }
 
-#proc foo {args} {
-#	puts "ARGS: $args | Reply Info: [getInfo]"
-#}
+proc foo {args} {
+	puts "ARGS: $args | Reply Info: [getInfo]"
+}
 
-#proc bar {args} {
-#	puts "ARGS: $args | Reply Event: [getEvent]"
-#}
+proc bar {args} {
+	puts "ARGS: $args | Reply Event: [getEvent]"
+}
 
 #namespace import geekosphere::tbar::i3::ipc::*
 #connect

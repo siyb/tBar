@@ -16,6 +16,7 @@ proc i3_workspace {w args} {
 catch {
 	namespace import ::geekosphere::tbar::util::logger::*
 	namespace import ::geekosphere::tbar::i3::ipc::*
+	namespace import ::geekosphere::tbar::util::*
 }
 namespace eval geekosphere::tbar::widget::i3::workspace {
 	initLogger
@@ -25,6 +26,10 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		
 		set sys($w,originalCommand) ${w}_
 		set sys($w,workspace) [dict create]
+		set sys($w,focusColor) "blue"
+		set sys($w,urgentColor) "red"
+		set sys($w,rolloverFontColor) [getOption "-fg" $arguments]
+		set sys($w,rolloverBackgroundColor) [getOption "-bg" $arguments]
 		
 		pack [frame ${w}]
 		
@@ -33,9 +38,10 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		uplevel #0 rename $w ${w}_
 		
 		initIpc $w
-		
+	
 		# run configuration
 		action $w configure $arguments
+		
 	}
 	
 	# initialize i3 ipc stuff
@@ -185,15 +191,19 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 			
 			pack [button ${w}.workspace${workspace} \
 				-text $workspace \
-				-command [list sendCommand $workspace]
+				-command [list sendCommand $workspace] \
+				-bg $sys($w,background) \
+				-fg $sys($w,foreground) \
+				-font $sys($w,font) \
+				-activeforeground $sys($w,rolloverFontColor)  \
+				-activebackground $sys($w,rolloverBackgroundColor) \
+				-highlightthickness 0
 			] -side left
 			
 			if {[dict get $sys($w,workspace) $workspace focus] == 1} {
-				${w}.workspace${workspace} configure -bg red
+				${w}.workspace${workspace} configure -bg $sys($w,focusColor)
 			} elseif {[dict get $sys($w,workspace) $workspace urgent] == 1} {
-				${w}.workspace${workspace} configure -bg green
-			} else {
-				${w}.workspace${workspace} configure -bg blue
+				${w}.workspace${workspace} configure -bg $sys($w,urgentColor)
 			}
 		}
 	}
@@ -206,6 +216,27 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		if {$command eq "configure"} {
 			foreach {opt value} $rest {
 				switch $opt {
+					"-fg" - "-foreground" {
+						changeForegroundColor $w $value
+					}
+					"-bg" - "-background" {
+						changeBackgroundColor $w $value
+					}
+					"-font" {
+						changeFont $w $value
+					}
+					"-focuscolor" {
+						changeFocuscolor $w $value
+					}
+					"-urgentcolor" {
+						changeUrgentcolor $w $value
+					}
+					"-rolloverfontcolor" {
+						changeRolloverFontColor $w $value
+					}
+					"-rolloverbackgroundcolor" {
+						changeRolloverBackground $w $value
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -220,5 +251,59 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 	proc updateWidget {w} {
 		variable sys
+	}
+	
+	#
+	# Widget configuration procs
+	#
+	
+	proc setForAllWorkspaces {w args} {
+		variable sys
+		dict for {workspace flag} $sys($w,workspace) {
+			${w}.workspace${workspace} configure {*}$args
+		}
+	}
+	
+	proc changeBackgroundColor {w color} {
+		variable sys
+		$sys($w,originalCommand) configure -bg $color
+		setForAllWorkspaces $w -bg $color
+		set sys($w,background) $color
+	}
+	
+	proc changeForegroundColor {w color} {
+		variable sys
+		setForAllWorkspaces $w -fg $color
+		set sys($w,foreground) $color
+	}
+	
+	proc changeFont {w font} {
+		variable sys
+		setForAllWorkspaces $w -font $font
+		set sys($w,font) $font
+	}
+	
+	proc changeFocuscolor {w color} {
+		variable sys
+		set sys($w,focusColor) $color
+	}
+	
+	proc changeUrgentcolor {w color} {
+		variable sys
+		set sys($w,urgentColor) $color
+	}
+	
+	proc changeRolloverBackground {w color} {
+		variable sys
+		setForAllWorkspaces $w -activebackground $color
+		set sys($w,rolloverBackgroundColor) $color
+		puts "use1 $color"
+	}
+	
+	proc changeRolloverFontColor {w color} {
+		variable sys
+		setForAllWorkspaces $w -activeforeground $color
+		set sys($w,rolloverFontColor) $color
+		puts "use2 $color"
 	}
 }

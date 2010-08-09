@@ -14,6 +14,7 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 	# creates the ical database table in the icaldata database in the user's home directory
 	proc mkDatabase {} {
 		variable sys
+		if {[file exists $sys(databaseFile)]} { return }
 		sqlite3 $sys(dbName) $sys(databaseFile)
 		$sys(dbName) eval {
 			CREATE TABLE appointment(uid int unique not null, organizer text, summary text, description text, dtstart text, dtend text, dtstamp text, color string)
@@ -46,9 +47,8 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 	# convert a ical file to database entries
 	proc ical2database {file} {
 		variable sys
-		if {![file exists $sys(databaseFile)]} {;# create database if file is not present, TODO: perhaps make a better check here
-			mkDatabase
-		}
+		mkDatabase
+		
 		set data [read [set fl [open $file r]]]; close $fl
 		set data [ical::cal2tree $data]; # ical data tree
 		set eventList [list]
@@ -109,9 +109,8 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 	# make a single entry, used by gui to make new appointments
 	proc icalMakeEntry {uid dtstart dtend summary} {
 		variable sys
-		if {![file exists $sys(databaseFile)]} {;# create database if file is not present, TODO: perhaps make a better check here
-			mkDatabase
-		}
+		mkDatabase
+		
 		sqlite3 $sys(dbName) $sys(databaseFile)
 		$sys(dbName) eval {
 				INSERT INTO appointment (`uid`, `organizer`, `summary`, `description`, `dtstart`, `dtend`, `dtstamp`, `color`) VALUES ($uid, "", $summary, "", $dtstart, $dtend, "", 'blue');
@@ -122,6 +121,8 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 	# removes appointments that are older than the specified timestamp
 	proc removeOldAppointments {timestamp} {
 		variable sys
+		mkDatabase
+		
 		sqlite3 $sys(dbName) $sys(databaseFile)
 		$sys(dbName) eval {
 			DELETE FROM appointment WHERE `dtstart` < $timestamp

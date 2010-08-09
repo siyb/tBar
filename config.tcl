@@ -213,3 +213,13 @@ addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 #
 #addWidgetToBar text text1 1 -command [list exec uptime]
 
+# If you are using i3, you can use this widget to manage your workspaces
+#
+# -fg / -foreground - the textcolor
+# -bg / -background - the background color
+# -focuscolor - the color to be used to mark a focussed workspace
+# -urgentcolor - the color to be used to mark a workspace with an urgent event waiting
+# -rolloverfontcolor - color to be displayed when the mouse cursor enters a workspace's box
+# -rolloverbackgroundcolor - color font color to be used when mouse cursor enters a workspace's box
+#
+#addWidgetToBar i3_workspace i3_workspace1 0

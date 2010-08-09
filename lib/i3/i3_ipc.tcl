@@ -19,7 +19,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 	set sys(event_reply) ""
 	
 	# magic i3 ipc string
-	set sys(magic) "i3-ipc"
+	set sys(magic) i3-ipc
 	
 	#
 	# System relevant stuff
@@ -30,8 +30,8 @@ namespace eval geekosphere::tbar::i3::ipc {
 		set sys(info_socket) [unix_sockets::connect $sys(socketFile)]
 		set sys(event_socket) [unix_sockets::connect $sys(socketFile)]
 		
-		chan configure $sys(info_socket) -translation binary -blocking 0
-		chan configure $sys(event_socket) -translation binary -blocking 0
+		chan configure $sys(info_socket) -translation binary -blocking 0 -buffering full
+		chan configure $sys(event_socket) -translation binary -blocking 0 -buffering full
 		
 		fileevent $sys(info_socket) readable [list geekosphere::tbar::i3::ipc::readInfo]
 		fileevent $sys(event_socket) readable [list geekosphere::tbar::i3::ipc::readEvent]
@@ -71,7 +71,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 	proc sendMessage {socket type message} {
 		variable sys
 		if {$type < 0 || $type > 3} { error "Message type invalid, must be between 0 and 3" }
-		puts $sys($socket) [i3queryEncode $type $message]
+		puts -nonewline $sys($socket) [i3queryEncode $type $message]
 		flush $sys($socket)
 	}
 		
@@ -124,7 +124,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 	}
 	
 	proc subscribeToOutput {} {
-		sendMessage event_socket 2 {["output"]}
+		sendMessage event_socket 2 {[ "output" ]}
 	}
 	
 	#
@@ -133,7 +133,11 @@ namespace eval geekosphere::tbar::i3::ipc {
 	
 	proc i3queryEncode {type message} {
 		variable sys
-		return [binary format a*nna* $sys(magic) [string length $message] $type $message]
+		#set message [encoding convertto utf-8 $message]
+		set bl [string bytelength $message]
+		set message [binary format a[string length $sys(magic)]nna* $sys(magic) $bl $type "$message"]
+		log "DEBUG" "Message bytelength: $bl"
+		return $message
 	}
 	
 	# TODO 1.x: there is a bug somewhere here, we cannot trust "type" yet, do _not_ solely rely on it!

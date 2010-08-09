@@ -231,6 +231,10 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 					"-rolloverbackgroundcolor" {
 						changeRolloverBackground $w $value
 					}
+					"-side" {
+						# do nothing, -side parameter was meant for widget wrapper
+						# dirty hack
+					}
 					default {
 						error "${opt} not supported"
 					}

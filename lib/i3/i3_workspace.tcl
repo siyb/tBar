@@ -59,7 +59,6 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set message [lindex $event 1]
 		set eventDict [::json::json2dict $message]
 		log "DEBUG" "Type: $type Event: $eventDict"
-		
 		# command reply / subscribe reply
 		# TODO: dict exists is an ugly workaround for bug in i3_ipc, read comment above i3queryDecode
 		if {$type == 0 || $type == 2 || [dict exists $eventDict success]} {
@@ -166,13 +165,6 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		}
 	}
 	
-	proc removeWorkspace {w id} {
-		variable sys
-		if {[dict exists $sys($w,workspace) $id]} {
-			dict remive sys($w,workspace) $id
-		}
-	}
-	
 	proc addWorkspace {w workspace} {
 		variable sys
 		set number [dict get $workspace num]
@@ -184,21 +176,23 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 	proc updateDisplay {w} {
 		variable sys
+		puts "ASDASD: $sys($w,workspace)"
 		dict for {workspace flag} [::geekosphere::tbar::util::dictsort $sys($w,workspace)] {
 			if {[winfo exists ${w}.workspace${workspace}]} {
 				destroy ${w}.workspace${workspace}
 			}
 			
-			pack [button ${w}.workspace${workspace} \
+			pack [label ${w}.workspace${workspace} \
 				-text $workspace \
-				-command [list sendCommand $workspace] \
 				-bg $sys($w,background) \
 				-fg $sys($w,foreground) \
 				-font $sys($w,font) \
 				-activeforeground $sys($w,rolloverFontColor)  \
 				-activebackground $sys($w,rolloverBackgroundColor) \
-				-highlightthickness 0
+				-highlightthickness 0 \
+				-width 2
 			] -side left
+			bind ${w}.workspace${workspace} <Button-1> [list sendCommand $workspace]
 			
 			if {[dict get $sys($w,workspace) $workspace focus] == 1} {
 				${w}.workspace${workspace} configure -bg $sys($w,focusColor)
@@ -297,13 +291,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		variable sys
 		setForAllWorkspaces $w -activebackground $color
 		set sys($w,rolloverBackgroundColor) $color
-		puts "use1 $color"
 	}
 	
 	proc changeRolloverFontColor {w color} {
 		variable sys
 		setForAllWorkspaces $w -activeforeground $color
 		set sys($w,rolloverFontColor) $color
-		puts "use2 $color"
 	}
 }

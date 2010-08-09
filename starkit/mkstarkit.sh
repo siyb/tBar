@@ -17,6 +17,7 @@ SDXSHA1='be3de2bc770764e269707a97741e3699d61e878d'
 SQLITE='/usr/lib/sqlite3/'
 TCLLIB='/usr/share/tcltk/tcllib1.12/'
 LIBTKIMG='/usr/lib/tcltk/Img1.3/'
+UNIXSOCKETS='/usr/lib/unix_sockets0.1/'
 
 #
 # CODE
@@ -40,6 +41,11 @@ if [ ! -d $LIBTKIMG ]; then
 	exit
 fi
 
+if [ ! -d $UNIXSOCKETS ]; then
+	echo "Unixsockets could not be found"
+	exit
+fi
+
 pwd=`pwd`
 
 # copy source and library files
@@ -48,6 +54,7 @@ mv /tmp/tbar.vfs/starkit/main.tcl /tmp/tbar.vfs/
 cp -r $SQLITE /tmp/tbar.vfs/sqlite
 cp -r $TCLLIB /tmp/tbar.vfs/tcllib
 cp -r $LIBTKIMG /tmp/tbar.vfs/libtkimg
+cp -r $UNIXSOCKETS /tmp/tbar.vfs/unixsockets
 
 # getting & unpacking & settings rights for tclkit software
 cd /tmp

@@ -1,5 +1,21 @@
 prefix = $(DESTDIR)
-deploy=tbar_1.2rc1_kit
+
+#
+# Settings
+#
+
+# tbar version
+version=1.3
+# kit name
+deploykit=tbar_$(version)_kit
+# tbar name
+deploy=tbar_$(version)
+# git head version of tbar
+gitv=`git rev-parse HEAD`
+# uncomment lines for experimental versions
+deploy=tbar_$(version)_git_$(gitv)
+deploykit=tbar_$(version)_kit_git_$(gitv)
+
 all: install
 
 essential: pkgindex
@@ -23,21 +39,24 @@ install: clean essential
 	cp -r widget/* $(DESTDIR)/usr/share/tbar/
 
 starkit: clean pkgindex
-	mkdir $(deploy)
+	mkdir $(deploykit)
 	starkit/mkstarkit.sh
 
-	cp tbar.kit $(deploy)/tbar
-	cp README $(deploy)
-	cp LICENSE $(deploy)
-	cp starkit/Makefile $(deploy)
+	cp tbar.kit $(deploykit)/tbar
+	cp README $(deploykit)
+	cp LICENSE $(deploykit)
+	cp starkit/Makefile $(deploykit)
 
-	gzip -c tbar.1 >> $(deploy)/tbar.1.gz
-	cp -r config.tcl $(deploy)
-	tar -cf $(deploy).tar $(deploy)
-	gzip --best $(deploy).tar
-	
+	gzip -c tbar.1 >> $(deploykit)/tbar.1.gz
+	cp -r config.tcl $(deploykit)
+	tar -cf $(deploykit).tar $(deploykit)
+	gzip --best $(deploykit).tar
+
+deploy: clean
+	git archive --format=tar --prefix=$(deploy)/ $(gitv) . | gzip --best > $(deploy).tar.gz
+
 uninstall:
 	rm -rf $(DESTDIR)/etc/tbar/ $(DESTDIR)/usr/bin/tbar $(DESTDIR)/usr/lib/tbar/ $(DESTDIR)/usr/share/tbar/ $(DESTDIR)/usr/share/man/man1/tbar.1.gz
 
 clean:
-	rm -rf tbar.1.gz tbar.kit lib/pkgIndex.tcl $(deploy) $(deploy).tar.gz
+	rm -rf tbar.1.gz tbar.kit lib/pkgIndex.tcl $(deploy).tar.gz $(deploykit) $(deploykit).tar.gz

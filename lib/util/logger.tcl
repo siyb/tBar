@@ -50,7 +50,7 @@ namespace eval geekosphere::tbar::util::logger {
 
 		set mloglevel [getNumericLoglevel $level];# the level of the message
 		set gloglevel [getNumericLoglevel $logger(level)];# the global log level
-		if {$mloglevel <= $gloglevel} { return };# check if message should be logged
+		if {$mloglevel < $gloglevel} { return };# check if message should be logged
 		if {$logger(dolog)} {
 			set message "[clock format [clock seconds] -format "%+"] | $level | ${namespace}: ${message}"
 			puts $message

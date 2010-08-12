@@ -37,7 +37,7 @@ foreach {parameter value} $argv {
 		}
 		"--help" {
 			puts "tBar help
---config <path>			specify a config file to load
+--config <path>			specify a config file to load"
 			exit
 		}
 	}

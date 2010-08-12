@@ -2,6 +2,7 @@ package provide i3_ipc 1.0
 
 package require logger
 package require unix_sockets
+package require hex
 
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::i3::ipc {
@@ -53,6 +54,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 			disconnect
 			log "ERROR" "Error reading socket, forcefully disconnected: $::errorInfo"
 		}
+                ::geekosphere::tbar::util::hex::puthex $data
 		foreach message [parseData $data] {
 			set sys(info_reply) $message
 		}
@@ -64,6 +66,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 			disconnect
 			log "ERROR" "Error reading socket, forcefully disconnected: $::errorInfo"
 		}
+		::geekosphere::tbar::util::hex::puthex $data
 		foreach message [parseData $data] {
 			set sys(event_reply) $message
 		}

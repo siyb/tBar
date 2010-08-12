@@ -52,7 +52,9 @@ namespace eval geekosphere::tbar::util::logger {
 		set gloglevel [getNumericLoglevel $logger(level)];# the global log level
 		if {$mloglevel < $gloglevel} { return };# check if message should be logged
 		if {$logger(dolog)} {
-			set message "[clock format [clock seconds] -format "%+"] | $level | ${namespace}: ${message}"
+			set uLevel [uplevel {info level}]
+			if {$uLevel == 0} { set proc "" } else { set proc ::[lindex [info level $uLevel] 0] }
+			set message "[clock format [clock seconds] -format "%+"] | $level | ${namespace}${proc}: ${message}"
 			puts $message
 			if {$logger(log2file)} {
 				set fl [open $logger(logfile) a+]; puts $fl $message; close $fl

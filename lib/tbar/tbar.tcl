@@ -38,6 +38,9 @@ namespace eval geekosphere::tbar {
 
 	set conf(widgets,position) "left"
 
+	set conf(sys,writeBugreport) 1
+	set conf(sys,killOnError) 0
+
 	#
 	# Code
 	#
@@ -161,6 +164,8 @@ namespace eval geekosphere::tbar {
 	# writes bugreports
 	proc saveBugreport {message} {
 		variable sys
+		variable conf
+		if {!$conf(sys,writeBugreport)} { return }
 		set timeStamp [clock format [clock seconds] -format "%+"]
 		set bugreportPath [file join $::env(HOME) .tbar]
 		if {![file exists $bugreportPath]} { return }
@@ -323,9 +328,19 @@ $::errorCode"
 		log "INFO" "Event ${event} added to ${widgetName}, invoking ${args}"
 	}
 
+	proc setKillOnError {killOnError} {
+		variable conf
+		set conf(sys,killOnError) $killOnError
+	}
+
+	proc writeBugreport {writeBugreport} {
+		variable conf
+		set conf(sys,writeBugreport) $writeBugreport
+	}
+
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
-	setLogLevel addWidgetToBar addEventTo
+	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError
 }
 
 # GLOBAL NAMESPACE!
@@ -333,5 +348,9 @@ initLogger
 proc bgerror {message} {
 	geekosphere::tbar::saveBugreport $message   
 	log "ERROR" "Background error encountered ${::errorInfo}"
+	if {$geekosphere::tbar::conf(sys,killOnError)} {
+		log "FATAL" "Background error encountered, system is configured to shutdown!"
+		exit
+	}
 }
 

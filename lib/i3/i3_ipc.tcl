@@ -52,7 +52,8 @@ namespace eval geekosphere::tbar::i3::ipc {
 		variable sys
 		if {[catch {set data [read $sys(info_socket)]} err]} {
 			disconnect
-			log "ERROR" "Error reading socket, forcefully disconnected: $::errorInfo"
+			log "ERROR" "Error reading socket, forcefully disconnected, attempting to reconnect: $::errorInfo"
+			connect
 		}
                 ::geekosphere::tbar::util::hex::puthex $data
 		foreach message [parseData $data] {
@@ -64,7 +65,8 @@ namespace eval geekosphere::tbar::i3::ipc {
 		variable sys
 		if {[catch {set data [read $sys(event_socket)]} err]} {
 			disconnect
-			log "ERROR" "Error reading socket, forcefully disconnected: $::errorInfo"
+			log "ERROR" "Error reading socket, forcefully disconnected, attempting to reconnect: $::errorInfo"
+			connect
 		}
 		::geekosphere::tbar::util::hex::puthex $data
 		foreach message [parseData $data] {
@@ -151,12 +153,12 @@ namespace eval geekosphere::tbar::i3::ipc {
 		while {1} {
 			binary scan $data @${mark}a${sys(magicLen)}nn magic length type
 			if {$magic != $sys(magic)} { error "Magic string was ${magic}, should have been ${sys(magic)}" }
-			if {$type < 0 || $type > 3} { log "ERROR" "Invalid type, was ${type}" }
+			if {$type < 0 || $type > 3} { log "WARNING" "Invalid type, was ${type}" }
 			set mark [expr {$mark + $sys(magicLen) + 8}]
 			binary scan $data @${mark}a${length} message
 		
 			incr mark $length
-			puts "MARK: $mark MAGIC: '$magic' TYPE: $type LENGTH: $length MESSAGE: '$message'\n\n\n"
+			log "TRACE" "MARK: $mark MAGIC: '$magic' TYPE: $type LENGTH: $length MESSAGE: '$message'\n\n\n"
 			lappend retList [list $type $message]
 			if {$mark >= $dataLength} { break }
 		}

@@ -36,6 +36,14 @@ setXposition 470
 # the Y position of the bar on the screen
 setYposition 1030
 
+# write a bugreport if an error is encountered, 1 to turn this feature on
+# 0 to disable it. 1 is recommended
+writeBugreport 1
+
+# kill tbar if an error is encounterd, 1 to turn this feature on
+# 0 to disable it. 0 is recommended for productive use
+setKillOnError 0
+
 # alternativly to using setYposition, setXposition
 # and setWidth you may use positionBar top/bottom
 # which will position the bar along the top or the

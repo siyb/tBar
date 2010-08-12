@@ -20,6 +20,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 	
 	# magic i3 ipc string
 	set sys(magic) i3-ipc
+	set sys(magicLen) [string length $sys(magic)]
 	
 	#
 	# System relevant stuff
@@ -52,8 +53,8 @@ namespace eval geekosphere::tbar::i3::ipc {
 			disconnect
 			log "ERROR" "Error reading socket, forcefully disconnected: $::errorInfo"
 		}
-		foreach message [separateData $data] {
-			set sys(info_reply) [i3queryDecode $message]
+		foreach message [parseData $data] {
+			set sys(info_reply) $message
 		}
 	}
 	
@@ -63,8 +64,8 @@ namespace eval geekosphere::tbar::i3::ipc {
 			disconnect
 			log "ERROR" "Error reading socket, forcefully disconnected: $::errorInfo"
 		}
-		foreach message [separateData $data] {
-			set sys(event_reply) [i3queryDecode $message]
+		foreach message [parseData $data] {
+			set sys(event_reply) $message
 		}
 	}
 
@@ -133,51 +134,32 @@ namespace eval geekosphere::tbar::i3::ipc {
 	
 	proc i3queryEncode {type message} {
 		variable sys
-		#set message [encoding convertto utf-8 $message]
-		set bl [string bytelength $message]
-		set message [binary format a[string length $sys(magic)]nna* $sys(magic) $bl $type "$message"]
-		log "DEBUG" "Message bytelength: $bl"
+		set length [string length $message]
+		set message [binary format a[string length $sys(magic)]nna* $sys(magic) $length $type "$message"]
+		log "DEBUG" "Message bytelength: $length"
 		return $message
 	}
-	
-	# TODO 1.x: there is a bug somewhere here, we cannot trust "type" yet, do _not_ solely rely on it!
-	proc i3queryDecode {message} {
-		variable sys
-		binary scan $message a6nna* magic length type message
-		if {$magic ne $sys(magic)} { error "Magic string mismatch." }
-		if {[string length $message] != $length} { error "Message length mismatch, was [string bytelength $message], should have been $length" }
-		if {$type < 0 || $type > 3} { log "ERROR" "Type code fuckup, type was: $type" }
-		return [list $type $message]
-	}
-	
-	proc separateData {data} {
-		variable sys
-		set magic_len [string length $sys(magic)]
-		set marker 0
-		set startList [list]
-		while {1} {
-			set start [string first $sys(magic) $data $marker]
-			if {$start == -1} { break }
-			set marker [expr {$magic_len + $start}]
-			log "DEBUG" "start: $start"
-			lappend startList $start
-			log "DEBUG" "marker: $marker"
-		}
 
-		set slLength [llength $startList]
+	proc parseData {data} {
+		variable sys
 		set retList [list]
-		for {set i 0} {$i < $slLength} {incr i} {
-			if {[expr {$i + 1}] < $slLength} {
-				set message [string range $data [lindex $startList $i] [expr {[lindex $startList $i+1] - 1}]]
-			} else {
-				set message [string range $data [lindex $startList $i] end]
-			}
-			log "DEBUG" "MESSAGE: $message"
-			lappend retList $message
+		set mark 0
+		set dataLength [string length $data]
+		while {1} {
+			binary scan $data @${mark}a${sys(magicLen)}nn magic length type
+			if {$magic != $sys(magic)} { error "Magic string was ${magic}, should have been ${sys(magic)}" }
+			if {$type < 0 || $type > 3} { log "ERROR" "Invalid type, was ${type}" }
+			set mark [expr {$mark + $sys(magicLen) + 8}]
+			binary scan $data @${mark}a${length} message
+		
+			incr mark $length
+			puts "MARK: $mark MAGIC: '$magic' TYPE: $type LENGTH: $length MESSAGE: '$message'\n\n\n"
+			lappend retList [list $type $message]
+			if {$mark >= $dataLength} { break }
 		}
 		return $retList
 	}
-	
+
 	namespace export connect disconnect addInfoListener addEventListener \
 	getEvent getInfo sendCommand getWorkspaces getOutputs \
 	subscribeToOutput subscribeToWorkspace

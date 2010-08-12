@@ -76,8 +76,10 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 					getWorkspaces
 				}
 				"init" {
+					getWorkspaces
 				}
 				"empty" {
+					getWorkspaces
 				}
 				"urgent" {
 					getWorkspaces
@@ -176,7 +178,6 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 	proc updateDisplay {w} {
 		variable sys
-		puts "ASDASD: $sys($w,workspace)"
 		dict for {workspace flag} [::geekosphere::tbar::util::dictsort $sys($w,workspace)] {
 			if {[winfo exists ${w}.workspace${workspace}]} {
 				destroy ${w}.workspace${workspace}

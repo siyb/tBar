@@ -1,5 +1,5 @@
 prefix = $(DESTDIR)
-version=1.2rc1
+version=1.2
 deploy=tbar_$(version)
 kit=tbar_$(version)_kit
 

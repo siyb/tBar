@@ -3,6 +3,9 @@ package provide tbar 1.2
 package require util
 package require logger
 
+# TODO 1.x: laptop widget (battery for instance)
+# TODO 1.x: hdd widget, temperature, free/used
+# TODO 1.x: implement a light mode, that knows which widgets / widget parameters need which tcl package and prevents them from being use.
 # TODO 1.x: instead of throwing an error if a package (ie sqlite) can not be required, use the widget wrapper to test if package is available (catch) and remove corresponding parameter or widget
 # TODO 1.x: language files
 # TODO 1.x: add icon support for widgets

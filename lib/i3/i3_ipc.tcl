@@ -150,7 +150,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 		set retList [list]
 		set mark 0
 		set dataLength [string length $data]
-		while {1} {
+		while {$mark <= $dataLength} {
 			binary scan $data @${mark}a${sys(magicLen)}nn magic length type
 			if {$magic != $sys(magic)} { error "Magic string was ${magic}, should have been ${sys(magic)}" }
 			if {$type < 0 || $type > 3} { log "WARNING" "Invalid type, was ${type}" }
@@ -160,7 +160,6 @@ namespace eval geekosphere::tbar::i3::ipc {
 			incr mark $length
 			log "TRACE" "MARK: $mark MAGIC: '$magic' TYPE: $type LENGTH: $length MESSAGE: '$message'\n\n\n"
 			lappend retList [list $type $message]
-			if {$mark >= $dataLength} { break }
 		}
 		return $retList
 	}

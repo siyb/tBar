@@ -3,7 +3,7 @@ package provide battery 1.0
 package require logger
 
 proc battery {w args} {
-	geekosphere::tbar::widget::cpu::makeBattery $w $args
+	geekosphere::tbar::widget::battery::makeBattery $w $args
 
 	proc $w {args} {
 		geekosphere::tbar::widget::battery::action [string trim [dict get [info frame 0] proc] ::] $args
@@ -35,7 +35,8 @@ namespace eval geekosphere::tbar::widget::battery {
 		variable sys
 		set sys($w,originalCommand) ${w}_
 		setBatteryDirs $w
-
+		drawBatteryWidget $w
+		
 		uplevel #0 rename $w ${w}_
 	}
 
@@ -54,8 +55,8 @@ namespace eval geekosphere::tbar::widget::battery {
 					"-bg" - "-background" {
 						changeBackgroundColor $w $value
 					}
-					"-c" - "-color" {
-						changeColor $w $value
+					"-dc" - "-displayColor" {
+						changeDisplayColor $w $value
 					}
 					"-width" {
 						changeWidth $w $value
@@ -85,10 +86,10 @@ namespace eval geekosphere::tbar::widget::battery {
 	
 	# draws a battery display for each battery found. Requires
 	# setBatteryDirs to be called beforehand
-	proc drawBatteryWidget {w}} {
+	proc drawBatteryWidget {w} {
 		variable sys
-		frame frame ${w}
-		for {set iter 0} {$iter <= $sys($w,batteryCount} {incr iter} {
+		frame ${w}
+		for {set iter 0} {$iter <= $sys($w,batteryCount)} {incr iter} {
 			pack [canvas ${w}.batteryDisplay${iter}]
 		}
 	}
@@ -101,7 +102,9 @@ namespace eval geekosphere::tbar::widget::battery {
 	proc setBatteryDirs {w} {
 		variable sys
 		set iter 0
-		foreach dir [getBatteryDirs] {
+		set batteryDirs [getBatteryDirs]
+		if {[llength $batteryDirs] < 1} { log "ERROR" "No batteries found" }
+		foreach dir $batteryDirs {
 			set sys($w,batteryDir,$iter) $dir
 			incr iter
 		}
@@ -155,10 +158,14 @@ namespace eval geekosphere::tbar::widget::battery {
 	
 	proc changeForegroundColor {w color} {
 		variable sys
-		
+		$sys($w,originalCommand) configure -bg $color
+
 		set sys($w,foreground) $color
 	}
-	
+
+	proc changeDisplayColor {w width} {
+	}
+
 	proc changeWidth {w width} {
 		variable sys
 		for {set iter 0} {$iter <= sys($w,batteryCount)} {incr iter} {
@@ -185,3 +192,6 @@ namespace eval geekosphere::tbar::widget::battery {
 	}
 
 }
+
+#test
+#pack [battery .foo -displayColor red]

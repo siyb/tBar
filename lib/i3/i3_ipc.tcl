@@ -50,7 +50,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 
 	proc readInfo {} {
 		variable sys
-		if {[catch {set data [read $sys(info_socket)]} err]} {
+		if {[catch {set data [read -nonewline $sys(info_socket)]} err]} {
 			disconnect
 			log "ERROR" "Error reading socket, forcefully disconnected, attempting to reconnect: $::errorInfo"
 			connect
@@ -63,7 +63,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 	
 	proc readEvent {} {
 		variable sys
-		if {[catch {set data [read $sys(event_socket)]} err]} {
+		if {[catch {set data [read -nonewline $sys(event_socket)]} err]} {
 			disconnect
 			log "ERROR" "Error reading socket, forcefully disconnected, attempting to reconnect: $::errorInfo"
 			connect
@@ -104,10 +104,12 @@ namespace eval geekosphere::tbar::i3::ipc {
 	#
 	
 	proc getWorkspaces {} {
+		log "TRACE" "Requesting Workspaces"
 		sendMessage info_socket 1 ""
 	}
 
 	proc getOutputs {} {
+		log "TRACE" "Requesting Outputs"
 		sendMessage info_socket 3 ""
 	}
 	
@@ -146,22 +148,28 @@ namespace eval geekosphere::tbar::i3::ipc {
 	}
 
 	proc parseData {data} {
+		set executionTime [time {
 		variable sys
 		set retList [list]
-		set mark 0
+		set mark 0 
 		set dataLength [string length $data]
 		while {$mark <= $dataLength} {
 			binary scan $data @${mark}a${sys(magicLen)}nn magic length type
-			if {$magic != $sys(magic)} { error "Magic string was ${magic}, should have been ${sys(magic)}" }
-			if {$type < 0 || $type > 3} { log "WARNING" "Invalid type, was ${type}" }
+			log "DEBUG" "Message length was ${length}"
+			if {$magic ne $sys(magic)} { error "Magic string was '${magic}', should have been '${sys(magic)}'" }
+
+			# seems that -2147483648 is a valid type .. wtf i3
+			if {($type < 0 || $type > 3) && $type != -2147483648} { log "WARNING" "Invalid type, was ${type}" }
 			set mark [expr {$mark + $sys(magicLen) + 8}]
 			binary scan $data @${mark}a${length} message
 		
 			incr mark $length
 			log "TRACE" "MARK: $mark MAGIC: '$magic' TYPE: $type LENGTH: $length MESSAGE: '$message'\n\n\n"
 			lappend retList [list $type $message]
-		}
+		}}]
+		log "DEBUG" "Parsing message took $executionTime"
 		return $retList
+		
 	}
 
 	namespace export connect disconnect addInfoListener addEventListener \

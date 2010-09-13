@@ -58,7 +58,6 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set type [lindex $event 0]
 		set message [lindex $event 1]
 		set eventDict [::json::json2dict $message]
-		log "DEBUG" "Type: $type Event: $eventDict"
 		# command reply / subscribe reply
 		# TODO: dict exists is an ugly workaround for bug in i3_ipc, read comment above i3queryDecode
 		if {$type == 0 || $type == 2 || [dict exists $eventDict success]} {
@@ -100,7 +99,6 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set type [lindex $event 0]
 		set message [lindex $event 1]
 		set eventDict [::json::json2dict $message]
-		log "INFO" "Type: $type Event: $eventDict"
 		
 		if {$type == 1} {
 			foreach workspace $eventDict {
@@ -179,26 +177,25 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	proc updateDisplay {w} {
 		variable sys
 		dict for {workspace flag} [::geekosphere::tbar::util::dictsort $sys($w,workspace)] {
-			if {[winfo exists ${w}.workspace${workspace}]} {
-				destroy ${w}.workspace${workspace}
+			if {![winfo exists ${w}.workspace${workspace}]} {
+				pack [label ${w}.workspace${workspace} \
+					-text $workspace \
+					-bg $sys($w,background) \
+					-fg $sys($w,foreground) \
+					-font $sys($w,font) \
+					-activeforeground $sys($w,rolloverFontColor)  \
+					-activebackground $sys($w,rolloverBackgroundColor) \
+					-highlightthickness 0 \
+					-width 2
+				] -side left
+				bind ${w}.workspace${workspace} <Button-1> [list sendCommand $workspace]
 			}
-			
-			pack [label ${w}.workspace${workspace} \
-				-text $workspace \
-				-bg $sys($w,background) \
-				-fg $sys($w,foreground) \
-				-font $sys($w,font) \
-				-activeforeground $sys($w,rolloverFontColor)  \
-				-activebackground $sys($w,rolloverBackgroundColor) \
-				-highlightthickness 0 \
-				-width 2
-			] -side left
-			bind ${w}.workspace${workspace} <Button-1> [list sendCommand $workspace]
-			
 			if {[dict get $sys($w,workspace) $workspace focus] == 1} {
 				${w}.workspace${workspace} configure -bg $sys($w,focusColor)
 			} elseif {[dict get $sys($w,workspace) $workspace urgent] == 1} {
 				${w}.workspace${workspace} configure -bg $sys($w,urgentColor)
+			} else {
+				${w}.workspace${workspace} configure -bg $sys($w,background)
 			}
 		}
 	}

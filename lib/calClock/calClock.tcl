@@ -149,11 +149,20 @@ namespace eval geekosphere::tbar::widget::calClock {
 	proc drawCalendarWindow {w} {
 		variable sys
 		set sys($w,calWin) ${w}.calendar
-		if {[winfo exists $sys($w,calWin)]} {
-			destroy $sys($w,calWin)
-			return 
-		}
-		
+		if {[winfo exists $sys($w,calWin)]} { destroy $sys($w,calWin); return }
+		#if {[winfo exists $sys($w,calWin)]} {
+		#	if {[winfo ismapped $sys($w,calWin)]} {
+		#		wm withdraw $sys($w,calWin)
+		#		puts withdrawing
+		#	} else {
+		#		wm overrideredirect $sys($w,calWin) 0
+		#		wm iconify $sys($w,calWin)
+		#		positionWindowRelativly $sys($w,calWin) $w
+		#		puts iconify
+		#	}
+		#	return
+		#}
+
 		# command rendering
 		if {$sys($w,useCommand)} { 
 			renderWithCommand $w
@@ -276,8 +285,6 @@ namespace eval geekosphere::tbar::widget::calClock {
 				-command		 [list geekosphere::tbar::widget::calClock::removeOldAppointments $w] \
 			] -side top -fill x
 		
-			# TODO: this is _very_slow with loads of appointments, circumvent redrawing!
-			# mark calendar appointments
 			log "DEBUG" "Calendar loaded in: [time { importCalendarData $w }]"		
 		}
 		

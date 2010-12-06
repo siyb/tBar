@@ -132,7 +132,6 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 	
 	# date/time parser that will create a consitent format from ical
 	proc dateTimeParser {dateTime} {
-		puts "DATETIME -> $dateTime"
 		variable sys
 		set length [string length $dateTime]
 		set retDict [dict create]
@@ -149,7 +148,6 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 		
 		# local: TZID=America/New_York:19980119T020000
 		} elseif {[string match tzid* [string toupper $dateTime]]} {
-			puts "NEW TIMEFORMAT TEST: $dateTime"
 			set splitData [split $dateTime ":"]
 			if {[llength $splitData] != 2} { log "ERROR" "dateTime malformatted, != 2";return }
 			set dateTime [lindex $splitData 1]

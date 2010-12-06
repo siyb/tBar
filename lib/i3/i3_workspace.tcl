@@ -215,6 +215,8 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set sortedWorkspaces [lsort $sys($w,workspace)]
 		foreach wspace $sortedWorkspaces {
 			set workspace [lindex $wspace 0]
+			# TODO: destroy is a dirty and slow hack, increase speed by only destroying "unsorted" windows
+			destroy ${w}.workspace${workspace}
 			if {![winfo exists ${w}.workspace${workspace}]} {
 				pack [label ${w}.workspace${workspace} \
 					-text $workspace \

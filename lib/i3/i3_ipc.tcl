@@ -54,8 +54,9 @@ namespace eval geekosphere::tbar::i3::ipc {
 			disconnect
 			log "ERROR" "Error reading socket, forcefully disconnected, attempting to reconnect: $::errorInfo"
 			connect
+		
 		}
-                ::geekosphere::tbar::util::hex::puthex $data
+		::geekosphere::tbar::util::hex::puthex $data
 		foreach message [parseData $data] {
 			set sys(info_reply) $message
 		}

@@ -68,6 +68,11 @@ namespace eval geekosphere::tbar::util::logger {
 		if {![dict exists $loggerSettings(levels) $level]} { error "WARNING | Loglevel invalid! (${level})" }
 		return [dict get $loggerSettings(levels) $level]
 	}
+	
+	proc getLogLevel {} {
+		variable loggerSettings
+		return $loggerSettings(globalLevel)
+	}
 
-	namespace export log initLogger setGlobalLogLevel
+	namespace export log initLogger setGlobalLogLevel getLogLevel
 }

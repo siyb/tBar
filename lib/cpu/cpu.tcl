@@ -369,15 +369,19 @@ namespace eval geekosphere::tbar::widget::cpu {
 	}
 	
 	proc isCpuFreqAvailable {w} {
+		variable sys
+		if {$sys($w,useSpeedStep) == 0} { return 0 }
 		set check [list minFreq maxFreq driver availGovs availFreqs currGov]
+		set possible 1
 		foreach item $check {
 			set file [getFreqFile $w $item]
 			if {![file exists $file]} {
 				log "ERROR" "CPU Frequency Scaling not possible: ${item} not found -> $file"
-				return 0
+				set possible 0
+				set sys($w,useSpeedStep) 0;# turn off speedstepping
 			}
 		}
-		return 1
+		return $possible
 	}
 	
 	proc getFreqFileData {w type} {

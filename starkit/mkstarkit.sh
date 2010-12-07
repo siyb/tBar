@@ -32,12 +32,12 @@ if [ ! -d $SQLITE ]; then
 fi
 
 if [ ! -d $TCLLIB ]; then
-	echo "Sqlite could not be found"
+	echo "Tcllib could not be found"
 	exit
 fi
 
 if [ ! -d $LIBTKIMG ]; then
-	echo "Sqlite could not be found"
+	echo "Libtkimg could not be found"
 	exit
 fi
 

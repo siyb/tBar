@@ -160,8 +160,11 @@ addText " | " "red"
 #		widget receives updates (needs to be the same 
 #		as the update interval specified as second parameter, 
 #		in order to give correct results)
-#
-addWidgetToBar network network1 1 -device eth1 -updateinterval 1
+# -additionalDevices - accepts a tcl list in the form {device1 device2 etc} or [list device1 device2 etc].
+# 		May contain the device specified by -device. If this parameter is specified and the list
+# 		is not empty, clicking on the network widget will cause a window to appear, which contains
+# 		stats of the devices specified. 
+addWidgetToBar network network1 1 -device eth0 -updateinterval 1 -additionalDevices [list eth0 eth1]
 addText " | " "red"
 
 # Displays memory and swap information

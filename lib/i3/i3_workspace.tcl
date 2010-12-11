@@ -33,10 +33,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		
 		pack [frame ${w}]
 		
-		
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_
-		
+	
+		set sys($w,lastWorkspaceStatus) [dict create]
+			
 		initIpc $w
 	
 		# run configuration
@@ -54,6 +55,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	}
 	
 	proc eventCallback {w args} {
+		variable sys
 		set event [getEvent]
 		set type [lindex $event 0]
 		set message [lindex $event 1]
@@ -98,6 +100,10 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set type [lindex $event 0]
 		set message [lindex $event 1]
 		set eventDict [::json::json2dict $message]
+		if {$sys($w,lastWorkspaceStatus) == $eventDict} {
+			return
+		}
+		set sys($w,lastWorkspaceStatus) $eventDict
 		if {$type == 1} {
 			foreach workspace $eventDict {
 				set workspaceId [dict get $workspace num]

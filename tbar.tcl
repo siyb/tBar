@@ -1,4 +1,9 @@
-#!/usr/bin/env wish8.5
+#!/usr/bin/env tclsh
+if {$::tcl_version < 8.5} {
+	puts "tBar requires TCL 8.5, $::tcl_version installed, exiting."
+	exit
+}
+
 package require Tk
 package require tbar
 package require logger

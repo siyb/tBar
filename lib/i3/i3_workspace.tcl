@@ -218,7 +218,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 	proc updateDisplay {w} {
 		variable sys
-		set sortedWorkspaces [lsort $sys($w,workspace)]
+		set sortedWorkspaces [lsort -index 0 -integer $sys($w,workspace)]
 		foreach wspace $sortedWorkspaces {
 			set workspace [lindex $wspace 0]
 			# TODO: destroy is a dirty and slow hack, increase speed by only destroying "unsorted" windows

@@ -152,25 +152,25 @@ namespace eval geekosphere::tbar::i3::ipc {
 		set executionTime [time {
 		variable sys
 		set retList [list]
-		set mark 0 
+		set mark 0
 		set dataLength [string length $data]
 		while {$mark <= $dataLength} {
 			binary scan $data @${mark}a${sys(magicLen)}nn magic length type
-			log "DEBUG" "Message length was ${length}"
+			log "DEBUG" "Message length was ${dataLength}"
 			if {$magic ne $sys(magic)} { error "Magic string was '${magic}', should have been '${sys(magic)}'" }
 
 			# seems that -2147483648 is a valid type .. wtf i3
 			if {($type < 0 || $type > 3) && $type != -2147483648} { log "WARNING" "Invalid type, was ${type}" }
 			set mark [expr {$mark + $sys(magicLen) + 8}]
 			binary scan $data @${mark}a${length} message
-		
+
 			incr mark $length
 			log "TRACE" "MARK: $mark MAGIC: '$magic' TYPE: $type LENGTH: $length MESSAGE: '$message'\n\n\n"
 			lappend retList [list $type $message]
 		}}]
 		log "DEBUG" "Parsing message took $executionTime"
 		return $retList
-		
+
 	}
 
 	namespace export connect disconnect addInfoListener addEventListener \

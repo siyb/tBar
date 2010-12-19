@@ -156,6 +156,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 		set dataLength [string length $data]
 		while {$mark <= $dataLength} {
 			binary scan $data @${mark}a${sys(magicLen)}nn magic length type
+			if {![info exists type]} { log "ERROR" "Unable to parse message" }
 			log "DEBUG" "Message length was ${dataLength}"
 			if {$magic ne $sys(magic)} { error "Magic string was '${magic}', should have been '${sys(magic)}'" }
 

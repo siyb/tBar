@@ -1,4 +1,5 @@
 #!/bin/sh
+# TODO: create lib folder and place all libs there, instead of appending them in main.tcl manually (this is best practise iirc)
 
 # This script can be used to build a tbar starkit. Please check the settings
 # section and adjust the settings if required.
@@ -8,12 +9,14 @@
 #
 
 # tclkit software
+# TODO: include all platforms here (array) and create a starkit for all available platforms
 TCLKITURL='http://tclkit.googlecode.com/files/tclkit-8.5.8-linux-ix86.gz'
 TCLKITSHA1='477331776ce8b67a7326c554c54f4688161679d7'
 SDXURL='http://tclkit.googlecode.com/files/sdx-20100310.kit'
 SDXSHA1='be3de2bc770764e269707a97741e3699d61e878d'
 
-# library path, those must include a valid, path independent pkgIndex.tcl
+# Paths of libraries which are mandatory for the standard tbar distribution.
+# Make sure that each path contains a valid pkgIndex.tcl file.
 SQLITE='/usr/lib/sqlite3/'
 TCLLIB='/usr/share/tcltk/tcllib1.12/'
 LIBTKIMG='/usr/lib/tcltk/Img1.3/'

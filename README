@@ -37,11 +37,20 @@
 
 		autoconf -> ./configure -> make -> make install
 
-4. License
+4. Misc Notes
+
+	4.1 Makefile
+
+		The Makefile supports the following parameters:
+
+		EXPERIMENTAL - Effects the deploy option only. Will create a version containing the git hash of the commit, which was used
+			       to create the build.
+
+5. License
 
 	tBar is licensed under the terms of the GPL 3. Please refer to the LICENSE file for more information on the GPL 3.
 
-5. Acknowledgement
+6. Acknowledgement
 
 	- Thanks to Jaafar Mejri aka Jaf (http://wiki.tcl.tk/13498) for his contribution to the program (calendar widget: http://wiki.tcl.tk/13497)
 	- Thanks to David Easton (http://wiki.tcl.tk/10511) for his contribution to the program (image resizer: http://wiki.tcl.tk/11196)
@@ -49,6 +58,7 @@
 	- Thanks to Thomas Sader for creating the starkit build script
 	- Thanks to Colin McCormack (http://wiki.tcl.tk/3650) for his contribution to the program (ical library: http://wiki.tcl.tk/_repo/tcal/)
 	- Thanks to Cybex (http://cybex.b0rk.de/files/tcl/) for the hexdump script
+
 6. Contact
 
 	Website: http://siyb.mount.at/tbar

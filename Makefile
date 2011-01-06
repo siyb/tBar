@@ -6,15 +6,21 @@ prefix = $(DESTDIR)
 
 # tbar version
 version=1.3
+
 # kit name
 deploykit=tbar_$(version)_kit
+
 # tbar name
 deploy=tbar_$(version)
+
 # git head version of tbar
 gitv=`git rev-parse HEAD`
-# uncomment lines for experimental versions
-deploy=tbar_$(version)_git_$(gitv)
-deploykit=tbar_$(version)_kit_git_$(gitv)
+
+# EXPERIMENTAL parameter
+ifdef EXPERIMENTAL
+	deploy=tbar_$(version)_git_$(gitv)
+	deploykit=tbar_$(version)_kit_git_$(gitv)
+endif
 
 all: install
 
@@ -59,4 +65,4 @@ uninstall:
 	rm -rf $(DESTDIR)/etc/tbar/ $(DESTDIR)/usr/bin/tbar $(DESTDIR)/usr/lib/tbar/ $(DESTDIR)/usr/share/tbar/ $(DESTDIR)/usr/share/man/man1/tbar.1.gz
 
 clean:
-	rm -rf tbar.1.gz tbar.kit lib/pkgIndex.tcl $(deploy).tar.gz $(deploykit) $(deploykit).tar.gz
+	rm -rf tbar.1.gz tbar.kit lib/pkgIndex.tcl $(deploy).tar.gz $(deploykit) $(deploykit).tar.gz tbar_$(version)_git_$(gitv) tbar_$(version)_git_$(gitv).tar.gz tbar_$(version)_kit_git_$(gitv) tbar_$(version)_kit_git_$(gitv).tar.gz

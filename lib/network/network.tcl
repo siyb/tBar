@@ -14,19 +14,20 @@ proc network {w args} {
 
 catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::network {
-	
+
 	if {$::tcl_platform(os) eq "Linux"} {
 		set sys(netInfo) [file join / proc net dev]
 	} else {
 		error "Network widget does not support your OS ($::tcl_platform(os)) yet. Please report this issue to help improove the software."
 	}
-	
+
 
 	proc makeNetwork {w arguments} {
 		variable sys
 		if {[set sys($w,device) [getOption "-device" $arguments]] eq ""} { error "Specify a device using the -device option." }
 		if {[set sys($w,updateInterval) [getOption "-updateinterval" $arguments]] eq ""} { error "Specify an update interval using the -updateinterval option." }
 		set sys($w,additionalDevices) [getOption "-additionalDevices" $arguments]
+		lappend sys($w,additionalDevices) $sys($w,device)
 		set sys($w,originalCommand) ${w}_
 
 		frame ${w}
@@ -37,12 +38,12 @@ namespace eval geekosphere::tbar::widget::network {
 
 		# run configuration
 		action $w configure $arguments
-		
+
 		set sys($w,initialized) 1
-		
+
 		# the location of the info window
 		set sys($w,infoWindow) ${w}.infoWindow
-		
+
 		# the data of all devices
 		set sys($w,allDeviceData) [list]
 
@@ -53,7 +54,7 @@ namespace eval geekosphere::tbar::widget::network {
 		variable sys
 		return [info exists sys($w,initialized)]
 	}
-	
+
 	proc updateWidget {w} {
 		variable sys
 		updateAllDevices $w
@@ -67,7 +68,7 @@ namespace eval geekosphere::tbar::widget::network {
 	proc updateInfoWindow {w deviceList} {
 		variable sys
 		foreach device $deviceList {
-		set netDict [getDeviceData $w $device];# even if there is no info window open, we still wanna update all devices which are being watched
+			set netDict [getDeviceData $w $device];# even if there is no info window open, we still wanna update all devices which are being watched
 			set tx [dict get $netDict "TX"]
 			set rx [dict get $netDict "RX"]
 			if {![winfo exists $sys($w,infoWindow)]} { continue }
@@ -75,8 +76,15 @@ namespace eval geekosphere::tbar::widget::network {
 				$sys($w,infoWindow).${device} configure -text "$device - Up: ${tx} kB/s Down: ${rx} kB/s" -fg $sys($w,foreground) -bg $sys($w,background)
 			} else {
 				pack [label $sys($w,infoWindow).${device} -text "$device - Up: ${tx} kB/s Down: ${rx} kB/s" -fg $sys($w,foreground) -bg $sys($w,background)] -anchor w
+				bind $sys($w,infoWindow).${device} <Button-1> [namespace code [list changeMainDevice $w $device %W]]
 			}
 		}
+	}
+
+	proc changeMainDevice {w newMainDevice invokerWindow} {
+		variable sys
+		set sys($w,device) $newMainDevice
+		updateWidget $w
 	}
 
 	proc drawInfoWindow {w deviceList} {
@@ -86,10 +94,10 @@ namespace eval geekosphere::tbar::widget::network {
 		updateInfoWindow $w $deviceList
 		positionWindowRelativly $sys($w,infoWindow) $w
 	}
-		
+
 	proc destroyInfoWindow {w} {
 		variable sys
-		destroy $sys($w,infoWindow)	
+		destroy $sys($w,infoWindow)
 	}
 
 	proc actionHandler {w invokerWindow} {
@@ -122,7 +130,7 @@ namespace eval geekosphere::tbar::widget::network {
 	# calling this proc async to the update time will cause erroneous netspeed calculations, use with care ;)
 	proc getNetworkSpeedFor {w device} {
 		variable sys
-		if {![info exists sys($w,lastTx,$device)]} {  
+		if {![info exists sys($w,lastTx,$device)]} {
 			set sys($w,lastTx,$device) 0
 		}
 		if {![info exists sys($w,lastRx,$device)]} {
@@ -146,7 +154,7 @@ namespace eval geekosphere::tbar::widget::network {
 		set sys($w,lastRx,$device) $rx
 		return $returnDict
 	}
-	
+
 	# parses the network speed for the specified device
 	proc parseNetworkSpeed {device} {
 		variable sys
@@ -166,7 +174,7 @@ namespace eval geekosphere::tbar::widget::network {
 		}
 		return $returnDict
 	}
-	
+
 	# calculates the netspeed
 	proc calculateNetspeed {last current interval} {
 		variable conf
@@ -174,7 +182,7 @@ namespace eval geekosphere::tbar::widget::network {
 		if {$difference < 0} { return 0 }
 		return [expr {$difference/$interval / 1024}]
 	}
-	
+
 	proc action {w args} {
 		variable sys
 		set args [join $args]
@@ -212,24 +220,23 @@ namespace eval geekosphere::tbar::widget::network {
 			error "Command ${command} not supported"
 		}
 	}
-	
+
 	#
 	# Widget configuration procs
 	#
-	
 	proc changeForegroundColor {w color} {
 		variable sys
 		${w}.network configure -fg $color
 		set sys($w,foreground) $color
 	}
-	
+
 	proc changeBackgroundColor {w color} {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
 		${w}.network configure -bg $color
 		set sys($w,background) $color
 	}
-	
+
 	proc changeFont {w font} {
 		variable sys
 		${w}.network configure -font $font

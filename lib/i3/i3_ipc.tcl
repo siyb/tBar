@@ -18,11 +18,11 @@ namespace eval geekosphere::tbar::i3::ipc {
 	# reply variable, stores reply of i3
 	set sys(info_reply) ""
 	set sys(event_reply) ""
-	
+
 	# magic i3 ipc string
 	set sys(magic) i3-ipc
 	set sys(magicLen) [string length $sys(magic)]
-	
+
 	#
 	# System relevant stuff
 	#
@@ -31,21 +31,24 @@ namespace eval geekosphere::tbar::i3::ipc {
 		if {$sys(info_socket) != -1 || $sys(event_socket) != -1} { error "Connection already established" }
 		set sys(info_socket) [unix_sockets::connect $sys(socketFile)]
 		set sys(event_socket) [unix_sockets::connect $sys(socketFile)]
-		
+
 		chan configure $sys(info_socket) -translation binary -blocking 0 -buffering full
 		chan configure $sys(event_socket) -translation binary -blocking 0 -buffering full
-		
+
 		fileevent $sys(info_socket) readable [list geekosphere::tbar::i3::ipc::readInfo]
 		fileevent $sys(event_socket) readable [list geekosphere::tbar::i3::ipc::readEvent]
 	}
 
 	proc disconnect {} {
 		variable sys
-		if {$sys(info_socket) != -1 || $sys(reply_socket) != -1} { error "Connection has not been established" }
-		close $sys(info_socket)
-		close $sys(reply_socket)
+		if {$sys(info_socket) != -1} {
+			close $sys(info_socket)
+		}
+		if {$sys(event_socket) != -1} {
+			close $sys(event_socket)
+		}
 		set sys(info_socket) -1
-		set sys(reply_socket) -1
+		set sys(event_socket) -1
 	}
 
 	proc readInfo {} {
@@ -54,14 +57,14 @@ namespace eval geekosphere::tbar::i3::ipc {
 			disconnect
 			log "ERROR" "Error reading socket, forcefully disconnected, attempting to reconnect: $::errorInfo"
 			connect
-		
+
 		}
 		::geekosphere::tbar::util::hex::puthex $data
 		foreach message [parseData $data] {
 			set sys(info_reply) $message
 		}
 	}
-	
+
 	proc readEvent {} {
 		variable sys
 		if {[catch {set data [read -nonewline $sys(event_socket)]} err]} {
@@ -81,29 +84,29 @@ namespace eval geekosphere::tbar::i3::ipc {
 		puts -nonewline $sys($socket) [i3queryEncode $type $message]
 		flush $sys($socket)
 	}
-		
+
 	proc addInfoListener {procedure info} {
 		variable sys
 		trace add variable sys(info_reply) write "$procedure $info"
 	}
-	
+
 	proc addEventListener {procedure info} {
 		variable sys
 		trace add variable sys(event_reply) write "$procedure $info"
 	}
-	
+
 	#
 	# Command
 	#
-	
+
 	proc sendCommand {command} {
 		sendMessage info_socket 0 $command
 	}
-	
+
 	#
 	# Information request procs
 	#
-	
+
 	proc getWorkspaces {} {
 		log "TRACE" "Requesting Workspaces"
 		sendMessage info_socket 1 ""
@@ -113,33 +116,33 @@ namespace eval geekosphere::tbar::i3::ipc {
 		log "TRACE" "Requesting Outputs"
 		sendMessage info_socket 3 ""
 	}
-	
+
 	proc getEvent {} {
 		variable sys
 		return $sys(event_reply)
 	}
-	
+
 	proc getInfo {} {
 		variable sys
 		return $sys(info_reply)
 	}
-	
+
 	#
 	# Subscription procs
 	#
-	
+
 	proc subscribeToWorkspace {} {
 		sendMessage event_socket 2 {[ "workspace" ]}
 	}
-	
+
 	proc subscribeToOutput {} {
 		sendMessage event_socket 2 {[ "output" ]}
 	}
-	
+
 	#
 	# Util
 	#
-	
+
 	proc i3queryEncode {type message} {
 		variable sys
 		set length [string length $message]
@@ -156,7 +159,12 @@ namespace eval geekosphere::tbar::i3::ipc {
 		set dataLength [string length $data]
 		while {$mark <= $dataLength} {
 			binary scan $data @${mark}a${sys(magicLen)}nn magic length type
-			if {![info exists type]} { log "ERROR" "Unable to parse message" }
+			if {![info exists type]} {
+				log "ERROR" "Unable to parse message"
+				disconnect
+				connect
+				return
+			}
 			log "DEBUG" "Message length was ${dataLength}"
 			if {$magic ne $sys(magic)} { error "Magic string was '${magic}', should have been '${sys(magic)}'" }
 

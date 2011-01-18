@@ -10,7 +10,6 @@ proc battery {w args} {
 	}
 	return $w
 }
-# TODO: remove line between battery pole and battery body
 catch {namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::widget::battery {
 	initLogger
@@ -158,7 +157,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			error "Fillstatus must be between 0 and 100 percent"
 		}
 		set canvasPath ${w}.batterydisplay
-		
+		set color [determineColorOfWidgetByBatteryStatus $w $fillStatus]
 		if {![winfo exists $canvasPath]} {
 			pack [canvas $canvasPath -height 10 -width 10 -bg $sys($w,background) -height $sys($w,height) -width $sys($w,width) -highlightthickness 0]
 			set cWidth [$canvasPath cget -width]
@@ -169,9 +168,9 @@ namespace eval geekosphere::tbar::widget::battery {
 			set startPoleY 1
 			set endPoleX [expr {($cWidth / 2) + ($cWidth / 10)}]
 			set endPoleY [expr {$cHeight - ($cHeight - ($cHeight/5))}]
-			set rect [$canvasPath create rectangle $startPoleX $startPoleY $endPoleX $endPoleY]
+			set sys($w,batteryPole) [$canvasPath create rectangle $startPoleX $startPoleY $endPoleX $endPoleY]
 			if {$fillStatus == 100} {
-				$canvasPath itemconfigure $rect -fill [determineColorOfWidgetByBatteryStatus $w $fillStatus]
+				$canvasPath itemconfigure $sys($w,batteryPole) -fill $color
 			}
 
 			# drawing battery "body"
@@ -179,8 +178,8 @@ namespace eval geekosphere::tbar::widget::battery {
 			set startBodyY $endPoleY
 			set endBodyX [expr {($cWidth / 2) + ($cWidth / 5)}]
 			set endBodyY $cHeight
-			$canvasPath create rectangle $startBodyX $startBodyY $endBodyX $endBodyY
-			
+			set sys($w,batteryBody) [$canvasPath create rectangle $startBodyX $startBodyY $endBodyX $endBodyY]
+		
 			bind $canvasPath <Button-1> [namespace code [list displayBatteryInfo $w]]
 			
 			# some vars for drawing the fillstatus
@@ -199,7 +198,26 @@ namespace eval geekosphere::tbar::widget::battery {
 			[expr {$sys($w,batterydisplay,cHeight) - ($fillStatus / 100.0 * ($sys($w,batterydisplay,cHeight)-$sys($w,batterydisplay,endPoleY)))}] \
 			[expr {($sys($w,batterydisplay,cWidth) / 2) + ($sys($w,batterydisplay,cWidth) / 5)}] \
 			$sys($w,batterydisplay,cHeight) \
-			-fill [determineColorOfWidgetByBatteryStatus $w $fillStatus]]
+			-fill $color \
+			-outline $color]
+		
+		# coloring over the ugly line, separating pole and body
+		if {![info exists sys($w,lastColorOverLine)]} {
+			set startLineX [expr {$startPoleX+1}]
+			set startLineY $endPoleY
+			set endLineX [expr {$endPoleX-1}]
+			set endLineY $endPoleY
+			set sys($w,lastColorOverLine) [$canvasPath create rectangle $startLineX $startLineY $endLineX $endLineY]
+		}
+		if {$fillStatus == 100} {
+			$canvasPath itemconfigure $sys($w,lastColorOverLine) -fill $color -outline $color
+		} else {
+			$canvasPath itemconfigure $sys($w,lastColorOverLine) -fill $sys($w,background)  -outline $sys($w,background) 
+		}
+		
+		# updating color of all boxes
+		$canvasPath itemconfigure $sys($w,batteryPole) -outline $color
+		$canvasPath itemconfigure $sys($w,batteryBody) -outline $color
 	}
 
 	# determine the color of the widget by loading status

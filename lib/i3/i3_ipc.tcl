@@ -57,10 +57,11 @@ namespace eval geekosphere::tbar::i3::ipc {
 			disconnect
 			log "ERROR" "Error reading socket, forcefully disconnected, attempting to reconnect: $::errorInfo"
 			connect
-
 		}
 		::geekosphere::tbar::util::hex::puthex $data
-		foreach message [parseData $data] {
+		set messages [parseData $data]
+		if {$messages == -1} { # TODO: do error handling here }
+		foreach message $messages {
 			set sys(info_reply) $message
 		}
 	}
@@ -73,7 +74,9 @@ namespace eval geekosphere::tbar::i3::ipc {
 			connect
 		}
 		::geekosphere::tbar::util::hex::puthex $data
-		foreach message [parseData $data] {
+		set messages [parseData $data]
+                if {$messages == -1} { # TODO: do error handling here}
+                foreach message $messages {
 			set sys(event_reply) $message
 		}
 	}
@@ -161,9 +164,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 			binary scan $data @${mark}a${sys(magicLen)}nn magic length type
 			if {![info exists type]} {
 				log "ERROR" "Unable to parse message"
-				disconnect
-				connect
-				return
+				return -1
 			}
 			log "DEBUG" "Message length was ${dataLength}"
 			if {$magic ne $sys(magic)} { error "Magic string was '${magic}', should have been '${sys(magic)}'" }

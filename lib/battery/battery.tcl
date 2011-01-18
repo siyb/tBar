@@ -12,6 +12,8 @@ proc battery {w args} {
 }
 
 catch {namespace import ::geekosphere::tbar::util::logger::* }
+# TODO: warning if battery reaches critical level
+# TODO: better visualisation
 namespace eval geekosphere::tbar::widget::battery {
 	initLogger
 
@@ -109,6 +111,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		set chargeDict [calculateCharge $w]
 		set sys($w,timeRemaining) [dict get $chargeDict time]
 		set sys($w,chargeInPercent) [dict get $chargeDict percent]
+		set sys($w,status) [dict get $chargeDict status]
 	}
 
 	#
@@ -135,6 +138,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		}
 		pack [label ${batteryWindow}.time -text "Time Remaining: $sys($w,timeRemaining)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
 		pack [label ${batteryWindow}.percent -text "Battery Left: $sys($w,chargeInPercent)%" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
+		pack [label ${batteryWindow}.status -text "Status: $sys($w,status)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
 		positionWindowRelativly $batteryWindow $w
 	}
 
@@ -185,8 +189,6 @@ namespace eval geekosphere::tbar::widget::battery {
 			set timeLeft [expr {($total*1.0 - $remaining) / $rate}]
 		} elseif {$status eq "-" || $status eq "Discharging"} {
 			set timeLeft [expr {$remaining*1.0 / $rate}]
-		} elseif {$status eq "full"} {
-			# do something here
 		} else {
 			set timeLeft -1
 			dict set returnDict time "N/A"
@@ -195,6 +197,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		set h [expr {round(floor($timeLeft))}]
 		set m [expr {round(floor(($timeLeft - $h) * 60.0))}]
 		dict set returnDict time "${h}:${m}"
+		dict set returnDict status $status
 		return $returnDict
 	}
 

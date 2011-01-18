@@ -51,6 +51,8 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,warnat) -1
 		set sys($w,hasBeenWarned) 0
 		set sys($w,lastStatus) -1
+		set sys($w,notifyFullyCharged) 0
+		set sys($w,hasBeenNotified) 0
 		
 		setBatteryDirs $w;# determine battery directory
 		determineBatteryInformationFiles $w $sys($w,batteryDir);# set files which contain charging information
@@ -104,6 +106,9 @@ namespace eval geekosphere::tbar::widget::battery {
 					"-warnAt" {
 						setWarnAt $w $value
 					}
+					"-notifyFullyCharged" {
+						setNotifyFullyCharged $w $value
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -126,10 +131,15 @@ namespace eval geekosphere::tbar::widget::battery {
 			set sys($w,lastStatus) $sys($w,status);# saving last status
 		}
 		set sys($w,status) [dict get $chargeDict status]
-		if {$sys($w,status) ne $sys($w,lastStatus)} {;# reset warning status if charger has been connected / disconnected etc
+		
+		# reset warning / notification status if charger has been connected / disconnected etc
+		if {$sys($w,status) ne $sys($w,lastStatus)} {
 			set sys($w,hasBeenWarned) 0
+			set sys($w,hasBeenNotified) 0
 		}
+		
 		drawWarnWindow $w
+		drawFullyChargedWindow $w
 		adjustBatteryStatusDisplay $w $sys($w,chargeInPercent)
 	}
 
@@ -179,6 +189,15 @@ namespace eval geekosphere::tbar::widget::battery {
 		if {$sys($w,warnat) != -1 && $sys($w,chargeInPercent) <= $sys($w,warnat) && ![winfo exists ${w}.warnWindow] && !$sys($w,hasBeenWarned) && $sys($w,status) ne "Charging" && $sys($w,status) ne "+"} {
 			tk_dialog ${w}.warnWindow "Battery warning" "Warning, $sys($w,chargeInPercent)% battery left" "" 0 Ok
 			set sys($w,hasBeenWarned) 1
+		}
+	}
+	
+	# draws a notification window if the battery has been fully charged and if the notification has been enabled ;)
+	proc drawFullyChargedWindow {w} {
+		variable sys
+		if {$sys($w,notifyFullyCharged) && $sys($w,chargeInPercent) == 100 && !$sys($w,hasBeenNotified)} {
+			tk_dialog ${w}.warnWindow "Battery info" "Battery has been fully charged!" "" 0 Ok
+			set sys($w,hasBeenNotified) 1
 		}
 	}
 
@@ -331,6 +350,15 @@ namespace eval geekosphere::tbar::widget::battery {
 		variable sys
 		$sys($w,originalCommand) configure -height $height
 		${w}.batteryDisplay configure -height $height
+	}
+	
+	proc setNotifyFullyCharged {w notify} {
+		variable sys
+		if {$notify != 0 &&  $notify != 1} {
+			log "ERROR" "-notifyFullyCharged must be 1 or 0, falling back to 0"
+			return
+		}
+		set sys($w,notifyFullyCharged) $notify
 	}
 	
 	proc setWarnAt {w warnat} {

@@ -126,7 +126,8 @@ setLogLevel "DEBUG"
 # -lc / -lowColor - the color to be used when battery is low
 # -mc / -mediumColor - the color to be used when battery is neither low nor high
 # -hc / -highColor - the color to be used when battery is high
-#addWidgetToBar battery battery1 1 -warnAt 5 -lc "red" -hc "green" -mc "yellow"
+# -notifyFullyCharged - must be 0 or 1, if set to 1, the widget will notify the user when the battery is fully charged
+#addWidgetToBar battery battery1 1 -warnAt 5 -lc "red" -hc "green" -mc "yellow" -notifyFullyCharged 1
 #addText " | " "red"
 
 # Displays the time

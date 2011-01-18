@@ -117,6 +117,18 @@ setLogLevel "DEBUG"
 #addWidgetToBar notify notify1 1 -image "/home/user/someimage" -imageDimensions 10X10 -notifyAt {[file exists "/home/user/somefile"]}
 #addText " | " "red"
 
+# Displays the battery status.
+#
+# -fg / -foreground - the text color
+# -bg / -background - the background color
+# -warnAt - will warn the user if N percent battery charge is reached
+# -battery - specify the battery, e.g. BAT0, only use this parameter if automatic determination fails!
+# -lc / -lowColor - the color to be used when battery is low
+# -mc / -mediumColor - the color to be used when battery is neither low nor high
+# -hc / -highColor - the color to be used when battery is high
+#addWidgetToBar battery battery1 1 -warnAt 5 -lc "red" -hc "green" -mc "yellow"
+#addText " | " "red"
+
 # Displays the time
 #
 # -fg / -foreground - the text color

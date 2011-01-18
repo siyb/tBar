@@ -80,8 +80,14 @@ namespace eval geekosphere::tbar::widget::battery {
 					"-bg" - "-background" {
 						changeBackgroundColor $w $value
 					}
-					"-dc" - "-displayColor" {
-						changeDisplayColor $w $value
+					"-lc" - "-lowColor" {
+						changeLowColor $w $value
+					}
+					"-mc" - "-mediumColor" {
+						changeMediumColor $w $value
+					}
+					"-hc" - "-highColor" {
+						changeHighColor $w $value
 					}
 					"-width" {
 						changeWidth $w $value
@@ -124,11 +130,24 @@ namespace eval geekosphere::tbar::widget::battery {
 			set sys($w,hasBeenWarned) 0
 		}
 		drawWarnWindow $w
+		adjustBatteryStatusDisplay $w $sys($w,chargeInPercent)
 	}
 
 	#
 	# GUI related stuff
 	#
+	
+	# adjust the color of the widget according to the charge state (low, medium, high)
+	proc adjustBatteryStatusDisplay {w charge} {
+		variable sys
+		if {$charge <= 10} {
+			${w}.batteryDisplay configure -fg $sys($w,lowColor)
+		} elseif {$charge >= 80} {
+			${w}.batteryDisplay configure -fg $sys($w,highColor)
+		} else {
+			${w}.batteryDisplay configure -fg $sys($w,mediumColor)
+		}
+	}
 	
 	# draws a battery display for each battery found. Requires
 	# setBatteryDirs to be called beforehand
@@ -288,7 +307,19 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,font) $font
 	}
 	
-	proc changeDisplayColor {w width} {
+	proc changeLowColor {w color} {
+		variable sys
+		set sys($w,lowColor) $color
+	}
+
+	proc changeMediumColor {w color} {
+		variable sys
+		set sys($w,mediumColor) $color
+	}
+
+	proc changeHighColor {w color} {
+		variable sys
+		set sys($w,highColor) $color
 	}
 
 	proc changeWidth {w width} {
@@ -300,10 +331,6 @@ namespace eval geekosphere::tbar::widget::battery {
 		variable sys
 		$sys($w,originalCommand) configure -height $height
 		${w}.batteryDisplay configure -height $height
-	}
-	
-	proc changeLoadColor {w color} {
-		variable sys
 	}
 	
 	proc setWarnAt {w warnat} {

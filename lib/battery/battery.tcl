@@ -10,9 +10,9 @@ proc battery {w args} {
 	}
 	return $w
 }
-
+# TODO: better integration of battery widget, canvas update as opposed to deleting and recreating it every time
+# TODO: remove line between battery pole and battery body
 catch {namespace import ::geekosphere::tbar::util::logger::* }
-# TODO: better visualisation
 namespace eval geekosphere::tbar::widget::battery {
 	initLogger
 
@@ -54,12 +54,17 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,notifyFullyCharged) 0
 		set sys($w,hasBeenNotified) 0
 		
+		set sys($w,lowBattery) 10
+		set sys($w,highBattery) 65
+		
+		set sys($w,height) 0
+		set sys($w,width) 0
+		
 		setBatteryDirs $w;# determine battery directory
 		determineBatteryInformationFiles $w $sys($w,batteryDir);# set files which contain charging information
 		
 		
 		frame ${w}
-		drawBatteryWidget $w
 		uplevel #0 rename $w ${w}_
 		
 		action $w configure $arguments
@@ -140,31 +145,64 @@ namespace eval geekosphere::tbar::widget::battery {
 		
 		drawWarnWindow $w
 		drawFullyChargedWindow $w
-		adjustBatteryStatusDisplay $w $sys($w,chargeInPercent)
+		drawBatteryDisplay $w $sys($w,chargeInPercent)
 	}
 
 	#
 	# GUI related stuff
 	#
 	
-	# adjust the color of the widget according to the charge state (low, medium, high)
-	proc adjustBatteryStatusDisplay {w charge} {
+	# draws a battery on a canvas
+	proc drawBatteryDisplay {w fillStatus} {
 		variable sys
-		if {$charge <= 10} {
-			${w}.batteryDisplay configure -fg $sys($w,lowColor)
-		} elseif {$charge >= 80} {
-			${w}.batteryDisplay configure -fg $sys($w,highColor)
-		} else {
-			${w}.batteryDisplay configure -fg $sys($w,mediumColor)
+		if {$fillStatus < 0 || $fillStatus > 100} {
+			error "Fillstatus must be between 0 and 100 percent"
 		}
+		set canvasPath ${w}.batterydisplay
+		if {[winfo exists $canvasPath]} {
+			destroy $canvasPath
+		}
+		pack [canvas $canvasPath -height 10 -width 10 -bg $sys($w,background) -height $sys($w,height) -width $sys($w,width) -highlightthickness 0]
+		set cWidth [$canvasPath cget -width]
+		set cHeight [$canvasPath cget -height]
+
+		# drawing battery + pole
+		set startPoleX [expr {($cWidth / 2) - ($cWidth / 10)}]
+		set startPoleY 1
+		set endPoleX [expr {($cWidth / 2) + ($cWidth / 10)}]
+		set endPoleY [expr {$cHeight - ($cHeight - ($cHeight/5))}]
+		set rect [$canvasPath create rectangle $startPoleX $startPoleY $endPoleX $endPoleY]
+		if {$fillStatus == 100} {
+			$canvasPath itemconfigure $rect -fill [determineColorOfWidgetByBatteryStatus $w $fillStatus]
+		}
+
+		# drawing battery "body"
+		set startBodyX [expr {($cWidth / 2) - ($cWidth / 5)}]
+		set startBodyY $endPoleY
+		set endBodyX [expr {($cWidth / 2) + ($cWidth / 5)}]
+		set endBodyY $cHeight
+		$canvasPath create rectangle $startBodyX $startBodyY $endBodyX $endBodyY
+		
+		# drawing the fill status
+		$canvasPath create rectangle \
+			[expr {($cWidth / 2) - ($cWidth / 5)}] \
+			[expr {$cHeight - ($fillStatus / 100.0 * ($cHeight-$endPoleY))}] \
+			[expr {($cWidth / 2) + ($cWidth / 5)}] \
+			$cHeight \
+			-fill [determineColorOfWidgetByBatteryStatus $w $fillStatus]
+		bind $canvasPath <Button-1> [namespace code [list displayBatteryInfo $w]]
 	}
-	
-	# draws a battery display for each battery found. Requires
-	# setBatteryDirs to be called beforehand
-	proc drawBatteryWidget {w} {
+
+	# determine the color of the widget by loading status
+	proc determineColorOfWidgetByBatteryStatus {w fillStatus} {
 		variable sys
-		pack [label ${w}.batteryDisplay -text "Battery"]
-		bind ${w}.batteryDisplay <Button-1> [namespace code [list displayBatteryInfo $w]]
+		if {$fillStatus < $sys($w,lowBattery)} {
+			return "red"
+		} elseif {$fillStatus > $sys($w,highBattery)} {
+			return "green"
+		} else {
+			return "yellow"
+		}
 	}
 
 	# battery display
@@ -308,21 +346,18 @@ namespace eval geekosphere::tbar::widget::battery {
 	proc changeBackgroundColor {w color} {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
-		${w}.batteryDisplay configure -bg $color
 		set sys($w,background) $color
 	}
 	
 	proc changeForegroundColor {w color} {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
-		${w}.batteryDisplay configure -fg $color
 		set sys($w,foreground) $color
 
 	}
 	
 	proc changeFont {w font} {
 		variable sys
-		${w}.batteryDisplay configure -font $font
 		set sys($w,font) $font
 	}
 	
@@ -343,13 +378,14 @@ namespace eval geekosphere::tbar::widget::battery {
 
 	proc changeWidth {w width} {
 		variable sys
-		${w}.batteryDisplay configure -width $width
+		set sys($w,width) $width
+		$sys($w,originalCommand) configure -width $width
 	}
 	
 	proc changeHeight {w height} {
 		variable sys
+		set sys($w,height) $height
 		$sys($w,originalCommand) configure -height $height
-		${w}.batteryDisplay configure -height $height
 	}
 	
 	proc setNotifyFullyCharged {w notify} {

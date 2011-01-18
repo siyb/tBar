@@ -121,7 +121,10 @@ namespace eval geekosphere::tbar {
 					set widgetFile [file join $widgetPath ${widget}.tcl]
 					if {[file exists $widgetFile]} {
 						uplevel #0 source $widgetFile
-						geekosphere::tbar::wrapper::${widget}::init $path $settingsList
+						if {[geekosphere::tbar::wrapper::${widget}::init $path $settingsList] == -1} {
+							log "ERROR" "Could not load ${widget}"
+							break
+						}
 						makeBindings $key
 						if {$updateInterval > 0} { updateWidget $path $widget $updateInterval }
 						log "INFO" "Widget $widget loaded from $widgetFile"

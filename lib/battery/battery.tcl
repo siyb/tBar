@@ -3,7 +3,9 @@ package provide battery 1.0
 package require logger
 
 proc battery {w args} {
-	geekosphere::tbar::widget::battery::makeBattery $w $args
+	if {[geekosphere::tbar::widget::battery::makeBattery $w $args] == -1} {
+		return -1
+	}
 
 	proc $w {args} {
 		geekosphere::tbar::widget::battery::action [string trim [dict get [info frame 0] proc] ::] $args
@@ -58,7 +60,9 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,height) 0
 		set sys($w,width) 0
 		
-		setBatteryDirs $w;# determine battery directory
+		if {[setBatteryDirs $w] == -1} {;# determine battery directory
+			return -1
+		}
 		determineBatteryInformationFiles $w $sys($w,batteryDir);# set files which contain charging information
 		
 		
@@ -127,6 +131,7 @@ namespace eval geekosphere::tbar::widget::battery {
 	
 	proc updateWidget {w} {
 		variable sys
+		if {![info exists sys($w,batteryDir)]} { return }
 		set chargeDict [calculateCharge $w]
 		set sys($w,timeRemaining) [dict get $chargeDict time]
 		set sys($w,chargeInPercent) [dict get $chargeDict percent]
@@ -276,7 +281,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		if {[info exists sys($w,batteryDir)]} { return }
 		set iter 0
 		set batteryDirs [getBatteryDirs]
-		if {[llength $batteryDirs] != 1} { log "ERROR" "No batteries or mulptiple batteries found, use the -battery option to specify the battery you wish to monitor." }
+		if {[llength $batteryDirs] != 1} { log "ERROR" "No batteries or mulptiple batteries found, use the -battery option to specify the battery you wish to monitor."; return -1}
 		set sys($w,batteryDir) $batteryDirs
 		log "INFO" "Found battery at '$batteryDirs'"
 	}

@@ -12,7 +12,6 @@ proc battery {w args} {
 }
 
 catch {namespace import ::geekosphere::tbar::util::logger::* }
-# TODO: warning if battery reaches critical level
 # TODO: better visualisation
 namespace eval geekosphere::tbar::widget::battery {
 	initLogger
@@ -49,6 +48,9 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,originalCommand) ${w}_
 		set sys($w,batteryInformation,now) -1
 		set sys($w,batteryInformation,full) -1
+		set sys($w,warnat) -1
+		set sys($w,hasBeenWarned) 0
+		set sys($w,lastStatus) -1
 		
 		setBatteryDirs $w;# determine battery directory
 		determineBatteryInformationFiles $w $sys($w,batteryDir);# set files which contain charging information
@@ -93,6 +95,9 @@ namespace eval geekosphere::tbar::widget::battery {
 					"-battery" {
 						setBattery $w $value
 					}
+					"-warnAt" {
+						setWarnAt $w $value
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -111,7 +116,14 @@ namespace eval geekosphere::tbar::widget::battery {
 		set chargeDict [calculateCharge $w]
 		set sys($w,timeRemaining) [dict get $chargeDict time]
 		set sys($w,chargeInPercent) [dict get $chargeDict percent]
+		if {[info exists sys($w,status)]} {
+			set sys($w,lastStatus) $sys($w,status);# saving last status
+		}
 		set sys($w,status) [dict get $chargeDict status]
+		if {$sys($w,status) ne $sys($w,lastStatus)} {;# reset warning status if charger has been connected / disconnected etc
+			set sys($w,hasBeenWarned) 0
+		}
+		drawWarnWindow $w
 	}
 
 	#
@@ -140,6 +152,15 @@ namespace eval geekosphere::tbar::widget::battery {
 		pack [label ${batteryWindow}.percent -text "Battery Left: $sys($w,chargeInPercent)%" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
 		pack [label ${batteryWindow}.status -text "Status: $sys($w,status)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
 		positionWindowRelativly $batteryWindow $w
+	}
+
+	# draws the warning window if appropriate
+	proc drawWarnWindow {w} {
+		variable sys
+		if {$sys($w,warnat) != -1 && $sys($w,chargeInPercent) <= $sys($w,warnat) && ![winfo exists ${w}.warnWindow] && !$sys($w,hasBeenWarned) && $sys($w,status) ne "Charging" && $sys($w,status) ne "+"} {
+			tk_dialog ${w}.warnWindow "Battery warning" "Warning, $sys($w,chargeInPercent)% battery left" "" 0 Ok
+			set sys($w,hasBeenWarned) 1
+		}
 	}
 
 	#
@@ -283,6 +304,16 @@ namespace eval geekosphere::tbar::widget::battery {
 	
 	proc changeLoadColor {w color} {
 		variable sys
+	}
+	
+	proc setWarnAt {w warnat} {
+		variable sys
+		if {![string is integer $warnat]} { 
+			log "ERROR" "-warnAt value is not an integer, falling back to 5%"
+			set sys($w,warnat) 5
+		} else {
+			set sys($w,warnat) $warnat
+		}
 	}
 	
 	proc setBattery {w battery} {

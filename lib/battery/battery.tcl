@@ -325,7 +325,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		}
 		set h [expr {round(floor($timeLeft))}]
 		set m [expr {round(floor(($timeLeft - $h) * 60.0))}]
-		dict set returnDict time "${h}:${m}"
+		dict set returnDict time [format "%02d:%02d" ${h} ${m}]
 		dict set returnDict status $status
 		return $returnDict
 	}

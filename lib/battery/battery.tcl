@@ -12,6 +12,7 @@ proc battery {w args} {
 	}
 	return $w
 }
+# TODO: charge status display is not really cen
 catch {namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::widget::battery {
 	initLogger
@@ -53,7 +54,8 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,lastStatus) -1
 		set sys($w,notifyFullyCharged) 0
 		set sys($w,hasBeenNotified) 0
-		
+		set sys($w,showChargeStatus) 1
+		set sys($w,batteryChargeSymbolColor) black
 		set sys($w,lowBattery) 10
 		set sys($w,highBattery) 65
 		
@@ -116,6 +118,12 @@ namespace eval geekosphere::tbar::widget::battery {
 					"-notifyFullyCharged" {
 						setNotifyFullyCharged $w $value
 					}
+					"-showChargeStatus" {
+						setShowChargeStatus $w $value
+					}
+					"-batteryChargeSymbolColor" {
+						setBatteryChargeSymbolColor $w $value
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -164,7 +172,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		set canvasPath ${w}.batterydisplay
 		set color [determineColorOfWidgetByBatteryStatus $w $fillStatus]
 		if {![winfo exists $canvasPath]} {
-			pack [canvas $canvasPath -height 10 -width 10 -bg $sys($w,background) -height $sys($w,height) -width $sys($w,width) -highlightthickness 0]
+			pack [canvas $canvasPath -bg $sys($w,background) -height $sys($w,height) -width $sys($w,width) -highlightthickness 0]
 			set cWidth [$canvasPath cget -width]
 			set cHeight [$canvasPath cget -height]
 
@@ -205,6 +213,26 @@ namespace eval geekosphere::tbar::widget::battery {
 			$sys($w,batterydisplay,cHeight) \
 			-fill $color \
 			-outline $color]
+		
+		# drawing discharge / charge symbol
+		if {$sys($w,showChargeStatus)} {
+			if {[info exists sys($w,batteryChargeSymbol)]} { $canvasPath delete $sys($w,batteryChargeSymbol) }
+			set status [getStatus $sys($w,batteryDir)]
+			set symbol "?"
+			if {$status eq "Discharging" || $status == "-"} { 
+			set symbol "-"
+			} elseif {$status eq "Charging" || $status eq "+"} {
+				set symbol "+"
+			}
+			#set rgb [split [winfo rgb . [$canvasPath itemcget $sys($w,batteryBody) -outline]]]
+			#set negativeColor [format "#%x%x%x" [expr {65535 - [lindex $rgb 0]}] [expr {65535 - [lindex $rgb 1]}] [expr {65535 - [lindex $rgb 2]}]]
+			set tmpFont [font create {*}[font configure $sys($w,font)]]
+			font configure $tmpFont -size [expr {round($sys($w,batterydisplay,cWidth) / 2.5)}] -weight bold
+			set sys($w,batteryChargeSymbol) \
+				[$canvasPath create text \
+					[expr {$sys($w,batterydisplay,cWidth)  / 2}] [expr {($sys($w,batterydisplay,cHeight) / 2) + ($sys($w,batterydisplay,cHeight) / 10)}] \
+					-anchor c -text $symbol -fill $sys($w,batteryChargeSymbolColor) -font $tmpFont]
+		}
 		
 		# coloring over the ugly line, separating pole and body
 		if {![info exists sys($w,lastColorOverLine)]} {
@@ -439,6 +467,15 @@ namespace eval geekosphere::tbar::widget::battery {
 		}
 	}
 	
+	proc setShowChargeStatus {w showChargeStatus} {
+		variable sys
+		if {$showChargeStatus != 1 && $showChargeStatus != 0} {
+			log "ERROR" "-showChargeStatus must be 1 or 0, falling back to 1"
+			return
+		}
+		set sys($w,showChargeStatus) $showChargeStatus
+	}
+	
 	proc setBattery {w battery} {
 		variable sys
 		set batteryDir [file join [dict get $sys(battery) dir] $battery]
@@ -447,5 +484,10 @@ namespace eval geekosphere::tbar::widget::battery {
 			return
 		}
 		set sys($w,batteryDir) $batteryDir
+	}
+	
+	proc setBatteryChargeSymbolColor {w color} {
+		variable sys
+		set sys($w,batteryChargeSymbolColor) $color
 	}
 }

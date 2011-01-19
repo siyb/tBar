@@ -127,6 +127,8 @@ setLogLevel "DEBUG"
 # -mc / -mediumColor - the color to be used when battery is neither low nor high
 # -hc / -highColor - the color to be used when battery is high
 # -notifyFullyCharged - must be 0 or 1, if set to 1, the widget will notify the user when the battery is fully charged
+# -showChargeStatus - must be 0 or 1, if set to 1, the widget will display a + or a - depending on the charge status of the battery
+# -batteryChargeSymbolColor - the color of the charge symbol, will only take effect if -showChargeStatus is 1
 #addWidgetToBar battery battery1 1 -warnAt 5 -lc "red" -hc "green" -mc "yellow" -notifyFullyCharged 1
 #addText " | " "red"
 

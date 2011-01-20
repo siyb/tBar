@@ -52,28 +52,37 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,warnat) -1
 		set sys($w,hasBeenWarned) 0
 		set sys($w,lastStatus) -1
+		# should the user be informed, that the battery is fully charged
 		set sys($w,notifyFullyCharged) 0
+		# a flag to determine if the user has been notified that the battery is fully charged
 		set sys($w,hasBeenNotified) 0
+		# display +/- sign when charging / discharging
 		set sys($w,showChargeStatus) 1
+		# the color of the +/- sign of the battery widget
 		set sys($w,batteryChargeSymbolColor) black
+		# the value that constitutes a low battery charge
 		set sys($w,lowBattery) 10
-		set sys($w,highBattery) 65
-		
+		# the value that consitutes a high battery charge
+		set sys($w,highBattery) 65;
+		# height of the widget
 		set sys($w,height) 0
+		# width of the widget
 		set sys($w,width) 0
-		
+		# if this flag is set to 1, the battery widget knows that there is no battery available and act accordingly	
+		set sys($w,unavailable) 0
+
 		if {[setBatteryDirs $w] == -1} {;# determine battery directory
-			return -1
+			set sys($w,unavailable) 1
+			log "ERROR" "No batteries or mulptiple batteries found, use the -battery option to specify the battery you wish to monitor."
+		} else {
+			determineBatteryInformationFiles $w $sys($w,batteryDir);# set files which contain charging information
+			log "INFO" "Battery information: [getInfo $sys($w,batteryDir)]"
 		}
-		determineBatteryInformationFiles $w $sys($w,batteryDir);# set files which contain charging information
-		
 		
 		frame ${w}
 		uplevel #0 rename $w ${w}_
 		
 		action $w configure $arguments
-		
-		log "INFO" "Battery information: [getInfo $sys($w,batteryDir)]"
 	}
 
 
@@ -139,23 +148,28 @@ namespace eval geekosphere::tbar::widget::battery {
 	
 	proc updateWidget {w} {
 		variable sys
-		if {![info exists sys($w,batteryDir)]} { return }
-		set chargeDict [calculateCharge $w]
-		set sys($w,timeRemaining) [dict get $chargeDict time]
-		set sys($w,chargeInPercent) [dict get $chargeDict percent]
-		if {[info exists sys($w,status)]} {
-			set sys($w,lastStatus) $sys($w,status);# saving last status
+		if {![isBatteryPresent $w]} {;# the battery we are attempting to poll has been removed
+			set sys($w,unavailable) 1
+			set sys($w,chargeInPercent) 100;# if we can't poll the battery, the fillstatus will be 100 (cable attached)
+			setBatteryDirs $w;# attempt to find battery, if non has been detected yet (battery path is empty)
+		} else {;# the battery we are attempting to poll is still present
+			set chargeDict [calculateCharge $w]
+			set sys($w,timeRemaining) [dict get $chargeDict time]
+			set sys($w,chargeInPercent) [dict get $chargeDict percent]
+			if {[info exists sys($w,status)]} {
+				set sys($w,lastStatus) $sys($w,status);# saving last status
+			}
+			set sys($w,status) [dict get $chargeDict status]
+
+			# reset warning / notification status if charger has been connected / disconnected etc
+			if {$sys($w,status) ne $sys($w,lastStatus)} {
+				set sys($w,hasBeenWarned) 0
+				set sys($w,hasBeenNotified) 0
+			}
+			set sys($w,unavailable) 0
+			drawWarnWindow $w
+			drawFullyChargedWindow $w
 		}
-		set sys($w,status) [dict get $chargeDict status]
-		
-		# reset warning / notification status if charger has been connected / disconnected etc
-		if {$sys($w,status) ne $sys($w,lastStatus)} {
-			set sys($w,hasBeenWarned) 0
-			set sys($w,hasBeenNotified) 0
-		}
-		
-		drawWarnWindow $w
-		drawFullyChargedWindow $w
 		drawBatteryDisplay $w $sys($w,chargeInPercent)
 	}
 
@@ -214,8 +228,9 @@ namespace eval geekosphere::tbar::widget::battery {
 			-fill $color \
 			-outline $color]
 		
+		set tmpFont [font create {*}[font configure $sys($w,font)]]
 		# drawing discharge / charge symbol
-		if {$sys($w,showChargeStatus)} {
+		if {$sys($w,showChargeStatus) && !$sys($w,unavailable)} {
 			if {[info exists sys($w,batteryChargeSymbol)]} { $canvasPath delete $sys($w,batteryChargeSymbol) }
 			set status [getStatus $sys($w,batteryDir)]
 			set symbol "?"
@@ -226,7 +241,6 @@ namespace eval geekosphere::tbar::widget::battery {
 			}
 			#set rgb [split [winfo rgb . [$canvasPath itemcget $sys($w,batteryBody) -outline]]]
 			#set negativeColor [format "#%x%x%x" [expr {65535 - [lindex $rgb 0]}] [expr {65535 - [lindex $rgb 1]}] [expr {65535 - [lindex $rgb 2]}]]
-			set tmpFont [font create {*}[font configure $sys($w,font)]]
 			font configure $tmpFont -size [expr {round($sys($w,batterydisplay,cWidth) / 2.5)}] -weight bold
 			set sys($w,batteryChargeSymbol) \
 				[$canvasPath create text \
@@ -245,12 +259,21 @@ namespace eval geekosphere::tbar::widget::battery {
 		if {$fillStatus == 100} {
 			$canvasPath itemconfigure $sys($w,lastColorOverLine) -fill $color -outline $color
 		} else {
-			$canvasPath itemconfigure $sys($w,lastColorOverLine) -fill $sys($w,background)  -outline $sys($w,background) 
+			$canvasPath itemconfigure $sys($w,lastColorOverLine) -fill $sys($w,background) -outline $sys($w,background) 
 		}
 		
 		# updating color of all boxes
 		$canvasPath itemconfigure $sys($w,batteryPole) -outline $color
 		$canvasPath itemconfigure $sys($w,batteryBody) -outline $color
+
+		# draw an X if battery is unavailable
+		if {$sys($w,unavailable)} {
+			if {[info exists sys($w,unavailableSymbol)]} { $canvasPath delete $sys($w,unavailableSymbol) }
+			font configure $tmpFont -size [expr {round($sys($w,batterydisplay,cWidth) / 2.5)}] -weight bold
+			set sys($w,unavailableSymbol) [$canvasPath create text \
+				[expr {$sys($w,batterydisplay,cWidth)  / 2}] [expr {($sys($w,batterydisplay,cHeight) / 2) + ($sys($w,batterydisplay,cHeight) / 10)}] \
+				-anchor c -text "X" -fill [determineColorOfWidgetByBatteryStatus $w 0] -font $tmpFont]
+		}
 	}
 
 	# determine the color of the widget by loading status
@@ -268,6 +291,7 @@ namespace eval geekosphere::tbar::widget::battery {
 	# battery display
 	proc displayBatteryInfo {w} {
 		variable sys
+		if {[info exists sys($w,unavailable)] && $sys($w,unavailable)} { return }
 		set batteryWindow ${w}.batteryWindow
 		if {![winfo exists $batteryWindow]} {
 			toplevel $batteryWindow
@@ -303,13 +327,18 @@ namespace eval geekosphere::tbar::widget::battery {
 	# Stuff required to obtain battery charging status
 	#
 
+	# check if the specified battery is present
+	proc isBatteryPresent {w} {
+		variable sys
+		return [expr {[info exists sys($w,batteryDir)] && [file isdirectory $sys($w,batteryDir)]}]
+	}
+
 	# sets widget dependant variables for battery directories
 	proc setBatteryDirs {w} {
 		variable sys
 		if {[info exists sys($w,batteryDir)]} { return }
-		set iter 0
 		set batteryDirs [getBatteryDirs]
-		if {[llength $batteryDirs] != 1} { log "ERROR" "No batteries or mulptiple batteries found, use the -battery option to specify the battery you wish to monitor."; return -1}
+		if {[llength $batteryDirs] != 1} { return -1 }
 		set sys($w,batteryDir) $batteryDirs
 		log "INFO" "Found battery at '$batteryDirs'"
 	}

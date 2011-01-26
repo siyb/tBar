@@ -19,22 +19,22 @@ namespace eval geekosphere::tbar::widget::battery {
 
 	# Information files for battery status
 	dict set sys(battery) dir [file join / sys class power_supply]
-	
+
 	dict set sys(battery) energy_full_design "energy_full_design"
 	dict set sys(battery) energy_now "energy_now"
 	dict set sys(battery) energy_full "energy_full"
-	
+
 	dict set sys(battery) charge_now "charge_now"
 	dict set sys(battery) charge_full "charge_full"
-	
+
 	dict set sys(battery) current_now "current_now"
-	
+
 	dict set sys(battery) present "present";# is the battery present
 	dict set sys(battery) status "status";# e.g. charging
-	
+
 	dict set sys(battery) voltage_min_design "voltage_min_design"
 	dict set sys(battery) voltage_now "voltage_now"
-	
+
 	# some more stuff
 	dict set sys(battery) manufacturer "manufacturer"
 	dict set sys(battery) model_name "model_name"
@@ -78,10 +78,10 @@ namespace eval geekosphere::tbar::widget::battery {
 			determineBatteryInformationFiles $w $sys($w,batteryDir);# set files which contain charging information
 			log "INFO" "Battery information: [getInfo $sys($w,batteryDir)]"
 		}
-		
+
 		frame ${w}
 		uplevel #0 rename $w ${w}_
-		
+
 		action $w configure $arguments
 	}
 
@@ -145,7 +145,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		}
 
 	}
-	
+
 	proc updateWidget {w} {
 		variable sys
 		if {![isBatteryPresent $w]} {;# the battery we are attempting to poll has been removed
@@ -176,7 +176,7 @@ namespace eval geekosphere::tbar::widget::battery {
 	#
 	# GUI related stuff
 	#
-	
+
 	# draws a battery on a canvas
 	proc drawBatteryDisplay {w fillStatus} {
 		variable sys
@@ -206,19 +206,19 @@ namespace eval geekosphere::tbar::widget::battery {
 			set endBodyX [expr {($cWidth / 2) + ($cWidth / 5)}]
 			set endBodyY $cHeight
 			set sys($w,batteryBody) [$canvasPath create rectangle $startBodyX $startBodyY $endBodyX $endBodyY]
-		
+
 			bind $canvasPath <Button-1> [namespace code [list displayBatteryInfo $w]]
-			
+
 			# some vars for drawing the fillstatus
 			set sys($w,batterydisplay,cWidth) $cWidth
 			set sys($w,batterydisplay,cHeight) $cHeight
 			set sys($w,batterydisplay,endPoleY) $endPoleY
 		}
-		
+
 		if {[info exists sys($w,lastBatteryStatusBox)]} {
 			$canvasPath delete $sys($w,lastBatteryStatusBox)
 		}
-		
+
 		# drawing the fill status
 		set sys($w,lastBatteryStatusBox) [$canvasPath create rectangle \
 			[expr {($sys($w,batterydisplay,cWidth) / 2) - ($sys($w,batterydisplay,cWidth) / 5)}] \
@@ -227,7 +227,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			$sys($w,batterydisplay,cHeight) \
 			-fill $color \
 			-outline $color]
-		
+
 		set tmpFont [font create {*}[font configure $sys($w,font)]]
 		# drawing discharge / charge symbol
 		if {$sys($w,showChargeStatus) && !$sys($w,unavailable)} {
@@ -247,7 +247,7 @@ namespace eval geekosphere::tbar::widget::battery {
 					[expr {$sys($w,batterydisplay,cWidth)  / 2}] [expr {($sys($w,batterydisplay,cHeight) / 2) + ($sys($w,batterydisplay,cHeight) / 10)}] \
 					-anchor c -text $symbol -fill $sys($w,batteryChargeSymbolColor) -font $tmpFont]
 		}
-		
+
 		# coloring over the ugly line, separating pole and body
 		if {![info exists sys($w,lastColorOverLine)]} {
 			set startLineX [expr {$startPoleX+1}]
@@ -259,9 +259,9 @@ namespace eval geekosphere::tbar::widget::battery {
 		if {$fillStatus == 100} {
 			$canvasPath itemconfigure $sys($w,lastColorOverLine) -fill $color -outline $color
 		} else {
-			$canvasPath itemconfigure $sys($w,lastColorOverLine) -fill $sys($w,background) -outline $sys($w,background) 
+			$canvasPath itemconfigure $sys($w,lastColorOverLine) -fill $sys($w,background) -outline $sys($w,background)
 		}
-		
+
 		# updating color of all boxes
 		$canvasPath itemconfigure $sys($w,batteryPole) -outline $color
 		$canvasPath itemconfigure $sys($w,batteryBody) -outline $color
@@ -269,7 +269,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		# draw an X if battery is unavailable
 		if {$sys($w,unavailable)} {
 			if {[info exists sys($w,unavailableSymbol)]} { $canvasPath delete $sys($w,unavailableSymbol) }
-			font configure $tmpFont -size [expr {round($sys($w,batterydisplay,cWidth) / 2.5)}] -weight bold
+			font configure $tmpFont -size [expr {round($sys($w,batterydisplay,cHeight) - ($sys($w,batterydisplay,cHeight) / 10))}] -weight bold
 			set sys($w,unavailableSymbol) [$canvasPath create text \
 				[expr {$sys($w,batterydisplay,cWidth)  / 2}] [expr {($sys($w,batterydisplay,cHeight) / 2) + ($sys($w,batterydisplay,cHeight) / 10)}] \
 				-anchor c -text "X" -fill [determineColorOfWidgetByBatteryStatus $w 0] -font $tmpFont]
@@ -313,7 +313,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			set sys($w,hasBeenWarned) 1
 		}
 	}
-	
+
 	# draws a notification window if the battery has been fully charged and if the notification has been enabled ;)
 	proc drawFullyChargedWindow {w} {
 		variable sys
@@ -362,7 +362,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			log "ERROR" "Unable to determine the battery unit"
 		}
 	}
-	
+
 	# calculates charging / discharging time and percent of battery charge
 	proc calculateCharge {w} {
 		variable sys
@@ -404,14 +404,14 @@ namespace eval geekosphere::tbar::widget::battery {
 		close $fl0;close $fl1;close $fl2;close $fl3
 		return $retDict
 	}
-	
+
 	# get current now
 	proc getCurrentNow {batteryFolder} {
 		variable sys
 		set data [gets [set fl [open [file join $batteryFolder [dict get $sys(battery) current_now]] r]]];close $fl
 		return $data
 	}
-	
+
 	# get remaining capacity
 	proc getRemainingCapacity {w} {
 		variable sys
@@ -419,7 +419,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		set data [gets [set fl [open $sys($w,batteryInformation,now) r]]];close $fl
 		return $data
 	}
-	
+
 	# get total capacity
 	proc getTotalCapacity {w} {
 		variable sys
@@ -431,25 +431,25 @@ namespace eval geekosphere::tbar::widget::battery {
 	#
 	# Widget configuration procs
 	#
-	
+
 	proc changeBackgroundColor {w color} {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
 		set sys($w,background) $color
 	}
-	
+
 	proc changeForegroundColor {w color} {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
 		set sys($w,foreground) $color
 
 	}
-	
+
 	proc changeFont {w font} {
 		variable sys
 		set sys($w,font) $font
 	}
-	
+
 	proc changeLowColor {w color} {
 		variable sys
 		set sys($w,lowColor) $color
@@ -470,13 +470,13 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,width) $width
 		$sys($w,originalCommand) configure -width $width
 	}
-	
+
 	proc changeHeight {w height} {
 		variable sys
 		set sys($w,height) $height
 		$sys($w,originalCommand) configure -height $height
 	}
-	
+
 	proc setNotifyFullyCharged {w notify} {
 		variable sys
 		if {$notify != 0 &&  $notify != 1} {
@@ -485,7 +485,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		}
 		set sys($w,notifyFullyCharged) $notify
 	}
-	
+
 	proc setWarnAt {w warnat} {
 		variable sys
 		if {![string is integer $warnat]} { 
@@ -495,7 +495,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			set sys($w,warnat) $warnat
 		}
 	}
-	
+
 	proc setShowChargeStatus {w showChargeStatus} {
 		variable sys
 		if {$showChargeStatus != 1 && $showChargeStatus != 0} {
@@ -504,7 +504,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		}
 		set sys($w,showChargeStatus) $showChargeStatus
 	}
-	
+
 	proc setBattery {w battery} {
 		variable sys
 		set batteryDir [file join [dict get $sys(battery) dir] $battery]
@@ -514,7 +514,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		}
 		set sys($w,batteryDir) $batteryDir
 	}
-	
+
 	proc setBatteryChargeSymbolColor {w color} {
 		variable sys
 		set sys($w,batteryChargeSymbolColor) $color

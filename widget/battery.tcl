@@ -12,7 +12,7 @@ namespace eval geekosphere::tbar::wrapper::battery {
 			{*}$settingsList] -side $geekosphere::tbar::conf(widgets,position)
 		return $path
 	}
-	
+
 	proc update {path} {
 		$path update
 	}

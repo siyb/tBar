@@ -22,8 +22,6 @@ ifdef EXPERIMENTAL
 	deploykit=tbar_$(version)_kit_git_$(gitv)
 endif
 
-all: install
-
 essential: pkgindex
 	mkdir -p $(DESTDIR)/etc/tbar/
 	mkdir -p $(DESTDIR)/usr/share/man/man1/
@@ -34,7 +32,7 @@ essential: pkgindex
 	cp tbar.1.gz $(DESTDIR)/usr/share/man/man1/
 
 pkgindex:
-	echo "pkg_mkIndex -verbose -direct lib/ */* */*/*" | tclsh
+	echo "pkg_mkIndex -verbose -direct lib/ */* */*/*" | tclsh8.5
 
 install: clean essential
 	mkdir -p $(DESTDIR)/usr/share/tbar/

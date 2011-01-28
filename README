@@ -15,6 +15,9 @@
 	
 	- To uninstall run: make uninstall, make sure to specify DESTFILE if you have done so in the install
 
+	Arch Linux:
+	- Check http://aur.archlinux.org/packages.php?ID=37314
+
 2. User specific widgets and libraries
 
 	From version 1.2 onwards, users are able to integrate custom libraries and widgets using folders located in their userland.
@@ -58,6 +61,7 @@
 	- Thanks to Thomas Sader for creating the starkit build script
 	- Thanks to Colin McCormack (http://wiki.tcl.tk/3650) for his contribution to the program (ical library: http://wiki.tcl.tk/_repo/tcal/)
 	- Thanks to Cybex (http://cybex.b0rk.de/files/tcl/) for the hexdump script
+	- Thanks to Evgeni Golov (sargentd@die-welt.net) for buildy (https://github.com/evgeni/buildy), a neat tool, easing the debian packaging process
 
 6. Contact
 

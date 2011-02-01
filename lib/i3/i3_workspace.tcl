@@ -20,31 +20,31 @@ catch {
 }
 namespace eval geekosphere::tbar::widget::i3::workspace {
 	initLogger
-	
+
 	proc makeI3Workspace {w arguments} {
 		variable sys
-		
+
 		set sys($w,originalCommand) ${w}_
 		set sys($w,workspace) [list]
 		set sys($w,focusColor) "blue"
 		set sys($w,urgentColor) "red"
 		set sys($w,rolloverFontColor) [getOption "-fg" $arguments]
 		set sys($w,rolloverBackgroundColor) [getOption "-bg" $arguments]
-		
+
 		pack [frame ${w}]
-		
+
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_
-	
+
 		set sys($w,lastWorkspaceStatus) [dict create]
-			
+
 		initIpc $w
-	
+
 		# run configuration
 		action $w configure $arguments
-		
+
 	}
-	
+
 	# initialize i3 ipc stuff
 	proc initIpc {w} {
 		connect
@@ -53,7 +53,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		subscribeToWorkspace
 		getWorkspaces
 	}
-	
+
 	proc eventCallback {w args} {
 		variable sys
 		set event [getEvent]
@@ -93,7 +93,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 			}
 		}
 	}
-	
+
 	proc infoCallback {w args} {
 		variable sys
 		set event [getInfo]
@@ -124,7 +124,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 			removeNonopenWorkspaces $w $eventDict
 		}
 	}
-	
+
 	#
 	# Workspace datastructure modificiation
 	#
@@ -150,7 +150,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 			}
 		}
 	}
-	
+
 	proc setUrgentStatus {w workspaceId status} {
 		variable sys
 		set position [getWorkspacePositionInList $w $workspaceId]
@@ -162,8 +162,8 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	proc setActiveStatus {w workspaceId status} {
 		variable sys
 		set position [getWorkspacePositionInList $w $workspaceId]
-		set workspace [lindex $sys($w,workspace) $position]             
-		set newWorkspace [lreplace $workspace 2 2 $status]       
+		set workspace [lindex $sys($w,workspace) $position]
+		set newWorkspace [lreplace $workspace 2 2 $status]
 		set sys($w,workspace) [lreplace $sys($w,workspace) $position $position $newWorkspace]
 	}
 
@@ -171,7 +171,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		variable sys
 		set position [getWorkspacePositionInList $w $workspaceId]
 		if {$position == -1} { error "Position could not be determined, was -1" }
-		return [lindex $sys($w,workspace) $position 1]	
+		return [lindex $sys($w,workspace) $position 1]
 	}
 
 	proc getActiveStatus {w workspaceId} {
@@ -196,7 +196,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 			}
 		}
 	}
-	
+
 	proc addWorkspace {w workspace} {
 		variable sys
 		set number [dict get $workspace num]
@@ -245,7 +245,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 			}
 		}
 	}
-	
+
 	proc action {w args} {
 		variable sys
 		set args [join $args]
@@ -294,7 +294,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	proc updateWidget {w} {
 		variable sys
 	}
-	
+
 	#
 	# Widget configuration procs
 	#

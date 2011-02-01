@@ -13,6 +13,7 @@ proc battery {w args} {
 	return $w
 }
 # TODO: charge status display is not really cen
+# TODO: if battery is removed the X appears but if it is reinstalled, it does not change back to display mode but remains X
 catch {namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::widget::battery {
 	initLogger

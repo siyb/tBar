@@ -154,22 +154,27 @@ namespace eval geekosphere::tbar::widget::battery {
 			set sys($w,chargeInPercent) 100;# if we can't poll the battery, the fillstatus will be 100 (cable attached)
 			setBatteryDirs $w;# attempt to find battery, if non has been detected yet (battery path is empty)
 		} else {;# the battery we are attempting to poll is still present
-			set chargeDict [calculateCharge $w]
-			set sys($w,timeRemaining) [dict get $chargeDict time]
-			set sys($w,chargeInPercent) [dict get $chargeDict percent]
-			if {[info exists sys($w,status)]} {
-				set sys($w,lastStatus) $sys($w,status);# saving last status
-			}
-			set sys($w,status) [dict get $chargeDict status]
+			if {[catch {
+				set chargeDict [calculateCharge $w]
+			} err]} {
+				set sys($w,chargeInPercent) 100
+			} else {
+				set sys($w,timeRemaining) [dict get $chargeDict time]
+				set sys($w,chargeInPercent) [dict get $chargeDict percent]
+				if {[info exists sys($w,status)]} {
+					set sys($w,lastStatus) $sys($w,status);# saving last status
+				}
+				set sys($w,status) [dict get $chargeDict status]
 
-			# reset warning / notification status if charger has been connected / disconnected etc
-			if {$sys($w,status) ne $sys($w,lastStatus)} {
-				set sys($w,hasBeenWarned) 0
-				set sys($w,hasBeenNotified) 0
+				# reset warning / notification status if charger has been connected / disconnected etc
+				if {$sys($w,status) ne $sys($w,lastStatus)} {
+					set sys($w,hasBeenWarned) 0
+					set sys($w,hasBeenNotified) 0
+				}
+				set sys($w,unavailable) 0
+				drawWarnWindow $w
+				drawFullyChargedWindow $w
 			}
-			set sys($w,unavailable) 0
-			drawWarnWindow $w
-			drawFullyChargedWindow $w
 		}
 		drawBatteryDisplay $w $sys($w,chargeInPercent)
 	}
@@ -274,6 +279,11 @@ namespace eval geekosphere::tbar::widget::battery {
 			set sys($w,unavailableSymbol) [$canvasPath create text \
 				[expr {$sys($w,batterydisplay,cWidth)  / 2}] [expr {($sys($w,batterydisplay,cHeight) / 2) + ($sys($w,batterydisplay,cHeight) / 10)}] \
 				-anchor c -text "X" -fill [determineColorOfWidgetByBatteryStatus $w 0] -font $tmpFont]
+		} else {
+			if {[info exists sys($w,unavailableSymbol)]} {
+				$canvasPath delete $sys($w,unavailableSymbol)
+				unset sys($w,unavailableSymbol)
+			}
 		}
 	}
 

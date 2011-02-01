@@ -20,7 +20,7 @@ namespace eval geekosphere::tbar::widget::battery {
 
 	# Information files for battery status
 	dict set sys(battery) dir [file join / sys class power_supply]
-
+	
 	dict set sys(battery) energy_full_design "energy_full_design"
 	dict set sys(battery) energy_now "energy_now"
 	dict set sys(battery) energy_full "energy_full"
@@ -367,7 +367,7 @@ namespace eval geekosphere::tbar::widget::battery {
 	# sets the information files
 	proc determineBatteryInformationFiles {w batteryFolder} {
 		variable sys
-		if {[info exists [file join $batteryFolder energy_now]]} {
+		if {[file exists [file join $batteryFolder energy_now]]} {
 			set sys($w,batteryInformation,now) [file join $sys($w,batteryDir) "energy_now"]
 			set sys($w,batteryInformation,full) [file join $sys($w,batteryDir) "energy_full"]
 		} elseif {[file exists [file join $batteryFolder charge_now]]} {

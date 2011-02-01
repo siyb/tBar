@@ -202,9 +202,9 @@ namespace eval geekosphere::tbar::widget::battery {
 			set endPoleX [expr {($cWidth / 2) + ($cWidth / 10)}]
 			set endPoleY [expr {$cHeight - ($cHeight - ($cHeight/5))}]
 			set sys($w,batteryPole) [$canvasPath create rectangle $startPoleX $startPoleY $endPoleX $endPoleY]
-			if {$fillStatus == 100} {
-				$canvasPath itemconfigure $sys($w,batteryPole) -fill $color
-			}
+			#if {$fillStatus == 100} {
+			#	$canvasPath itemconfigure $sys($w,batteryPole) -fill $color
+			#}
 
 			# drawing battery "body"
 			set startBodyX [expr {($cWidth / 2) - ($cWidth / 5)}]
@@ -254,7 +254,7 @@ namespace eval geekosphere::tbar::widget::battery {
 					-anchor c -text $symbol -fill $sys($w,batteryChargeSymbolColor) -font $tmpFont]
 		}
 
-		# coloring over the ugly line, separating pole and body
+		# creating overlay between pole and battery, covering the ugly line 
 		if {![info exists sys($w,lastColorOverLine)]} {
 			set startLineX [expr {$startPoleX+1}]
 			set startLineY $endPoleY
@@ -262,10 +262,14 @@ namespace eval geekosphere::tbar::widget::battery {
 			set endLineY $endPoleY
 			set sys($w,lastColorOverLine) [$canvasPath create rectangle $startLineX $startLineY $endLineX $endLineY]
 		}
+
+		# color stuff accoriding to fillstatus
 		if {$fillStatus == 100} {
 			$canvasPath itemconfigure $sys($w,lastColorOverLine) -fill $color -outline $color
+			$canvasPath itemconfigure $sys($w,batteryPole) -fill $color -outline $color
 		} else {
 			$canvasPath itemconfigure $sys($w,lastColorOverLine) -fill $sys($w,background) -outline $sys($w,background)
+			$canvasPath itemconfigure $sys($w,batteryPole) -fill $sys($w,background)
 		}
 
 		# updating color of all boxes

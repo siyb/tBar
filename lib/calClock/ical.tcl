@@ -146,19 +146,19 @@ namespace eval geekosphere::tbar::widget::calClock::ical {
 			dict set retDict type 1
 			dict set retDict sinceEpoch [clock scan $dateTime -format "%Y%m%dT%H%M%SZ"]
 		
-		# TODO: implement this datetime format!
 		# local: TZID=America/New_York:19980119T020000
+		} elseif {[string match tzid* [string toupper $dateTime]]} {
+			set splitData [split $dateTime ":"]
+			if {[llength $splitData] != 2} { log "ERROR" "dateTime malformatted, != 2";return }
+			set dateTime [lindex $splitData 1]
+			set timeZone [split [lindex $splitData 0] "="]
+			if {[llength $timeZone] != 2} { log "ERROR" "dataTime malformatted, timezone != 2";return }
+			set timeZone [lindex $timeZone 1]
+			dict set retDict type 2
+			dict set retDict sinceEpoch [clock scan $dateTime -format "%Y%m%dT%H%M%SZ" -timezone :$timeZone]
 		} else {
 			error "Time/Date Format not supported yet: $dateTime"
-			set splitALL [split $dateTime "=:"]
-			if {[llength $splitALL] != 3} { error "LOCAL: Malformed date time: $dateTime" }
-			set splitDT [split [lindex $splitDT 2] "T"]
-			if {[llength $splitDT] != 2} { error "LOCAL: Malformed date time: $dateTime" }
-			
-			dict set retDict type 2
-			dict set retDict timeZone [lindex $splitALL 1]
-			dict set retDict date [lindex $splitDT 0] 
-			dict set retDict time [lindex $splitDT 1] 
 		}
+
 	}
 }

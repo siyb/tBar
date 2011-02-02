@@ -1,9 +1,29 @@
 prefix = $(DESTDIR)
-version=1.2
-deploy=tbar_$(version)
-kit=tbar_$(version)_kit
 
-all: install
+#
+# Settings
+#
+
+# tbar version
+version=1.3
+
+# kit name
+deploykit=tbar_$(version)_kit
+
+# tbar name
+deploy=tbar_$(version)
+
+# git head version of tbar
+gitv=`git rev-parse HEAD`
+
+# EXPERIMENTAL parameter
+ifdef EXPERIMENTAL
+	deploy=tbar_$(version)_git_$(gitv)
+	deploykit=tbar_$(version)_kit_git_$(gitv)
+endif
+
+pkgindex:
+	echo "pkg_mkIndex -verbose -direct lib/ */* */*/*" | tclsh8.5
 
 essential: pkgindex
 	mkdir -p $(DESTDIR)/etc/tbar/
@@ -14,9 +34,6 @@ essential: pkgindex
 	gzip -c tbar.1 >> tbar.1.gz
 	cp tbar.1.gz $(DESTDIR)/usr/share/man/man1/
 
-pkgindex:
-	echo "pkg_mkIndex -verbose -direct lib/ */* */*/*" | tclsh
-
 install: clean essential
 	mkdir -p $(DESTDIR)/usr/share/tbar/
 	mkdir -p $(DESTDIR)/usr/lib/tbar/
@@ -26,24 +43,24 @@ install: clean essential
 	cp -r widget/* $(DESTDIR)/usr/share/tbar/
 
 starkit: clean pkgindex
-	mkdir $(kit)
+	mkdir $(deploykit)
 	starkit/mkstarkit.sh
 
-	cp tbar.kit $(kit)/tbar
-	cp README $(kit)
-	cp LICENSE $(kit)
-	cp starkit/Makefile $(kit)
+	cp tbar.kit $(deploykit)/tbar
+	cp README $(deploykit)
+	cp LICENSE $(deploykit)
+	cp starkit/Makefile $(deploykit)
 
-	gzip -c tbar.1 >> $(kit)/tbar.1.gz
-	cp -r config.tcl $(kit)
-	tar -cf $(kit).tar $(kit)
-	gzip --best $(kit).tar
-	
-deploy:
-	git archive --prefix=$(deploy)/ --format=tar $(version) | gzip --best > $(deploy).tar.gz
+	gzip -c tbar.1 >> $(deploykit)/tbar.1.gz
+	cp -r config.tcl $(deploykit)
+	tar -cf $(deploykit).tar $(deploykit)
+	gzip --best $(deploykit).tar
+
+deploy: clean
+	git archive --format=tar --prefix=$(deploy)/ $(gitv) . | gzip --best > $(deploy).tar.gz
 
 uninstall:
 	rm -rf $(DESTDIR)/etc/tbar/ $(DESTDIR)/usr/bin/tbar $(DESTDIR)/usr/lib/tbar/ $(DESTDIR)/usr/share/tbar/ $(DESTDIR)/usr/share/man/man1/tbar.1.gz
 
 clean:
-	rm -rf tbar.1.gz tbar.kit lib/pkgIndex.tcl $(kit) $(kit).tar.gz $(deploy).tar.gz
+	rm -rf tbar.1.gz tbar.kit lib/pkgIndex.tcl $(deploy).tar.gz $(deploykit) $(deploykit).tar.gz tbar_$(version)_git_$(gitv) tbar_$(version)_git_$(gitv).tar.gz tbar_$(version)_kit_git_$(gitv) tbar_$(version)_kit_git_$(gitv).tar.gz

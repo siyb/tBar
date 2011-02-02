@@ -1,0 +1,17 @@
+Source: tbar
+Section: x11
+Priority: extra
+Maintainer: Patrick Sturm <siyb@geekosphere.org>
+Build-Depends: debhelper (>= 7.0.50~), tcl8.5
+Standards-Version: 3.9.1
+Homepage: http://siyb.mount.at/tbar
+
+Package: tbar
+Architecture: all
+Depends: tcl8.5, tk8.5, libtk-img, tcllib, libsqlite3-tcl
+Description: A lightweight taskbar
+ tBar is yet another tool bar capable of displaying your 
+ system's status in a compact, well readable form. It 
+ features different widgets that can be arranged and 
+ colored using a provided configuration file. 
+ tBar is written in TCL/TK and is licensed under the terms of the GPL 3.

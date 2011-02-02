@@ -8,21 +8,32 @@ tBar \- a small taskbar written in TCL/TK
 .RB [ \--config
 .IR FILE
 .RB ]
-.RB [ \--widget
-.IR PATH
-.RB ]
 
 .SH DESCRIPTION
-.Pp
+.PP
 \fBtBar\fP is a small taskbar application designed for leightweight window
 managers. It provides basic system monitoring facilities such as:
 .TP
-	* cpu temperature, load, frequency, cache
+* CPU widget: temperature, frequency, cache, load, frequency scaling information, supports multiple devices
 .TP
-	* memory and swap usage
+* Memory / Swap widget: in use / free
 .TP
-	* networking load
-	
+* Ethernet widget: supports multiple devices
+.TP
+* Calendar / Clock widget with ICalendar support
+.TP
+* Customizable audio player widget
+.TP
+* Notification widget, reacting on boolean expressions
+.TP
+* Text widget, capable of displaying arbitrary strings
+.TP
+* Battery widget, may warn the user if battery is running low or is fully charged
+.TP
+* i3 desktop switcher widget
+.TP
+* Simple widget API
+
 .SH OPTIONS
 .TP
 \fB\-\-config\fR \fIFILE\fR
@@ -35,6 +46,18 @@ global configuration file
 .TP
 .I ~/.tbar/config.tcl
 user specific config file
+.TP
+.I ~/.tbar/widget
+user specific widget directory, place widgets here in order to make them loadable by tBar
+.TP
+.I ~/.tbar/lib
+user specific library directory, place libraries along with a pkgIndex.tcl file here in order to make them loadable by tBar
+.TP
+.I ~/.tbar/icaldata
+sqlite database storing user specific calendar data
+.TP
+.I ~/.tbar/log
+tBar logfile
 
 .SH BUGS
 Send bug reports to <siyb@geekosphere.org>
@@ -43,4 +66,4 @@ Send bug reports to <siyb@geekosphere.org>
 The project's website can be found at http://siyb.mount.at/tbar/
 
 .SH AUTHOR
-tBar was written by Patrick Sturm <siyb@geekosphere.org>
+tBar and its documentation was written by Patrick Sturm <siyb@geekosphere.org>

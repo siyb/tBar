@@ -36,6 +36,14 @@ setXposition 470
 # the Y position of the bar on the screen
 setYposition 1030
 
+# write a bugreport if an error is encountered, 1 to turn this feature on
+# 0 to disable it. 1 is recommended
+writeBugreport 1
+
+# kill tbar if an error is encounterd, 1 to turn this feature on
+# 0 to disable it. 0 is recommended for productive use
+setKillOnError 0
+
 # alternativly to using setYposition, setXposition
 # and setWidth you may use positionBar top/bottom
 # which will position the bar along the top or the
@@ -109,6 +117,23 @@ setLogLevel "DEBUG"
 #addWidgetToBar notify notify1 1 -image "/home/user/someimage" -imageDimensions 10X10 -notifyAt {[file exists "/home/user/somefile"]}
 #addText " | " "red"
 
+# Displays the battery status.
+#
+# -fg / -foreground - the text color
+# -bg / -background - the background color
+# -warnAt - will warn the user if N percent battery charge is reached
+# -battery - specify the battery, e.g. BAT0, only use this parameter if automatic determination fails!
+# -lc / -lowColor - the color to be used when battery is low
+# -mc / -mediumColor - the color to be used when battery is neither low nor high
+# -hc / -highColor - the color to be used when battery is high
+# -notifyFullyCharged - must be 0 or 1, if set to 1, the widget will notify the user when the battery is fully charged
+# -showChargeStatus - must be 0 or 1, if set to 1, the widget will display a + or a - depending on the charge status of the battery
+# -batteryChargeSymbolColor - the color of the charge symbol, will only take effect if -showChargeStatus is 1
+# -height - height of the widget
+# -width - width of the widget
+#addWidgetToBar battery battery1 1 -warnAt 5 -lc "red" -hc "green" -mc "yellow" -notifyFullyCharged 1
+#addText " | " "red"
+
 # Displays the time
 #
 # -fg / -foreground - the text color
@@ -152,8 +177,11 @@ addText " | " "red"
 #		widget receives updates (needs to be the same 
 #		as the update interval specified as second parameter, 
 #		in order to give correct results)
-#
-addWidgetToBar network network1 1 -device eth1 -updateinterval 1
+# -additionalDevices - accepts a tcl list in the form {device1 device2 etc} or [list device1 device2 etc].
+# 		May contain the device specified by -device. If this parameter is specified and the list
+# 		is not empty, clicking on the network widget will cause a window to appear, which contains
+# 		stats of the devices specified. 
+addWidgetToBar network network1 1 -device eth0 -updateinterval 1 -additionalDevices [list eth0 eth1]
 addText " | " "red"
 
 # Displays memory and swap information
@@ -213,3 +241,13 @@ addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 #
 #addWidgetToBar text text1 1 -command [list exec uptime]
 
+# If you are using i3, you can use this widget to manage your workspaces
+#
+# -fg / -foreground - the textcolor
+# -bg / -background - the background color
+# -focuscolor - the color to be used to mark a focussed workspace
+# -urgentcolor - the color to be used to mark a workspace with an urgent event waiting
+# -rolloverfontcolor - color to be displayed when the mouse cursor enters a workspace's box
+# -rolloverbackgroundcolor - color font color to be used when mouse cursor enters a workspace's box
+# -side use this parameter to position the bar on a certain side, may be "left" or "right"
+#addWidgetToBar i3_workspace i3_workspace1 0

@@ -50,9 +50,11 @@ namespace eval geekosphere::tbar::util::logger {
 
 		set mloglevel [getNumericLoglevel $level];# the level of the message
 		set gloglevel [getNumericLoglevel $logger(level)];# the global log level
-		if {$mloglevel <= $gloglevel} { return };# check if message should be logged
+		if {$mloglevel < $gloglevel} { return };# check if message should be logged
 		if {$logger(dolog)} {
-			set message "[clock format [clock seconds] -format "%+"] | $level | ${namespace}: ${message}"
+			set uLevel [uplevel {info level}]
+			if {$uLevel == 0} { set proc "" } else { set proc ::[lindex [info level $uLevel] 0] }
+			set message "[clock format [clock seconds] -format "%+"] | $level | ${namespace}${proc}: ${message}"
 			puts $message
 			if {$logger(log2file)} {
 				set fl [open $logger(logfile) a+]; puts $fl $message; close $fl
@@ -66,6 +68,11 @@ namespace eval geekosphere::tbar::util::logger {
 		if {![dict exists $loggerSettings(levels) $level]} { error "WARNING | Loglevel invalid! (${level})" }
 		return [dict get $loggerSettings(levels) $level]
 	}
+	
+	proc getLogLevel {} {
+		variable loggerSettings
+		return $loggerSettings(globalLevel)
+	}
 
-	namespace export log initLogger setGlobalLogLevel
+	namespace export log initLogger setGlobalLogLevel getLogLevel
 }

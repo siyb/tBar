@@ -3,10 +3,14 @@ package provide tbar 1.2
 package require util
 package require logger
 
+# TODO 1.x: hdd widget, temperature, free/used
+# TODO 1.x: implement a light mode, that knows which widgets / widget parameters need which tcl package and prevents them from being use.
+# TODO 1.x: instead of throwing an error if a package (ie sqlite) can not be required, use the widget wrapper to test if package is available (catch) and remove corresponding parameter or widget
 # TODO 1.x: language files
 # TODO 1.x: add icon support for widgets
 # TODO 1.x: stop update activities if screensaver is on
 # TODO 1.X: make popup windows more customizable (e.g. let the user decide which and if calendar window appears) -> subwidget or something
+# TODO 1.x: recovery -> if a widget causes an error, delete namespace and remove all traces (e.g. timer, variables, etc) of the widget from the bar
 catch {
 	namespace import ::geekosphere::tbar::util::logger::*
 	namespace import ::geekosphere::tbar::util::*
@@ -16,7 +20,7 @@ namespace eval geekosphere::tbar {
 
 	# setting loglevel, can be overridden by userconfig
 	setGlobalLogLevel "TRACE"
-	
+
 	#
 	# Config (use config.tcl to make changes!)
 	#
@@ -24,18 +28,21 @@ namespace eval geekosphere::tbar {
 	set conf(color,hovercolor) "blue"
 	set conf(color,clickedcolor) "red"
 	set conf(color,text) "white"
-	
+
 	set conf(font,name) "DejaVu Sans Mono"
 	set conf(font,size) 12
 	set conf(font,bold) normal
 	set conf(font,sysFont) -1
-	
+
 	set conf(geom,width) 1000
 	set conf(geom,height) 20
 	set conf(geom,xpos) 750
 	set conf(geom,ypos) 1031
 
 	set conf(widgets,position) "left"
+
+	set conf(sys,writeBugreport) 1
+	set conf(sys,killOnError) 0
 
 	#
 	# Code
@@ -80,23 +87,23 @@ namespace eval geekosphere::tbar {
 		incr sys(widget,counter)
 		log "WARNING" "From version 1.2 onwards, using this procedure to add widgets to the bar is _DEPRECATED_! Use addWidgetToBar instead. (widget: $proc)"
 		if {[dict exists $sys(widget,dict) $sys(widget,counter)]} { error "A widget named $name already exists" }
-		dict set sys(widget,dict) $sys(widget,counter) widgetName $proc 
+		dict set sys(widget,dict) $sys(widget,counter) widgetName $proc
 		dict set sys(widget,dict) $sys(widget,counter) updateInterval $updateInterval
 		dict set sys(widget,dict) $sys(widget,counter) arguments $args
 		dict set sys(widget,dict) $sys(widget,counter) path [geekosphere::tbar::util::generateComponentName]
 		return $sys(widget,counter)
 	}
-	
+
 	# add a widget to the bar
 	proc addWidgetToBar {proc name updateInterval args} {
 		variable sys
 		if {[dict exists $sys(widget,dict) $name]} { error "A widget named $name already exists" }
-		dict set sys(widget,dict) $name widgetName $proc 
+		dict set sys(widget,dict) $name widgetName $proc
 		dict set sys(widget,dict) $name updateInterval $updateInterval
 		dict set sys(widget,dict) $name arguments $args
 		dict set sys(widget,dict) $name path [geekosphere::tbar::util::generateComponentName]
 	}
-	
+
 	# load all widgets
 	proc loadWidgets {} {
 		variable sys
@@ -113,7 +120,10 @@ namespace eval geekosphere::tbar {
 					set widgetFile [file join $widgetPath ${widget}.tcl]
 					if {[file exists $widgetFile]} {
 						uplevel #0 source $widgetFile
-						geekosphere::tbar::wrapper::${widget}::init $path $settingsList
+						if {[geekosphere::tbar::wrapper::${widget}::init $path $settingsList] == -1} {
+							log "ERROR" "Could not load ${widget}"
+							break
+						}
 						makeBindings $key
 						if {$updateInterval > 0} { updateWidget $path $widget $updateInterval }
 						log "INFO" "Widget $widget loaded from $widgetFile"
@@ -132,12 +142,12 @@ namespace eval geekosphere::tbar {
 			}
 		}
 	}
-	
+
 	proc makeBindings {widgetName} {
 		variable sys
 		if {![info exists sys(widget,events,$widgetName)]} { return };# no events -> no need to continue
 		set path [dict get $sys(widget,dict) $widgetName path]
-		
+
 		foreach {event command} $sys(widget,events,$widgetName) {
 			foreach child [returnNestedChildren ${path}] {
 				bind ${child} $event +$command
@@ -160,6 +170,8 @@ namespace eval geekosphere::tbar {
 	# writes bugreports
 	proc saveBugreport {message} {
 		variable sys
+		variable conf
+		if {!$conf(sys,writeBugreport)} { return }
 		set timeStamp [clock format [clock seconds] -format "%+"]
 		set bugreportPath [file join $::env(HOME) .tbar]
 		if {![file exists $bugreportPath]} { return }
@@ -295,7 +307,7 @@ $::errorCode"
 		variable conf
 		set conf(color,clickedcolor) $color
 	}
-	
+
 	proc setFontName {font} {
 		variable conf
 		set conf(font,name) $font
@@ -314,7 +326,7 @@ $::errorCode"
 	proc setLogLevel {level} {
 		setGlobalLogLevel $level
 	}
-	
+
 	proc addEventTo {widgetName event args} {
 		variable sys
 		# dict lappend does not work with nested dicts yet, using an array instead of ugly hacking
@@ -322,15 +334,29 @@ $::errorCode"
 		log "INFO" "Event ${event} added to ${widgetName}, invoking ${args}"
 	}
 
+	proc setKillOnError {killOnError} {
+		variable conf
+		set conf(sys,killOnError) $killOnError
+	}
+
+	proc writeBugreport {writeBugreport} {
+		variable conf
+		set conf(sys,writeBugreport) $writeBugreport
+	}
+
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
-	setLogLevel addWidgetToBar addEventTo
+	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError
 }
 
 # GLOBAL NAMESPACE!
 initLogger
 proc bgerror {message} {
-	geekosphere::tbar::saveBugreport $message   
+	geekosphere::tbar::saveBugreport $message
 	log "ERROR" "Background error encountered ${::errorInfo}"
+	if {$geekosphere::tbar::conf(sys,killOnError)} {
+		log "FATAL" "Background error encountered, system is configured to shutdown!"
+		exit
+	}
 }
 

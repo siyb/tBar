@@ -1,4 +1,9 @@
-#!/usr/bin/env wish8.5
+#!/usr/bin/env tclsh
+if {$::tcl_version < 8.5} {
+	puts "tBar requires TCL 8.5, $::tcl_version installed, exiting."
+	exit
+}
+
 package require Tk
 package require tbar
 package require logger
@@ -35,13 +40,9 @@ foreach {parameter value} $argv {
 			if {![file exists $value]} { puts "The config file you specifed does not exist"; exit }
 			set geekosphere::tbar::sys(config) $value
 		}
-		"--widget" {
-			set geekosphere::tbar::conf(widget,path) $value
-		}
 		"--help" {
 			puts "tBar help
---config <path>			specify a config file to load
---widget <path>			specify the widget path"
+--config <path>			specify a config file to load"
 			exit
 		}
 	}

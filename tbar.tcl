@@ -37,7 +37,7 @@ set geekosphere::tbar::sys(screen,height) [winfo screenheight $geekosphere::tbar
 foreach {parameter value} $argv {
 	switch $parameter {
 		"--config" {
-			if {![file exists $value]} { puts "The config file you specifed does not exist"; exit }
+			if {![file exists $value] || [file isdirectory $value]} { puts "The config file you specifed does not exist or is a directory"; exit }
 			set geekosphere::tbar::sys(config) $value
 		}
 		"--help" {

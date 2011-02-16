@@ -18,18 +18,20 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc makeMixer {w arguments} {
 		variable sys
-		set sys($w,originalCommand) $w
+		set sys($w,originalCommand) ${w}_
 
 		# create an array containing all controldevices
 		# listed by amixer
 		updateControlList $w
 
 		frame ${w}
-		uplevel #0 rename $w ${w}_
 
+		pack [label ${w}.mixer -text "MIXER"]
+		bind ${w}.mixer <Button-1> [namespace code [list drawAllVolumeControls $w]]
+
+		uplevel #0 rename $w ${w}_
 		action $w configure $arguments
 	}
-
 
 	proc action {w args} {
 		variable sys
@@ -80,12 +82,19 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc drawAllVolumeControls {w} {
 		variable sys
+		if {[winfo exists ${w}.mixerWindow]} {
+			destroy ${w}.mixerWindow
+			return
+		} else {
+			toplevel ${w}.mixerWindow -bg $sys($w,background) 
+		}
 		foreach device [getControlDeviceList $w] {
 			set info [getControlDeviceInfo $w $device]
 			if {[shouldDeviceBeShown $w $device]} {
-				drawVolumeControl [dict get $info "name"] ${w}.{$device}
+				drawVolumeControl [dict get $info "name"] ${w}.mixerWindow.{$device}
 			}
 		}
+		positionWindowRelativly ${w}.mixerWindow $w
 	}
 
 	# updates the volume control bar
@@ -96,9 +105,9 @@ namespace eval geekosphere::tbar::widget::mixer {
 	# draws a single volume scrollbar element
 	proc drawVolumeControl {name path} {
 		set controlPath ${path}
-		pack [frame $controlPath] -fill y -expand 1 -side right
+		pack [frame $controlPath -height 500] -fill y -expand 1 -side right 
 		pack [label ${controlPath}.label -text "$name"] -side top
-		pack [scrollbar ${controlPath}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $controlPath]] -expand 1 -fill y
+		pack [scrollbar ${controlPath}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $controlPath]] -expand 1 -fill y 
 		${controlPath}.bar set 0.0 0.0
 	}
 	
@@ -180,7 +189,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc shouldDeviceBeShown {w numid} {
 		variable sys
-		if {![info exists sys($w,activatedDevices)] || [lsearch sys($w,activatedDevices) $numid] != -1} { return 1 } else { return 0 }
+		if {![info exists sys($w,activatedDevices)] || [lsearch $sys($w,activatedDevices) $numid] != -1} { return 1 } else { return 0 }
 	}
 
 	#
@@ -190,18 +199,19 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc changeBackgroundColor {w color} {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
+		${w}.mixer configure -bg $color
 		set sys($w,background) $color
 	}
 
 	proc changeForegroundColor {w color} {
 		variable sys
-		$sys($w,originalCommand) configure -bg $color
+		${w}.mixer configure -fg $color
 		set sys($w,foreground) $color
-
 	}
 
 	proc changeFont {w font} {
 		variable sys
+		${w}.mixer configure -font $font
 		set sys($w,font) $font
 	}
 

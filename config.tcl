@@ -251,3 +251,7 @@ addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 # -rolloverbackgroundcolor - color font color to be used when mouse cursor enters a workspace's box
 # -side use this parameter to position the bar on a certain side, may be "left" or "right"
 #addWidgetToBar i3_workspace i3_workspace1 0
+
+# This mixer widget enables controlling audio devices using amixer.
+# Note that amixer _must_ be installed to use this widget
+#addWidgetToBar mixer mixer1 0

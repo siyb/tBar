@@ -86,7 +86,6 @@ namespace eval geekosphere::tbar::widget::battery {
 		action $w configure $arguments
 	}
 
-
 	proc action {w args} {
 		variable sys
 		set args [join $args]

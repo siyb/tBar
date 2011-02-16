@@ -20,6 +20,10 @@ namespace eval geekosphere::tbar::widget::mixer {
 		variable sys
 		set sys($w,originalCommand) $w
 
+		# create an array containing all controldevices
+		# listed by amixer
+		updateControlList $w
+
 		frame ${w}
 		uplevel #0 rename $w ${w}_
 
@@ -50,6 +54,9 @@ namespace eval geekosphere::tbar::widget::mixer {
 					"-font" {
 						changeFont $w $value
 					}
+					"-devices" {
+						setDevices $w $value
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -71,8 +78,14 @@ namespace eval geekosphere::tbar::widget::mixer {
 	# GUI related stuff
 	#
 
-	proc drawAllVolumeControls {} {
+	proc drawAllVolumeControls {w} {
 		variable sys
+		foreach device [getControlDeviceList $w] {
+			set info [getControlDeviceInfo $w $device]
+			if {[shouldDeviceBeShown $w $device]} {
+				drawVolumeControl [dict get $info "name"] ${w}.{$device}
+			}
+		}
 	}
 
 	# updates the volume control bar
@@ -123,28 +136,51 @@ namespace eval geekosphere::tbar::widget::mixer {
 	# sets the sys($w,control,numid,key) array, containing information from all available controls
 	proc updateControlList {w} {
 		variable sys
+		set sys($w,amixerControls) [dict create];# reset the dict (or create it)
 		set data [read [set fl [open |[list amixer controls]]]]
 		close $fl
 		foreach control [split $data "\n"] {
 			set splitControl [split $control ","]
+			set controlDeviceDict [dict create]
+			set numId -1
 			foreach item $splitControl {
 				set splitItem [split $item "="]
 				set key [lindex $splitItem 0]
 				set value [lindex $splitItem 1]
-				if {$key eq "numid"} {
-					set arrayKey $value
+				if {$key eq "numid"} { 
+					set numId $value
 				} else {
-					set sys($w,control,$arrayKey,$key) $value 
+					dict set controlDeviceDict $key $value
 				}
 			}
+			if {$numId == -1} { continue };# do not add devices with -1 numid
+			dict set sys($w,amixerControls) $numId $controlDeviceDict
 		}
+	}
+
+	proc getControlDeviceInfo {w numid} {
+		variable sys
+		if {![dict exists $sys($w,amixerControls) $numid]} { error "Control with numid='$numid' does not exist" }
+		dict get $sys($w,amixerControls) $numid
+	}
+
+	proc getControlDeviceList {w} {
+		variable sys
+		return [dict keys $sys($w,amixerControls)]
 	}
 
 	proc getInformationOnDevice {w numid} {
 		variable sys
-		set data [split [read [set fl [open |[list amixer cget numid=$numid]]]] "\n"]
-		
-		
+		#set data [split [read [set fl [open |[list amixer cget numid=$numid]]]] "\n"];close $fl
+		set data [read [set fl [open |[list amixer cget numid=$numid]]]];close $fl
+		puts "----------------------------------"
+		puts $data
+		puts "----------------------------------"
+	}
+
+	proc shouldDeviceBeShown {w numid} {
+		variable sys
+		if {![info exists sys($w,activatedDevices)] || [lsearch sys($w,activatedDevices) $numid] != -1} { return 1 } else { return 0 }
 	}
 
 	#
@@ -181,13 +217,8 @@ namespace eval geekosphere::tbar::widget::mixer {
 		$sys($w,originalCommand) configure -height $height
 	}
 
-	drawVolumeControl "Foo" .foo
-	drawVolumeControl "Bar" .bar
-	drawVolumeControl "Lol" .lol
-	drawVolumeControl "Kay" .kay
-	updateControlList LOL
-	getInformationOnDevice LOL 22
-	foreach {key value} [array get sys] {
-		puts "$key -> $value"
+	proc setDevices {w devices} {
+		variable sys
+		set sys($w,activatedDevices) $devices
 	}
 }

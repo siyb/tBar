@@ -89,7 +89,8 @@ namespace eval geekosphere::tbar::widget::mixer {
 			toplevel ${w}.mixerWindow -bg $sys($w,background) -height 400 
 		}
 		foreach device [getControlDeviceList $w] {
-			getInformationOnDevice $w $device
+			set deviceInformation [getInformationOnDevice $device]
+			puts "DI: $deviceInformation"
 			set info [getControlDeviceInfo $w $device]
 			if {[shouldDeviceBeShown $w $device]} {
 				drawVolumeControl $w [dict get $info "name"] ${w}.mixerWindow.${device}
@@ -193,6 +194,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 		set readingKey 1;# is 1 if we are currently reading the key part of ley=value, when 0, we are reading the value
 		set informationDict [dict create];# the dict that stores the parsed data
 		set lineNumber 1;# the current line number we are on
+		set insideString 0;# a flag to determine if the parser is currently within a string
 		for {set i 0} {$i < [string length $data]} {incr i} {
 			set letter [string index $data $i]
 			if {$letter eq "|" || $letter eq ";" || $letter eq ":" || $letter eq ","} {
@@ -200,21 +202,20 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 				if {$tmpKey eq "type"} { 
 					set type $tmpValue
-					puts "TYPE is $type"
 				}
 				
 				if {[info exists type] && $type eq "ENUMERATED" && $tmpKey eq "items"} { 
 					set items $tmpValue
 					set readingItems 1
 					set readingItemsEndLine [expr {$lineNumber + $items}]
-					puts "READING $items items to line $readingItemsEndLine"
 					set tmpKey ""; set tmpValue ""
 					continue
 				}
-
 				if {$readingItems} {
-					puts "ADDING: $tmpKey"
 					dict lappend informationDict items $tmpKey
+					if {$lineNumber == $readingItemsEndLine} {
+						set readingItems 0
+					}
 				} else {
 					dict set informationDict $tmpKey $tmpValue
 				}
@@ -222,15 +223,13 @@ namespace eval geekosphere::tbar::widget::mixer {
 				set tmpKey ""; set tmpValue ""
 				continue
 			}
-			if {$letter eq " "} {
+			if {$letter eq "'"} {
+				set insideString [expr {!$insideString}]
+			}
+			if {$letter eq " " && !$insideString} {
 				continue
 			}
 			if {$letter eq "\n"} { 
-				if {$readingItems && $lineNumber == $readingItemsEndLine} {
-					puts "ALL ITEMS READ, last item -> $tmpKey|$tmpValue"
-					set readingItems 0
-				}
-				puts "LINENUMBER: $lineNumber"
 				incr lineNumber
 				continue
 			}
@@ -244,10 +243,8 @@ namespace eval geekosphere::tbar::widget::mixer {
 				append tmpValue $letter
 			}
 		}
-		puts $informationDict
+		return $informationDict
 	}
-	getInformationOnDevice 1
-	getInformationOnDevice 26
 
 	proc shouldDeviceBeShown {w numid} {
 		variable sys

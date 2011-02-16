@@ -86,15 +86,15 @@ namespace eval geekosphere::tbar::widget::mixer {
 			destroy ${w}.mixerWindow
 			return
 		} else {
-			toplevel ${w}.mixerWindow -bg $sys($w,background) 
+			toplevel ${w}.mixerWindow -bg $sys($w,background) -height 400 
 		}
 		foreach device [getControlDeviceList $w] {
 			set info [getControlDeviceInfo $w $device]
 			if {[shouldDeviceBeShown $w $device]} {
-				drawVolumeControl [dict get $info "name"] ${w}.mixerWindow.{$device}
+				drawVolumeControl $w [dict get $info "name"] ${w}.mixerWindow.${device}
 			}
 		}
-		positionWindowRelativly ${w}.mixerWindow $w
+	#	positionWindowRelativly ${w}.mixerWindow $w
 	}
 
 	# updates the volume control bar
@@ -103,11 +103,12 @@ namespace eval geekosphere::tbar::widget::mixer {
 	}
 
 	# draws a single volume scrollbar element
-	proc drawVolumeControl {name path} {
+	proc drawVolumeControl {w name path} {
+		variable sys
 		set controlPath ${path}
-		pack [frame $controlPath -height 500] -fill y -expand 1 -side right 
-		pack [label ${controlPath}.label -text "$name"] -side top
-		pack [scrollbar ${controlPath}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $controlPath]] -expand 1 -fill y 
+		pack [frame $controlPath -bg $sys($w,background)] -fill y -expand 1 -side right 
+		pack [label ${controlPath}.label -text "$name" -bg $sys($w,background) -font $sys($w,font) -fg $sys($w,foreground)] -side top
+		pack [scrollbar ${controlPath}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $controlPath] -bg $sys($w,background)] -expand 1 -fill y 
 		${controlPath}.bar set 0.0 0.0
 	}
 	

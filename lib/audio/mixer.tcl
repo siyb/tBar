@@ -94,7 +94,8 @@ namespace eval geekosphere::tbar::widget::mixer {
 				drawVolumeControl $w [dict get $info "name"] ${w}.mixerWindow.${device}
 			}
 		}
-	#	positionWindowRelativly ${w}.mixerWindow $w
+		pack [label ${w}.mixerWindow.l -text "\n\n\n\n\n\n\n\n" -bg $sys($w,background)] -expand 1 -fill y
+		positionWindowRelativly ${w}.mixerWindow $w
 	}
 
 	# updates the volume control bar

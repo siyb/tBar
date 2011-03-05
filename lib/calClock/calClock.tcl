@@ -1,9 +1,10 @@
-package provide calClock 1.2
+package provide calClock 1.3
 
 package require callib
 package require util
 package require logger
 
+# TODO add option to remove appointment
 proc calClock {w args} {
 	geekosphere::tbar::widget::calClock::makeCalClock $w $args
 
@@ -450,6 +451,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 				-text				"Ok" \
 				-command		 [list geekosphere::tbar::widget::calClock::addCalendarEntry $w $year $month $day]
 		] -side left -fill x
+		positionWindowRelativly ${w}.mkappointment $sys($w,calWin).cal 
 	}
 	
 	proc addCalendarEntry {w year month day} {

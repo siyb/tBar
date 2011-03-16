@@ -1,6 +1,7 @@
 package provide mixer 1.0
 
 package require logger
+package require amixer
 
 proc mixer {w args} {
 	if {[geekosphere::tbar::widget::mixer::makeMixer $w $args] == -1} {
@@ -22,7 +23,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 		# create an array containing all controldevices
 		# listed by amixer
-		updateControlList $w
+		geekosphere::amixer::updateControlList
 
 		frame ${w}
 
@@ -88,12 +89,17 @@ namespace eval geekosphere::tbar::widget::mixer {
 		} else {
 			toplevel ${w}.mixerWindow -bg $sys($w,background) -height 400 
 		}
-		foreach device [getControlDeviceList $w] {
-			set deviceInformation [getInformationOnDevice $device]
+		foreach device [geekosphere::amixer::getControlDeviceList] {
+			set deviceInformation [geekosphere::amixer::getInformationOnDevice $device]
 			puts "DI: $deviceInformation"
-			set info [getControlDeviceInfo $w $device]
+			set info [geekosphere::amixer::getControlDeviceInfo $device]
 			if {[shouldDeviceBeShown $w $device]} {
-				drawVolumeControl $w [dict get $info "name"] ${w}.mixerWindow.${device}
+				set type [dict get $deviceInformation "type"]
+				if {$type eq "BOOLEAN"} {
+					drawSwitch $w [dict get $info "name"] ${w}.mixerWindow.${device} $device
+				} elseif {$type eq "INTEGER"} {
+					drawVolumeControl $w [dict get $info "name"] ${w}.mixerWindow.${device}
+				}
 			}
 		}
 		pack [label ${w}.mixerWindow.l -text "\n\n\n\n\n\n\n\n" -bg $sys($w,background)] -expand 1 -fill y
@@ -114,7 +120,22 @@ namespace eval geekosphere::tbar::widget::mixer {
 		pack [scrollbar ${controlPath}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $controlPath] -bg $sys($w,background)] -expand 1 -fill y 
 		${controlPath}.bar set 0.0 0.0
 	}
-	
+
+	# draws a switch control element
+	proc drawSwitch {w name path device} {
+		variable sys
+		set controlPath ${path}
+		pack [frame $controlPath -bg $sys($w,background)] -fill y -expand 1 -side right
+		pack [label ${controlPath}.label -text "$name" -bg $sys($w,background) -font $sys($w,font) -fg $sys($w,foreground)] -side top
+		pack [checkbutton ${controlPath}.cb \
+			-bg $sys($w,background) \
+			-font $sys($w,font) \
+			-fg $sys($w,foreground) \
+			-highlightbackground $sys($w,background) \
+			-activebackground $sys($w,background) \
+			-variable sys(checkboxes,$device)]
+	}
+
 	# the action handler for the volume scrollbars
 	proc changeYView {args} {
 		set path [lindex $args 0]
@@ -141,111 +162,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 			}
 		}
 	}
-
-	#
-	# AMIXER related stuff
-	#
-
-	# sets the sys($w,control,numid,key) array, containing information from all available controls
-	proc updateControlList {w} {
-		variable sys
-		set sys($w,amixerControls) [dict create];# reset the dict (or create it)
-		set data [read [set fl [open |[list amixer controls]]]]
-		close $fl
-		foreach control [split $data "\n"] {
-			set splitControl [split $control ","]
-			set controlDeviceDict [dict create]
-			set numId -1
-			foreach item $splitControl {
-				set splitItem [split $item "="]
-				set key [lindex $splitItem 0]
-				set value [lindex $splitItem 1]
-				if {$key eq "numid"} { 
-					set numId $value
-				} else {
-					dict set controlDeviceDict $key $value
-				}
-			}
-			if {$numId == -1} { continue };# do not add devices with -1 numid
-			dict set sys($w,amixerControls) $numId $controlDeviceDict
-		}
-	}
-
-	proc getControlDeviceInfo {w numid} {
-		variable sys
-		if {![dict exists $sys($w,amixerControls) $numid]} { error "Control with numid='$numid' does not exist" }
-		dict get $sys($w,amixerControls) $numid
-	}
-
-	proc getControlDeviceList {w} {
-		variable sys
-		return [dict keys $sys($w,amixerControls)]
-	}
-
-	# parses the information provided by "amixer cget numid="
-	proc getInformationOnDevice {numid} {
-		set data [read [set fl [open |[list amixer cget numid=$numid]]]];close $fl
-		set tmpKey "";# stores the current tmpKey of a key/value pair
-		set tmpValue "";# stores the current tmpValue of a key/value pair
-		set type "";# stores the type of the device
-		set items 0;# if type ==  ENUMERATED, this var will store how many items can be parsed
-		set readingItems 0;# is 1 if we are currently reading in items
-		set readingItemsEndLine 0;# the line of the last item
-		set readingKey 1;# is 1 if we are currently reading the key part of ley=value, when 0, we are reading the value
-		set informationDict [dict create];# the dict that stores the parsed data
-		set lineNumber 1;# the current line number we are on
-		set insideString 0;# a flag to determine if the parser is currently within a string
-		for {set i 0} {$i < [string length $data]} {incr i} {
-			set letter [string index $data $i]
-			if {$letter eq "|" || $letter eq ";" || $letter eq ":" || $letter eq ","} {
-				set readingKey 1
-
-				if {$tmpKey eq "type"} { 
-					set type $tmpValue
-				}
-				
-				if {[info exists type] && $type eq "ENUMERATED" && $tmpKey eq "items"} { 
-					set items $tmpValue
-					set readingItems 1
-					set readingItemsEndLine [expr {$lineNumber + $items}]
-					set tmpKey ""; set tmpValue ""
-					continue
-				}
-				if {$readingItems} {
-					dict lappend informationDict items $tmpKey
-					if {$lineNumber == $readingItemsEndLine} {
-						set readingItems 0
-					}
-				} else {
-					dict set informationDict $tmpKey $tmpValue
-				}
-
-				set tmpKey ""; set tmpValue ""
-				continue
-			}
-			if {$letter eq "'"} {
-				set insideString [expr {!$insideString}]
-			}
-			if {$letter eq " " && !$insideString} {
-				continue
-			}
-			if {$letter eq "\n"} { 
-				incr lineNumber
-				continue
-			}
-			if {$letter eq "="} {
-				set readingKey 0 
-				continue
-			}
-			if {$readingKey} {
-				append tmpKey $letter
-			} else {
-				append tmpValue $letter
-			}
-		}
-		return $informationDict
-	}
-
+	
 	proc shouldDeviceBeShown {w numid} {
 		variable sys
 		if {![info exists sys($w,activatedDevices)] || [lsearch $sys($w,activatedDevices) $numid] != -1} { return 1 } else { return 0 }

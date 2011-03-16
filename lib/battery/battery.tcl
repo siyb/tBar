@@ -14,6 +14,7 @@ proc battery {w args} {
 }
 # TODO: charge status display is not really cen
 # TODO: if battery is removed the X appears but if it is reinstalled, it does not change back to display mode but remains X
+# TODO: if the charing status can not be determined and "?" is displayed, opening info window will cause a tcl error
 catch {namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::widget::battery {
 	initLogger
@@ -69,7 +70,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,height) 0
 		# width of the widget
 		set sys($w,width) 0
-		# if this flag is set to 1, the battery widget knows that there is no battery available and act accordingly	
+		# if this flag is set to 1, the battery widget knows that there is no battery available and acts accordingly	
 		set sys($w,unavailable) 0
 
 		if {[setBatteryDirs $w] == -1} {;# determine battery directory
@@ -240,12 +241,10 @@ namespace eval geekosphere::tbar::widget::battery {
 			set status [getStatus $sys($w,batteryDir)]
 			set symbol "?"
 			if {$status eq "Discharging" || $status == "-"} { 
-			set symbol "-"
+				set symbol "-"
 			} elseif {$status eq "Charging" || $status eq "+"} {
 				set symbol "+"
 			}
-			#set rgb [split [winfo rgb . [$canvasPath itemcget $sys($w,batteryBody) -outline]]]
-			#set negativeColor [format "#%x%x%x" [expr {65535 - [lindex $rgb 0]}] [expr {65535 - [lindex $rgb 1]}] [expr {65535 - [lindex $rgb 2]}]]
 			font configure $tmpFont -size [expr {round($sys($w,batterydisplay,cWidth) / 2.5)}] -weight bold
 			set sys($w,batteryChargeSymbol) \
 				[$canvasPath create text \
@@ -305,7 +304,8 @@ namespace eval geekosphere::tbar::widget::battery {
 	# battery display
 	proc displayBatteryInfo {w} {
 		variable sys
-		if {[info exists sys($w,unavailable)] && $sys($w,unavailable)} { return }
+		if {([info exists sys($w,unavailable)] && $sys($w,unavailable))} { return }
+		if {![info exists sys($w,timeRemaining)] || ![info exists sys($w,chargeInPercent)] || ![info exists sys($w,status)]} { return }
 		set batteryWindow ${w}.batteryWindow
 		if {![winfo exists $batteryWindow]} {
 			toplevel $batteryWindow

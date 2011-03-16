@@ -1,6 +1,7 @@
 package provide mixer 1.0
 
 package require logger
+package require amixer
 
 proc mixer {w args} {
 	if {[geekosphere::tbar::widget::mixer::makeMixer $w $args] == -1} {
@@ -22,7 +23,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 		# create an array containing all controldevices
 		# listed by amixer
-		updateControlList $w
+		geekosphere::amixer::updateControlList
 
 		frame ${w}
 
@@ -88,7 +89,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 		} else {
 			toplevel ${w}.mixerWindow -bg $sys($w,background) -height 400 
 		}
-		foreach device [getControlDeviceList $w] {
+		foreach device [geekosphere::amixer::getControlDeviceList $w] {
 			set deviceInformation [getInformationOnDevice $device]
 			puts "DI: $deviceInformation"
 			set info [getControlDeviceInfo $w $device]

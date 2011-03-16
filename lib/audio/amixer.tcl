@@ -1,13 +1,10 @@
+package provide amixer 1.0
+
 namespace eval geekosphere::amixer {
-	set sys(iter) 0
-	
-	proc amixer {} {
-		variable sys
-		proc amixer_$sys(iter) {} {
-		}
-		return $sys(iter)
-	}
-	
+
+	# sets or updates the sys(amixerControls) dictionary. This dictionary will store
+	# device information of each device found.
+	# The key is the numid, value is another dict with two key, "iface" and "name"
 	proc updateControlList {} {
 		variable sys
 		set sys(amixerControls) [dict create];# reset the dict (or create it)
@@ -31,20 +28,24 @@ namespace eval geekosphere::amixer {
 			dict set sys(amixerControls) $numId $controlDeviceDict
 		}
 	}
-	
+
+	# returns the information gathered by updateControlList, a dict with two keys
+	# iface and name
 	proc getControlDeviceInfo {numid} {
 		variable sys
 		if {![dict exists $sys(amixerControls) $numid]} { error "Control with numid='$numid' does not exist" }
 		dict get $sys(amixerControls) $numid
 	}
 
+	# returns a sorted list containing the numid of all devices
 	proc getControlDeviceList {} {
 		variable sys
 		if {![info exists sys(amixerControls)]} { updateControlList }
-		return [dict keys $sys(amixerControls)]
+		return [lsort -integer [dict keys $sys(amixerControls)]]
 	}
 	
-	# parses the information provided by "amixer cget numid="
+	# takes the numid of a device as input. will call amixer cget numid=$numid
+	# and parse its output to create a return dict
 	proc getInformationOnDevice {numid} {
 		set data [read [set fl [open |[list amixer cget numid=$numid]]]];close $fl
 		set tmpKey "";# stores the current tmpKey of a key/value pair

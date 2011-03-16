@@ -89,10 +89,10 @@ namespace eval geekosphere::tbar::widget::mixer {
 		} else {
 			toplevel ${w}.mixerWindow -bg $sys($w,background) -height 400 
 		}
-		foreach device [geekosphere::amixer::getControlDeviceList $w] {
-			set deviceInformation [getInformationOnDevice $device]
+		foreach device [geekosphere::amixer::getControlDeviceList] {
+			set deviceInformation [geekosphere::amixer::getInformationOnDevice $device]
 			puts "DI: $deviceInformation"
-			set info [getControlDeviceInfo $w $device]
+			set info [geekosphere::amixer::getControlDeviceInfo $device]
 			if {[shouldDeviceBeShown $w $device]} {
 				drawVolumeControl $w [dict get $info "name"] ${w}.mixerWindow.${device}
 			}

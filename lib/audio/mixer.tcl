@@ -94,7 +94,12 @@ namespace eval geekosphere::tbar::widget::mixer {
 			puts "DI: $deviceInformation"
 			set info [geekosphere::amixer::getControlDeviceInfo $device]
 			if {[shouldDeviceBeShown $w $device]} {
-				drawVolumeControl $w [dict get $info "name"] ${w}.mixerWindow.${device}
+				set type [dict get $deviceInformation "type"]
+				if {$type eq "BOOLEAN"} {
+					drawSwitch $w [dict get $info "name"] ${w}.mixerWindow.${device} $device
+				} elseif {$type eq "INTEGER"} {
+					drawVolumeControl $w [dict get $info "name"] ${w}.mixerWindow.${device}
+				}
 			}
 		}
 		pack [label ${w}.mixerWindow.l -text "\n\n\n\n\n\n\n\n" -bg $sys($w,background)] -expand 1 -fill y
@@ -115,7 +120,22 @@ namespace eval geekosphere::tbar::widget::mixer {
 		pack [scrollbar ${controlPath}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $controlPath] -bg $sys($w,background)] -expand 1 -fill y 
 		${controlPath}.bar set 0.0 0.0
 	}
-	
+
+	# draws a switch control element
+	proc drawSwitch {w name path device} {
+		variable sys
+		set controlPath ${path}
+		pack [frame $controlPath -bg $sys($w,background)] -fill y -expand 1 -side right
+		pack [label ${controlPath}.label -text "$name" -bg $sys($w,background) -font $sys($w,font) -fg $sys($w,foreground)] -side top
+		pack [checkbutton ${controlPath}.cb \
+			-bg $sys($w,background) \
+			-font $sys($w,font) \
+			-fg $sys($w,foreground) \
+			-highlightbackground $sys($w,background) \
+			-activebackground $sys($w,background) \
+			-variable sys(checkboxes,$device)]
+	}
+
 	# the action handler for the volume scrollbars
 	proc changeYView {args} {
 		set path [lindex $args 0]

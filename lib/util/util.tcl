@@ -23,6 +23,15 @@ namespace eval geekosphere::tbar::util {
 		return $returnDict
 	}
 
+	# will pad the given string with spaces to the given length.
+	# inserts the spaces at the left
+	proc padStringLeft {string length} {
+		set len [string length $string]
+		if {$len >= $length} { return $string }
+		set padding [expr {$length - $len}]
+		return [string repeat " " $padding]$string
+	}
+
 	proc positionWindowRelativly {windowToPosition w} {
 		# hack to prevent flickering caused by update:
 		# 1) window will be handled by the geometry manager to position it first (size doesn't matter

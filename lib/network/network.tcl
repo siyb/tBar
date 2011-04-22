@@ -21,11 +21,11 @@ namespace eval geekosphere::tbar::widget::network {
 		error "Network widget does not support your OS ($::tcl_platform(os)) yet. Please report this issue to help improove the software."
 	}
 
-
 	proc makeNetwork {w arguments} {
 		variable sys
 		if {[set sys($w,device) [getOption "-device" $arguments]] eq ""} { error "Specify a device using the -device option." }
 		if {[set sys($w,updateInterval) [getOption "-updateinterval" $arguments]] eq ""} { error "Specify an update interval using the -updateinterval option." }
+		set sys(padding) 6;# padding for display, so that the widget does not expand
 		set sys($w,additionalDevices) [getOption "-additionalDevices" $arguments]
 		lappend sys($w,additionalDevices) $sys($w,device)
 		set sys($w,originalCommand) ${w}_
@@ -61,7 +61,7 @@ namespace eval geekosphere::tbar::widget::network {
 		set netDict [getDeviceData $w $sys($w,device)]
 		set tx [dict get $netDict "TX"]
 		set rx [dict get $netDict "RX"]
-		${w}.network configure -text "$sys($w,device) - Up: ${tx} kB/s Down: ${rx} kB/s"
+		setBandwidthInfoInLabel ${w}.network $sys($w,device) $tx $rx
 		updateInfoWindow $w $sys($w,additionalDevices)
 	}
 
@@ -73,12 +73,21 @@ namespace eval geekosphere::tbar::widget::network {
 			set rx [dict get $netDict "RX"]
 			if {![winfo exists $sys($w,infoWindow)]} { continue }
 			if {[winfo exists $sys($w,infoWindow).${device}]} {
-				$sys($w,infoWindow).${device} configure -text "$device - Up: ${tx} kB/s Down: ${rx} kB/s" -fg $sys($w,foreground) -bg $sys($w,background)
+				setBandwidthInfoInLabel $sys($w,infoWindow).${device} $device $tx $rx
+				$sys($w,infoWindow).${device} configure -fg $sys($w,foreground) -bg $sys($w,background)
 			} else {
-				pack [label $sys($w,infoWindow).${device} -text "$device - Up: ${tx} kB/s Down: ${rx} kB/s" -fg $sys($w,foreground) -bg $sys($w,background)] -anchor w
+				pack [label $sys($w,infoWindow).${device} -fg $sys($w,foreground) -bg $sys($w,background)] -anchor w
+				setBandwidthInfoInLabel $sys($w,infoWindow).${device} $device $tx $rx
 				bind $sys($w,infoWindow).${device} <Button-1> [namespace code [list changeMainDevice $w $device %W]]
 			}
 		}
+	}
+
+	proc setBandwidthInfoInLabel {labelPath device tx rx} {
+		variable sys
+		set tx [geekosphere::tbar::util::padStringLeft $tx $sys(padding)]
+		set rx [geekosphere::tbar::util::padStringLeft $rx $sys(padding)]
+		$labelPath configure -text "$device - Up: $tx kB/s Down: $rx kB/s" 
 	}
 
 	proc changeMainDevice {w newMainDevice invokerWindow} {

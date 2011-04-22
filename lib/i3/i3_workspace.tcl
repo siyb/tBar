@@ -84,6 +84,9 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 				"urgent" {
 					getWorkspaces
 				}
+				"create" {
+					getWorkspaces
+				}
 				"unspecified" {
 					return
 				}

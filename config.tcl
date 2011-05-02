@@ -2,6 +2,10 @@
 # General settings
 #
 
+# set this to 1 if you wish to use the compatibility mode. Only do this if 
+# your wm does not support the _NET_WM_WINDOW_TYPE_DOCK hint!
+setCompatibilityMode 0
+
 # the color of the bar
 setBarColor black
 
@@ -24,15 +28,18 @@ setHoverColor blue
 # color for clicked (marked) widgets
 setClickedColor red
 
+# OBSOLETE - only valid when compatibility mode is switched on
 # the width of the bar in pixels
 setWidth 1400
 
 # the height of the bar in pixels
 setHeight 20
 
+# OBSOLETE - only valid when compatibility mode is switched on
 # the X position of the bar on the screen
 setXposition 470
 
+# OBSOLETE - only valid when compatibility mode is switched on
 # the Y position of the bar on the screen
 setYposition 1030
 
@@ -52,7 +59,6 @@ positionBar top
 
 # widget alignment, might be left or right
 alignWidgets right
-
 
 # set loglevel for application, from sorted from least to most verbose.
 # defaults to "DEBUG" if not specified

@@ -43,6 +43,7 @@ namespace eval geekosphere::tbar {
 
 	set conf(sys,writeBugreport) 1
 	set conf(sys,killOnError) 0
+	set conf(sys,compatibilityMode) 0
 
 	#
 	# Code
@@ -66,10 +67,22 @@ namespace eval geekosphere::tbar {
 		wm minsize $sys(bar,toplevel) $conf(geom,width) $conf(geom,height)
 		wm maxsize $sys(bar,toplevel) $conf(geom,width) $conf(geom,height)
 		$sys(bar,toplevel) configure -bg $conf(color,background)
-		wm overrideredirect $sys(bar,toplevel) 1
+		createBar
 		lappend conf(widget,path) [file join / usr share tbar]
 		lappend conf(widget,path) [file join widget]
 		loadWidgets
+	}
+
+	proc createBar {} {
+		variable conf
+		variable sys
+		if {$conf(sys,compatibilityMode)} {
+			wm overrideredirect $sys(bar,toplevel) 1
+		} else {
+			wm withdraw $sys(bar,toplevel)
+			wm attributes $sys(bar,toplevel) -type dock
+			wm iconify .
+		}
 	}
 
 	# adds text to widget
@@ -342,6 +355,11 @@ $::errorCode"
 	proc writeBugreport {writeBugreport} {
 		variable conf
 		set conf(sys,writeBugreport) $writeBugreport
+	}
+
+	proc setCompatibilityMode {mode} {
+		variable conf
+		set conf(sys,compatibilityMode) $mode
 	}
 
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \

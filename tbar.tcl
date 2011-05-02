@@ -1,6 +1,6 @@
 #!/usr/bin/env tclsh
 if {$::tcl_version < 8.5} {
-	puts "tBar requires TCL 8.5, $::tcl_version installed, exiting."
+	puts "tBar requires TCL 8.5.9 or higher to function correctly, $::tcl_version installed, exiting."
 	exit
 }
 

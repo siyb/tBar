@@ -59,6 +59,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set event [getEvent]
 		set type [lindex $event 0]
 		set message [lindex $event 1]
+		if {$event == -1} {
+			log "WARNING" "A connection error occured, resetting system!"
+			resetWorkspaceSystem $w
+			return
+		}
 		set eventDict [::json::json2dict $message]
 		# command reply / subscribe reply
 		# TODO: dict exists is an ugly workaround for bug in i3_ipc, read comment above i3queryDecode
@@ -102,6 +107,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set event [getInfo]
 		set type [lindex $event 0]
 		set message [lindex $event 1]
+		if {$event == -1} {
+			log "WARNING" "A connection error occured, resetting system!"
+			resetWorkspaceSystem $w
+			return
+		}
 		set eventDict [::json::json2dict $message]
 		if {$sys($w,lastWorkspaceStatus) == $eventDict} {
 			return
@@ -131,6 +141,14 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	#
 	# Workspace datastructure modificiation
 	#
+
+	proc resetWorkspaceSystem {w} {
+		variable sys
+		puts reset
+		after 500
+		set sys($w,workspace) [list]
+		getWorkspaces
+	}
 
 	proc flagWorkspace {w workspace kind} {
 		variable sys
@@ -237,7 +255,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 					-highlightthickness 0 \
 					-width 2
 				] -side left
-				bind ${w}.workspace${workspace} <Button-1> [list sendCommand $workspace]
+				bind ${w}.workspace${workspace} <Button-1> [list geekosphere::tbar::widget::i3::workspace::changeWorkspace $workspace]
 			}
 			if {[getActiveStatus $w $workspace] == 1} {
 				${w}.workspace${workspace} configure -bg $sys($w,focusColor)
@@ -247,6 +265,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 				${w}.workspace${workspace} configure -bg $sys($w,background)
 			}
 		}
+	}
+
+	proc changeWorkspace {workspace} {
+		sendCommand $workspace
+		wm focusmodel . passive
 	}
 
 	proc action {w args} {

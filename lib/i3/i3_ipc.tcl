@@ -28,7 +28,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 	#
 	proc connect {} {
 		variable sys
-		if {$sys(info_socket) != -1 || $sys(event_socket) != -1} { error "Connection already established" }
+		if {$sys(info_socket) != -1 || $sys(event_socket) != -1} { return }
 		set sys(info_socket) [unix_sockets::connect $sys(socketFile)]
 		set sys(event_socket) [unix_sockets::connect $sys(socketFile)]
 
@@ -37,6 +37,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 
 		fileevent $sys(info_socket) readable [list geekosphere::tbar::i3::ipc::readInfo]
 		fileevent $sys(event_socket) readable [list geekosphere::tbar::i3::ipc::readEvent]
+		log "INFO" "Connect to unix socket, info: $sys(info_socket) event: $sys(event_socket)"
 	}
 
 	proc disconnect {} {
@@ -49,40 +50,46 @@ namespace eval geekosphere::tbar::i3::ipc {
 		}
 		set sys(info_socket) -1
 		set sys(event_socket) -1
+		log "INFO" "Diconnected, info: $sys(info_socket) event: $sys(event_socket)"
 	}
 
 	proc readInfo {} {
 		variable sys
-		if {[catch {set data [read -nonewline $sys(info_socket)]} err]} {
+		if {[catch {
+			set data [read -nonewline $sys(info_socket)]	
+			::geekosphere::tbar::util::hex::puthex $data
+			set messages [parseData $data]
+			if {$messages == -1} { # TODO: do error handling here }
+			foreach message $messages {
+				set sys(info_reply) $message
+			}
+		} err]} {
 			disconnect
-			log "ERROR" "Error reading socket, forcefully disconnected, attempting to reconnect: $::errorInfo"
-			connect
-		}
-		::geekosphere::tbar::util::hex::puthex $data
-		set messages [parseData $data]
-		if {$messages == -1} { # TODO: do error handling here }
-		foreach message $messages {
-			set sys(info_reply) $message
+			log "ERROR" "Error reading socket, forcefully disconnected: $::errorInfo"
+			set sys(info_reply) -1
 		}
 	}
 
 	proc readEvent {} {
 		variable sys
-		if {[catch {set data [read -nonewline $sys(event_socket)]} err]} {
+		if {[catch {
+			set data [read -nonewline $sys(event_socket)]
+			::geekosphere::tbar::util::hex::puthex $data
+			set messages [parseData $data]
+			if {$messages == -1} { # TODO: do error handling here}
+			foreach message $messages {
+				set sys(event_reply) $message
+			}
+		} err]} {
 			disconnect
-			log "ERROR" "Error reading socket, forcefully disconnected, attempting to reconnect: $::errorInfo"
-			connect
-		}
-		::geekosphere::tbar::util::hex::puthex $data
-		set messages [parseData $data]
-                if {$messages == -1} { # TODO: do error handling here}
-                foreach message $messages {
-			set sys(event_reply) $message
+			log "ERROR" "Error reading socket, forcefully disconnected: $::errorInfo"
+			set sys(event_reply) -1
 		}
 	}
 
 	proc sendMessage {socket type message} {
 		variable sys
+		connect
 		if {$type < 0 || $type > 3} { error "Message type invalid, must be between 0 and 3" }
 		puts -nonewline $sys($socket) [i3queryEncode $type $message]
 		flush $sys($socket)

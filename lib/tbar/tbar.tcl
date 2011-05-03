@@ -185,7 +185,7 @@ namespace eval geekosphere::tbar {
 		variable sys
 		variable conf
 		if {!$conf(sys,writeBugreport)} { return }
-		set timeStamp [clock format [clock seconds] -format "%+"]
+		set timeStamp [clock format [clock seconds] -format "%m-%d-%Y@%H-%M"]
 		set bugreportPath [file join $::env(HOME) .tbar]
 		if {![file exists $bugreportPath]} { return }
 		set file [string map {" " _} [file join $bugreportPath BUGREPORT_${timeStamp}]]

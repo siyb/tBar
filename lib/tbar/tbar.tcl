@@ -364,7 +364,7 @@ $::errorCode"
 
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
-	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError
+	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode
 }
 
 # GLOBAL NAMESPACE!

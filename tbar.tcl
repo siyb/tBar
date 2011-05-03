@@ -1,7 +1,9 @@
 #!/usr/bin/env tclsh
 if {$::tcl_version < 8.5} {
-	puts "tBar requires TCL 8.5.9 or higher to function correctly, $::tcl_version installed, exiting."
+	puts "tBar requires TCL 8.5 or higher to function correctly, $::tcl_version installed, exiting."
 	exit
+} elseif {$::tcl_version < 8.6 && $::tcl_patchLevel != "8.5.9"} {
+	puts "You are running a version lower than TCL 8.9.5, you need to enable the compatibility mode in your config in order to run tBar"
 }
 
 package require Tk

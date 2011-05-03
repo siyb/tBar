@@ -144,10 +144,22 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 	proc resetWorkspaceSystem {w} {
 		variable sys
-		puts reset
 		after 500
+		removeAllWorkspaceLabels $w
 		set sys($w,workspace) [list]
+		set sys($w,lastWorkspaceStatus) [dict create]
+		connect	
+		subscribeToWorkspace
 		getWorkspaces
+		updateDisplay $w
+	}
+
+	proc removeAllWorkspaceLabels {w} {
+		variable sys
+		foreach workspace $sys($w,workspace) {
+			set currentWorkspaceNumber [lindex $workspace 0]
+			destroy ${w}.workspace${currentWorkspaceNumber}
+		}
 	}
 
 	proc flagWorkspace {w workspace kind} {

@@ -1,4 +1,5 @@
 package provide packageloader 1.0
+package provide struct::record
 
 rename package _package
 rename unknown _original_unknown
@@ -8,14 +9,60 @@ proc package {args} {
 
 namespace eval geekosphere::tbar::packageloader {
 	variable sys
-	proc generallyRequires {command args} {
-		foreach package $args {
-			_package require $package
+	set sys(widgetRecords) [list]
+	set sys(procRecord) [::struct::record define {procName generalPackage parameterPackages}]
+	set sys(parameterRecord) [::struct::record define {parameter packageList}]
+
+	#
+	# Accessible from outside
+	#
+	
+	proc generallyRequires {proc args} {
+	}
+
+	proc parameterRequires {proc parameter args} {
+	}
+
+	#
+	# Namespace internal
+	#
+	
+	proc registerProcWithPackageLoader {proc} {
+		variable sys
+		if {[isProcRegisteredWithPackageLoader $proc]} { return }
+		set record [$sys(procRecord) $proc]
+		$record configure -procName $proc
+		$record configure -generalPackage [list]
+		$record configure -parameterPackages [list]
+		lappend sys(widgetRecords) $record	
+	}
+
+	proc isProcRegisteredWithPackageLoader {proc} {
+		if {[getRecordForProc $proc] == -1} {
+			return 0
+		} else {
+			return 1
 		}
 	}
 
-	proc parameterRequires {command parameter args} {
+	proc addGeneralPackagesToProcRecord {proc packageList} {
+		if {[set record [getRecordForProc $proc]] != -1} {
+			set generalList [$record cget -generalPackages]
+			foreach package $packageList {
+				lappend generalList $package
+			}
+			$record configure -generalPackage $generalList
+		}
+	}
 
+	proc getRecordForProc {proc} {
+		variable sys
+		foreach record $sys(widgetRecords) {
+			if {[$record -cget procName] eq $proc]} {
+				return $record
+			}
+		}
+		return -1
 	}
 
 	proc registerProcForArgsFiltering {proc} {
@@ -34,6 +81,8 @@ namespace eval geekosphere::tbar::packageloader {
 	proc filterArguments {arguments} {
 		return $arguments
 	}
+
+	namespace export generallyRequires parameterRequires
 }
 
 proc unknown args {
@@ -47,10 +96,3 @@ proc unknown args {
 	}
 }
 
-#proc test {a b} {
-#        puts "a: $a b: $b"
-#}
-
-#geekosphere::tbar::packageloader::registerProcForArgsFiltering test
-
-#test 1 2

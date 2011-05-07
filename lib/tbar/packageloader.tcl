@@ -14,7 +14,8 @@ namespace eval geekosphere::tbar::packageloader {
 	set sys(widgetRecords) [list]
 	set sys(procRecord) [::struct::record define procRecord {procName generalPackage parameterPackages}]
 	set sys(parameterRecord) [::struct::record define parameterRecord {parameter packageList}]
-
+	set sys(errorMessage) ""
+	
 	#
 	# Accessible from outside
 	#
@@ -49,6 +50,7 @@ namespace eval geekosphere::tbar::packageloader {
 	proc registerProcWithPackageLoader {proc} {
 		variable sys
 		if {[isProcRegisteredWithPackageLoader $proc]} { return }
+		registerProcForArgsFiltering $proc
 		set record [$sys(procRecord) $proc]
 		$record configure -procName $proc
 		$record configure -generalPackage [list]
@@ -130,7 +132,7 @@ namespace eval geekosphere::tbar::packageloader {
 	proc getRecordForProc {proc} {
 		variable sys
 		foreach record $sys(widgetRecords) {
-			if {[$record cget procName] eq $proc} {
+			if {[$record cget -procName] eq $proc} {
 				return $record
 			}
 		}
@@ -138,37 +140,74 @@ namespace eval geekosphere::tbar::packageloader {
 	}
 
 	proc registerProcForArgsFiltering {proc} {
-		trace add execution $proc enter geekosphere::tbar::packageloader::traceCallback
+		trace add execution $proc enter traceCallback
 	}
 
-	proc traceCallback {args} {
-		set procCall [lindex $args 0]
-		set callArgs [lrange $procCall 1 end]
-		set ::procName [lindex $procCall 0]
-		set ::procArgs [info args $::procName]
-		set ::procBody [info body $::procName]
-		rename $::procName ""
+	proc argumentProcessor {proc arguments} {
+		foreach parameterRecord [getParameterRecordList $proc] {
+			set parameter [$parameterRecord cget -parameter]
+			set packageList [$parameterRecord cget -packageList]
+			foreach package $packageList {
+				if {![checkIfPackageCanBeLoaded $package]} {
+					set arguments [removeParameterFromCallList $parameter $arguments]
+				}
+			}
+		}
+		return $arguments 
 	}
 
-	proc filterArguments {arguments} {
-		return $arguments
+	proc removeParameterFromCallList {parameterToRemove callList} {
+		set position [lsearch $callList $parameterToRemove]
+		if {$position != -1} { set callList [lreplace $callList $position $position] }
+		return $callList
+	}
+
+	proc checkIfPackageCanBeLoaded {package} {
+		variable sys
+		rename package package_tmp
+		rename _package package
+		if {[catch {
+			_package require $package
+		} sys(errorMessage)]} {
+			set ret 0
+		} else {
+			set ret 1
+		}
+		rename package _package
+		rename package_tmp package
+		return $ret
 	}
 
 	namespace export generallyRequires parameterRequires
+}
+
+proc traceCallback {args} {
+	set procCall [lindex $args 0]
+	set ::callArgs [lrange $procCall 1 end]
+	set ::procName [lindex $procCall 0]
+	set ::procArgs [info args $::procName]
+	set ::procBody [info body $::procName]
+	rename $::procName ""
 }
 
 proc unknown args {
 	set command [lindex $args 0]
 	if {[info exists ::procName] && $command == $::procName} {
 		proc $::procName $::procArgs $::procBody
-		$::procName {*}[geekosphere::tbar::packageloader::filterArguments $::procArgs]
+		$::procName {*}[geekosphere::tbar::packageloader::argumentProcessor $::procName $::callArgs]
 		unset ::procName ::procArgs ::procBody
 	} else {
 		uplevel 1 [list _original_unknown {*}$args]
 	}
 }
-
 # testing
+proc aTestProc {args} {
+	puts "aTestProc args: $args"
+}
+
+proc bTestProc {args} {
+	puts "bTestProc args: $args"
+}
 geekosphere::tbar::packageloader::generallyRequires aTestProc gen1 gen2 gen3
 geekosphere::tbar::packageloader::generallyRequires aTestProc gen4 gen5 gen6
 geekosphere::tbar::packageloader::parameterRequires aTestProc -aTestParameter para1 para2 para3
@@ -181,3 +220,5 @@ geekosphere::tbar::packageloader::parameterRequires bTestProc -cTestParameter pa
 
 puts \n\n
 geekosphere::tbar::packageloader::printAllDeps
+aTestProc -aTestParameter -cTestParameter -dTestParameter -xTestParameter 
+bTestProc -yTestParameter -cTestParameter

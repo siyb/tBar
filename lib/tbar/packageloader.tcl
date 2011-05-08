@@ -20,7 +20,10 @@ namespace eval geekosphere::tbar::packageloader {
 	
 	# stores the package loading error of the last package loading attempt
 	set sys(errorMessage) ""
-	
+
+	# saves the init state
+	set sys(hasBeenInit) 0
+
 	#
 	# Accessible from outside
 	#
@@ -30,6 +33,7 @@ namespace eval geekosphere::tbar::packageloader {
 	# 	proc - the proc used to create and start the widget
 	# 	args - a list of packages that need to be present to load the widget	
 	proc generallyRequires {proc args} {
+		init
 		registerProcWithPackageLoader $proc
 		addGeneralPackagesToProcRecord $proc $args
 	}
@@ -40,6 +44,7 @@ namespace eval geekosphere::tbar::packageloader {
 	# 	parameter - the parameter that requires a certain package to be present
 	# 	args - a list of packages the parameter depends on
 	proc parameterRequires {proc parameter args} {
+		init
 		registerProcWithPackageLoader $proc
 		addParameterPackagesToProcRecord $proc $parameter $args
 	}
@@ -50,9 +55,13 @@ namespace eval geekosphere::tbar::packageloader {
 	
 	# init code moved here to prevent errors on pkgIndex creation
 	proc init {} {
-		initLogger
-		set sys(procRecord) [::struct::record define procRecord {procName generalPackage parameterPackages}]
-		set sys(parameterRecord) [::struct::record define parameterRecord {parameter packageList}]
+		variable sys
+		if {!$sys(hasBeenInit)} {
+			initLogger
+			set sys(procRecord) [::struct::record define procRecord {procName generalPackage parameterPackages}]
+			set sys(parameterRecord) [::struct::record define parameterRecord {parameter packageList}]
+			set sys(hasBeenInit) 1
+		}
 	}
 
 	# print all deps (for debugging)
@@ -161,10 +170,12 @@ namespace eval geekosphere::tbar::packageloader {
 	}
 
 	proc registerProcForArgsFiltering {proc} {
+		log "DEBUG" "Adding trace for '$proc'"
 		trace add execution $proc enter traceCallback
 	}
 
 	proc argumentProcessor {proc arguments} {
+		log "DEBUG" "Processing arguments: '$arguments' for '$proc'"
 		set generalPackageDependencies [[getRecordForProc $proc] cget -generalPackage]
 		foreach package $generalPackageDependencies {
 			if {![checkIfPackageCanBeLoaded $package]} {
@@ -181,13 +192,14 @@ namespace eval geekosphere::tbar::packageloader {
 				}
 			}
 		}
+		log "DEBUG" "Argument list after processing for '$proc': '$arguments'"
 		return $arguments 
 	}
 
 	proc removeParameterFromCallList {parameterToRemove callList} {
-		puts $callList
+		puts "CALLLIST '$callList' '$parameterToRemove'"
 		set startPosition [lsearch $callList $parameterToRemove]
-		if {$startPosition == -1} { return }
+		if {$startPosition == -1} { puts "PARAMETER $parameterToRemove not found";return $callList}
 		for {set endPosition [expr {$startPosition + 1}]} {$endPosition < [llength $callList]} {incr endPosition} {
 			if {[string index [lindex $callList $endPosition] 0] == "-"} {
 				set endPosition [expr {$endPosition -1}]
@@ -225,6 +237,7 @@ proc unknown args {
 	set command [lindex $args 0]
 	if {[info exists ::procName] && $command == $::procName} {
 		proc $::procName $::procArgs $::procBody
+		puts "EXEC: $::procName {*}[geekosphere::tbar::packageloader::argumentProcessor $::procName $::callArgs]"
 		$::procName {*}[geekosphere::tbar::packageloader::argumentProcessor $::procName $::callArgs]
 		unset ::procName ::procArgs ::procBody
 	} else {

@@ -1,30 +1,46 @@
 package provide packageloader 1.0
 package require struct::record
+package require logger
 
-rename package _package
 rename unknown _original_unknown
-proc package {args} {
-	if {[lindex $args 0] eq "require"} {
-		error "Use the geekosphere::tbar::packageloader to load packages!"
-	}
-}
 
+catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::packageloader {
 	variable sys
+	
+	initLogger
+
+	# a list containing records for all registered procs
 	set sys(widgetRecords) [list]
+
+	# a record storing package information on proc (which "proc" needs which package), including proc
+	# parameters and their package dependency
 	set sys(procRecord) [::struct::record define procRecord {procName generalPackage parameterPackages}]
+	
+	# a record for widget parameters package dependencies. this record is par of sys(procRecord)
 	set sys(parameterRecord) [::struct::record define parameterRecord {parameter packageList}]
+	
+	# stores the package loading error of the last package loading attempt
 	set sys(errorMessage) ""
 	
 	#
 	# Accessible from outside
 	#
-	
+
+	# define packages that are generally required by your widget
+	# 
+	# 	proc - the proc used to create and start the widget
+	# 	args - a list of packages that need to be present to load the widget	
 	proc generallyRequires {proc args} {
 		registerProcWithPackageLoader $proc
 		addGeneralPackagesToProcRecord $proc $args
 	}
 
+	# define packages that are required by the widget on a parameter basis.
+	# 
+	# 	proc - the proc used to create and start the widget
+	# 	parameter - the parameter that requires a certain package to be present
+	# 	args - a list of packages the parameter depends on
 	proc parameterRequires {proc parameter args} {
 		registerProcWithPackageLoader $proc
 		addParameterPackagesToProcRecord $proc $parameter $args
@@ -144,12 +160,19 @@ namespace eval geekosphere::tbar::packageloader {
 	}
 
 	proc argumentProcessor {proc arguments} {
+		set generalPackageDependencies [[getRecordForProc $proc] cget -generalPackage]
+		foreach package $generalPackageDependencies {
+			if {![checkIfPackageCanBeLoaded $package]} {
+				log "WARNING" "The package '$proc' requested '$package' to be loaded, which is not installed on the system. Make sure to install all additional dependencies as well: $generalPackageDependencies"
+			}
+		}
 		foreach parameterRecord [getParameterRecordList $proc] {
 			set parameter [$parameterRecord cget -parameter]
 			set packageList [$parameterRecord cget -packageList]
 			foreach package $packageList {
 				if {![checkIfPackageCanBeLoaded $package]} {
 					set arguments [removeParameterFromCallList $parameter $arguments]
+					log "WARNING" "The parameter '$parameter' of the '$proc' widget required additional packages that are not installed on this system -> '$packageList', error caused by '$package'"
 				}
 			}
 		}
@@ -164,8 +187,6 @@ namespace eval geekosphere::tbar::packageloader {
 
 	proc checkIfPackageCanBeLoaded {package} {
 		variable sys
-		rename package package_tmp
-		rename _package package
 		if {[catch {
 			_package require $package
 		} sys(errorMessage)]} {
@@ -173,8 +194,6 @@ namespace eval geekosphere::tbar::packageloader {
 		} else {
 			set ret 1
 		}
-		rename package _package
-		rename package_tmp package
 		return $ret
 	}
 
@@ -200,25 +219,4 @@ proc unknown args {
 		uplevel 1 [list _original_unknown {*}$args]
 	}
 }
-# testing
-proc aTestProc {args} {
-	puts "aTestProc args: $args"
-}
 
-proc bTestProc {args} {
-	puts "bTestProc args: $args"
-}
-geekosphere::tbar::packageloader::generallyRequires aTestProc gen1 gen2 gen3
-geekosphere::tbar::packageloader::generallyRequires aTestProc gen4 gen5 gen6
-geekosphere::tbar::packageloader::parameterRequires aTestProc -aTestParameter para1 para2 para3
-geekosphere::tbar::packageloader::parameterRequires aTestProc -aTestParameter para4 para5 para6
-geekosphere::tbar::packageloader::parameterRequires aTestProc -bTestParameter para7 para8 para9
-
-geekosphere::tbar::packageloader::generallyRequires bTestProc gen7 gen8 gen9
-geekosphere::tbar::packageloader::generallyRequires bTestProc gen10 gen11 gen12
-geekosphere::tbar::packageloader::parameterRequires bTestProc -cTestParameter para10 para11 para12
-
-puts \n\n
-geekosphere::tbar::packageloader::printAllDeps
-aTestProc -aTestParameter -cTestParameter -dTestParameter -xTestParameter 
-bTestProc -yTestParameter -cTestParameter

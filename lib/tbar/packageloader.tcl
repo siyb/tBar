@@ -8,17 +8,15 @@ catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::packageloader {
 	variable sys
 	
-	#initLogger
-
 	# a list containing records for all registered procs
 	set sys(widgetRecords) [list]
 
 	# a record storing package information on proc (which "proc" needs which package), including proc
 	# parameters and their package dependency
-	set sys(procRecord) [::struct::record define procRecord {procName generalPackage parameterPackages}]
+	set sys(procRecord) ""
 	
 	# a record for widget parameters package dependencies. this record is par of sys(procRecord)
-	set sys(parameterRecord) [::struct::record define parameterRecord {parameter packageList}]
+	set sys(parameterRecord) ""
 	
 	# stores the package loading error of the last package loading attempt
 	set sys(errorMessage) ""
@@ -49,6 +47,13 @@ namespace eval geekosphere::tbar::packageloader {
 	#
 	# Namespace internal
 	#
+	
+	# init code moved here to prevent errors on pkgIndex creation
+	proc init {} {
+		initLogger
+		set sys(procRecord) [::struct::record define procRecord {procName generalPackage parameterPackages}]
+		set sys(parameterRecord) [::struct::record define parameterRecord {parameter packageList}]
+	}
 
 	# print all deps (for debugging)
 	proc printAllDeps {} {

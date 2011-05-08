@@ -8,7 +8,7 @@ catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::packageloader {
 	variable sys
 	
-	initLogger
+	#initLogger
 
 	# a list containing records for all registered procs
 	set sys(widgetRecords) [list]
@@ -180,9 +180,16 @@ namespace eval geekosphere::tbar::packageloader {
 	}
 
 	proc removeParameterFromCallList {parameterToRemove callList} {
-		set position [lsearch $callList $parameterToRemove]
-		if {$position != -1} { set callList [lreplace $callList $position $position] }
-		return $callList
+		puts $callList
+		set startPosition [lsearch $callList $parameterToRemove]
+		if {$startPosition == -1} { return }
+		for {set endPosition [expr {$startPosition + 1}]} {$endPosition < [llength $callList]} {incr endPosition} {
+			if {[string index [lindex $callList $endPosition] 0] == "-"} {
+				set endPosition [expr {$endPosition -1}]
+				break;
+			}
+		}
+		return [lreplace $callList $startPosition $endPosition] 
 	}
 
 	proc checkIfPackageCanBeLoaded {package} {
@@ -219,4 +226,3 @@ proc unknown args {
 		uplevel 1 [list _original_unknown {*}$args]
 	}
 }
-

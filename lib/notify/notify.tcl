@@ -1,10 +1,4 @@
 package provide notify 1.0
-package require util
-if {[catch { package require Img } err]} {
-	error "You need to install libtk-img in order to be able to use the notify widget"
-}
-
-package require imageresize
 
 proc notify {w args} {
 	geekosphere::tbar::widget::notify::makeNotify $w $args

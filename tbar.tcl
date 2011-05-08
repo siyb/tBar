@@ -5,8 +5,8 @@ if {$::tcl_version < 8.5} {
 } elseif {$::tcl_version < 8.6 && $::tcl_patchLevel != "8.5.9"} {
 	puts "You are running a version lower than TCL 8.5.9, you need to enable the compatibility mode in your config in order to run tBar"
 }
-puts "FOO: $::tcl_patchLevel"
 
+package require packageloader
 package require Tk
 package require tbar
 package require logger

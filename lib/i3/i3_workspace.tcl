@@ -30,7 +30,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set sys($w,urgentColor) "red"
 		set sys($w,rolloverFontColor) [getOption "-fg" $arguments]
 		set sys($w,rolloverBackgroundColor) [getOption "-bg" $arguments]
-
+		set sys($w,legacyMode) 0
 		pack [frame ${w}]
 
 		# rename widgets so that it will not receive commands
@@ -266,7 +266,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 					-highlightthickness 0 \
 					-width 2
 				] -side left
-				bind ${w}.workspace${workspace} <Button-1> [list geekosphere::tbar::widget::i3::workspace::changeWorkspace $workspace]
+				bind ${w}.workspace${workspace} <Button-1> [list geekosphere::tbar::widget::i3::workspace::changeWorkspace $w $workspace]
 			}
 			if {[getActiveStatus $w $workspace] == 1} {
 				${w}.workspace${workspace} configure -bg $sys($w,focusColor)
@@ -278,8 +278,14 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		}
 	}
 
-	proc changeWorkspace {workspace} {
-		sendCommand $workspace
+	proc changeWorkspace {w workspace} {
+		variable sys
+		if {$sys($w,legacyMode)} {
+			log "DEBUG" "Using i3 legacy mode"
+			sendCommand $workspace
+		} else {
+			sendCommand [list workspace $workspace]
+		}
 		wm focusmodel . passive
 	}
 
@@ -319,6 +325,9 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 					"-setipcpath" {
 						setIpcPath $value
 					}
+					"-legacymode" {
+						setLegacyMode $w $value
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -338,6 +347,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	#
 	# Widget configuration procs
 	#
+
+	proc setLegacyMode {w legacyMode} {
+		variable sys
+		set sys($w,legacyMode) $legacyMode
+	}
 
 	proc setIpcPath {path} {
 		if {![file exists $path] || [file isfile $path] || [file isdirectory $path]} {

@@ -255,7 +255,8 @@ addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 # -urgentcolor - the color to be used to mark a workspace with an urgent event waiting
 # -rolloverfontcolor - color to be displayed when the mouse cursor enters a workspace's box
 # -rolloverbackgroundcolor - color font color to be used when mouse cursor enters a workspace's box
-# -side use this parameter to position the bar on a certain side, may be "left" or "right"
+# -side - use this parameter to position the bar on a certain side, may be "left" or "right"
+# -setipcpath - sets the path to the i3 ipc socket 
 #addWidgetToBar i3_workspace i3_workspace1 0
 
 # This mixer widget enables controlling audio devices using amixer.

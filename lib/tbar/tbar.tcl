@@ -150,7 +150,7 @@ namespace eval geekosphere::tbar {
 					log "WARNING" "Widget $widget can not be found in: $conf(widget,path)"
 				}
 			} err]} {
-				log "ERROR" "Failed loading widget $widget: $::errorInfo"
+				log "ERROR" "Failed loading widget $widget:\n $::errorInfo"
 			}
 		}
 	}

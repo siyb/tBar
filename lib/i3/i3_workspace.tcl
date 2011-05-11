@@ -38,11 +38,10 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 		set sys($w,lastWorkspaceStatus) [dict create]
 
-		initIpc $w
-
 		# run configuration
 		action $w configure $arguments
 
+		initIpc $w
 	}
 
 	# initialize i3 ipc stuff
@@ -317,6 +316,9 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 						# do nothing, -side parameter was meant for widget wrapper
 						# dirty hack
 					}
+					"-setipcpath" {
+						setIpcPath $value
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -336,6 +338,14 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	#
 	# Widget configuration procs
 	#
+
+	proc setIpcPath {path} {
+		if {![file exists $path] || [file isfile $path] || [file isdirectory $path]} {
+			log "WARNING" "The i3 ipc path specified using the -setipcpath option does not exist, is a regular file or a directory. Using '~/.i3/ipc.sock' as fallback"
+			return
+		}
+		set geekosphere::tbar::i3::ipc::sys(socketFile) $path
+	}
 
 	proc setForAllWorkspaces {w args} {
 		variable sys

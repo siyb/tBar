@@ -9,7 +9,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 	initLogger
 
 	# i3 socket file
-	set sys(socketFile) [file join $::env(HOME) .i3 ipc.sock]
+	set sys(socketFile) "" 
 
 	# sockets
 	set sys(info_socket) -1
@@ -28,6 +28,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 	#
 	proc connect {} {
 		variable sys
+		if {$sys(socketFile) eq ""} { set sys(socketFile) [determineSocketPath] }
 		if {$sys(info_socket) != -1 || $sys(event_socket) != -1} { return }
 		set sys(info_socket) [unix_sockets::connect $sys(socketFile)]
 		set sys(event_socket) [unix_sockets::connect $sys(socketFile)]
@@ -152,6 +153,14 @@ namespace eval geekosphere::tbar::i3::ipc {
 	#
 	# Util
 	#
+
+	proc determineSocketPath {} {
+		if {[info exists ::env(I3SOCK)]} {
+			return $::env(I3SOCK)
+		} else {
+			return [file join $::env(HOME) .i3 ipc.sock]
+		}
+	}
 
 	proc i3queryEncode {type message} {
 		variable sys

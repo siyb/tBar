@@ -155,7 +155,7 @@ namespace eval geekosphere::tbar::widget::notify {
 
 	proc changeImage {w imagePath} {
 		variable sys
-		if {![file exists $imagePath]} { error "Image file $imageFile does not exists" }
+		if {![file exists $imagePath]} { error "Image file $imagePath does not exists" }
 		set sys($w,imagePath) $imagePath
 		set sys($w,image) [image create photo -file $imagePath]
 	}

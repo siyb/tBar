@@ -245,7 +245,7 @@ namespace eval geekosphere::tbar::packageloader {
 			foreach package $packageList {
 				if {![checkIfPackageCanBeLoaded $package]} {
 					set arguments [removeParameterFromCallList $parameter $arguments]
-					log "WARNING" "The parameter '$parameter' of the '$proc' widget required additional packages that are not installed on this system -> '$packageList', error caused by '$package'"
+					log "WARNING" "The parameter '$parameter' of the '$proc' widget requires additional packages that are not installed on this system -> '$packageList', error caused by '$package'"
 				}
 			}
 		}

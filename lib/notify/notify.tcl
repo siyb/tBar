@@ -15,13 +15,12 @@ namespace eval geekosphere::tbar::widget::notify {
 	proc makeNotify {w arguments} {
 		variable sys
 		set sys($w,originalCommand) ${w}_
-
+		
 		changeNotifyAt $w [getOption "-notifyAt" $arguments]
-
+		
 		# has -image?
 		if {[set imgp [getOption "-image" $arguments]] != ""} {
 			changeImage $w $imgp
-
 			# should be scaled?
 			if {[set imgdim [getOption "-imageDimensions" $arguments]] != ""} {
 				changeImageDimensions $w $imgdim
@@ -38,10 +37,10 @@ namespace eval geekosphere::tbar::widget::notify {
 
 		frame $w
 		pack [label ${w}.displayLabel] -side left -fill both
-
+		
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_
-
+		
 		# run configuration
 		action $w configure $arguments
 

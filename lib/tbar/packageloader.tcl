@@ -7,7 +7,7 @@ rename unknown _original_unknown
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::packageloader {
 	variable sys
-	
+
 	# a list containing records for all registered procs
 	set sys(widgetRecords) [list]
 
@@ -212,7 +212,7 @@ namespace eval geekosphere::tbar::packageloader {
 	proc checkIfPackageCanBeLoaded {package} {
 		variable sys
 		if {[catch {
-			_package require $package
+			package require $package
 		} sys(errorMessage)]} {
 			set ret 0
 		} else {
@@ -237,9 +237,11 @@ proc unknown args {
 	set command [lindex $args 0]
 	if {[info exists ::procName] && $command == $::procName} {
 		proc $::procName $::procArgs $::procBody
-		puts "EXEC: $::procName {*}[geekosphere::tbar::packageloader::argumentProcessor $::procName $::callArgs]"
-		$::procName {*}[geekosphere::tbar::packageloader::argumentProcessor $::procName $::callArgs]
+		log "INFO" "EXEC: $::procName {*}[geekosphere::tbar::packageloader::argumentProcessor $::procName $::callArgs]"
+		catch {$::procName {*}[geekosphere::tbar::packageloader::argumentProcessor $::procName $::callArgs]} retval retoptions
 		unset ::procName ::procArgs ::procBody
+		return {*}$retoptions $retval
+		
 	} else {
 		uplevel 1 [list _original_unknown {*}$args]
 	}

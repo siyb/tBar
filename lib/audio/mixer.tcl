@@ -1,7 +1,9 @@
 package provide mixer 1.0
 
-package require logger
-package require amixer
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require logger
+	package require amixer
+}
 
 proc mixer {w args} {
 	if {[geekosphere::tbar::widget::mixer::makeMixer $w $args] == -1} {

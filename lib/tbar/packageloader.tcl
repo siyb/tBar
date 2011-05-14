@@ -8,6 +8,9 @@ catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::packageloader {
 	variable sys
 
+	# a variable to indicate that the packageloader is available
+	set available 1
+
 	# a list containing records for all registered procs
 	set sys(widgetRecords) [list]
 
@@ -48,6 +51,28 @@ namespace eval geekosphere::tbar::packageloader {
 		registerProcWithPackageLoader $proc
 		addParameterPackagesToProcRecord $proc $parameter $args
 	}
+	
+	# sets the namespace for the specified proc.
+	#
+	#	proc - the proc whose namespace to define
+	#	namespace - the namespace the proc operates in, not the one it is called in
+	proc setNamespace {proc namespace} {
+		init
+		registerProcWithPackageLoader $proc
+		setProcRecordNamespace $proc $namespace
+	}
+
+	# register namespace imports that should 
+	# be executed in the procs namespace once
+	# all required packages have been loaded
+	#
+	#	proc - the proc to register the namespace imports for
+	#	args - a list of namespaces to register
+	proc registerNamespaceImportsFor {proc args} {
+		init
+		registerProcWithPackageLoader $proc
+		setProcRecordNamespaceImports $proc $args
+	}
 
 	#
 	# Namespace internal
@@ -58,7 +83,7 @@ namespace eval geekosphere::tbar::packageloader {
 		variable sys
 		if {!$sys(hasBeenInit)} {
 			initLogger
-			set sys(procRecord) [::struct::record define procRecord {procName generalPackage parameterPackages}]
+			set sys(procRecord) [::struct::record define procRecord {procName generalPackage parameterPackages namespace namespaceImports}]
 			set sys(parameterRecord) [::struct::record define parameterRecord {parameter packageList}]
 			set sys(hasBeenInit) 1
 		}
@@ -80,12 +105,44 @@ namespace eval geekosphere::tbar::packageloader {
 	proc registerProcWithPackageLoader {proc} {
 		variable sys
 		if {[isProcRegisteredWithPackageLoader $proc]} { return }
+		if {[catch {
+			package require $proc
+		} err]} {
+			log "WARNING" "Could not load default package for '$proc', the default package must have the same name as the item to load"
+			return
+		}
 		registerProcForArgsFiltering $proc
 		set record [$sys(procRecord) $proc]
 		$record configure -procName $proc
 		$record configure -generalPackage [list]
 		$record configure -parameterPackages [list]
-		lappend sys(widgetRecords) $record	
+		$record configure -namespace ""
+		$record configure -namespaceImports [list]
+		lappend sys(widgetRecords) $record
+	}
+	
+	# gets the namespace proc is related to
+	proc getProcRecordNamespace {proc} {
+		set record [getRecordForProc $proc]
+		return [$record cget -namespace]
+	}
+	
+	# gets all namespaces to import for proc
+	proc getProcRecordNamespaceImports {proc} {
+		set record [getRecordForProc $proc]
+		return [$record cget -namespaceImports]
+	}
+	
+	# sets the namespace proc is related to
+	proc setProcRecordNamespace {proc namespace} {
+		set record [getRecordForProc $proc]
+		$record configure -namespace $namespace
+	}
+	
+	# sets the namespace imports for proc
+	proc setProcRecordNamespaceImports {proc namespaces} {
+		set record [getRecordForProc $proc]
+		$record configure -namespaceImports $namespaces
 	}
 
 	# check if the given proc is registered with the filter trace
@@ -192,6 +249,20 @@ namespace eval geekosphere::tbar::packageloader {
 				}
 			}
 		}
+		
+		set procNamespace [getProcRecordNamespace $proc]
+		if {$procNamespace ne ""} {
+			log "INFO" "Namspace is '$procNamespace', starting imports"
+			if {[catch {
+				foreach ns [getProcRecordNamespaceImports $proc] {
+					log "INFO" "Attempting to import '$ns' to '$procNamespace'"
+					namespace eval $procNamespace [list namespace import $ns]
+				}
+			} err]} {
+				log "WARNING" "Error importing '$ns' into '$procNamespace': $::errorInfo"
+			}
+		}
+		
 		log "DEBUG" "Argument list after processing for '$proc': '$arguments'"
 		return $arguments 
 	}
@@ -221,7 +292,7 @@ namespace eval geekosphere::tbar::packageloader {
 		return $ret
 	}
 
-	namespace export generallyRequires parameterRequires
+	namespace export generallyRequires parameterRequires setNamespace registerNamespaceImportsFor
 }
 
 proc traceCallback {args} {

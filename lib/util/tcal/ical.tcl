@@ -1,8 +1,11 @@
 package provide ical 0.1
 
-package require ical-semantics
-package require util
-package require logger
+if {![info exists geekosphere::tbar::packageloader::available]} {
+	package require ical-semantics
+	package require util
+	package require logger
+	package require struct::tree
+}
 
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval ical {
@@ -528,7 +531,6 @@ proc ical::dump {tree} {
 }
 
 proc ical::cal2tree {str} {
-    package require struct::tree
     set tree [::struct::tree]
     set node root
     $tree set root @type root

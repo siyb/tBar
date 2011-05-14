@@ -1,7 +1,9 @@
 package provide memory 1.2
 
-package require statusBar
-package require util
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require statusBar
+	package require util
+}
 
 proc memory {w args} {
 	geekosphere::tbar::widget::memory::makeMemory $w $args

@@ -1,11 +1,12 @@
-package require notify
-package require util
 catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::notify {
 
-	# let tbar know about package dependencies
+	generallyRequires notify util
 	parameterRequires notify -imageDimensions Img imageresize
 	parameterRequires notify -image Img imageresize
+	setNamespace notify ::geekosphere::tbar::widget::notify
+	registerNamespaceImportsFor notify \
+		::geekosphere::tbar::util::*
 
 	proc init {path settingsList} {
 		pack [notify $path \

@@ -1,8 +1,10 @@
 package provide cpu 1.2
 
-package require barChart
-package require util
-package require logger
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require barChart
+	package require util
+	package require logger
+}
 
 proc cpu {w args} {
 	geekosphere::tbar::widget::cpu::makeCpu $w $args

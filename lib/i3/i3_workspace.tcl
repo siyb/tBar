@@ -1,8 +1,10 @@
 package provide i3_workspace 1.0
 
-package require logger
-package require i3_ipc
-package require json
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require logger
+	package require i3_ipc
+	package require json
+}
 
 proc i3_workspace {w args} {
 	geekosphere::tbar::widget::i3::workspace::makeI3Workspace $w $args
@@ -18,6 +20,7 @@ catch {
 	namespace import ::geekosphere::tbar::i3::ipc::*
 	namespace import ::geekosphere::tbar::util::*
 }
+
 namespace eval geekosphere::tbar::widget::i3::workspace {
 	initLogger
 

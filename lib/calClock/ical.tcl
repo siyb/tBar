@@ -1,8 +1,11 @@
 package provide icalCalClock 1.0
 
-package require logger
-package require sqlite3
-package require ical
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require logger
+	package require sqlite3
+	package require ical
+}
+
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::widget::calClock::ical {
 	initLogger

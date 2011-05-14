@@ -1,6 +1,8 @@
 package provide battery 1.0
 
-package require logger
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require logger
+}
 
 proc battery {w args} {
 	if {[geekosphere::tbar::widget::battery::makeBattery $w $args] == -1} {

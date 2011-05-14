@@ -1,8 +1,10 @@
 package provide calClock 1.3
 
-package require callib
-package require util
-package require logger
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require callib
+	package require util
+	package require logger
+}
 
 # TODO add option to remove appointment
 proc calClock {w args} {
@@ -26,7 +28,9 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set sys($w,ical) 1
 		set sys($w,ical) [string is true -strict [getOption "-ical" $arguments]]
 		if {$sys($w,ical)} {
-			package require icalCalClock
+			if {![info exist geekosphere::tbar::packageloader::available]} {
+				package require icalCalClock
+			}
 		}
 		
 		set sys($w,originalCommand) ${w}_

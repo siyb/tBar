@@ -1,6 +1,8 @@
-package require player
-
 namespace eval geekosphere::tbar::wrapper::player {
+
+	setNamespace player ::geekosphere::tbar::widget::player
+	registerNamespaceImportsFor player \
+		::geekosphere::tbar::util::* \
 
 	proc init {path settingsList} {
 		pack [player $path \

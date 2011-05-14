@@ -1,7 +1,9 @@
 package provide network 1.2
 
-package require statusBar
-package require util
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require statusBar
+	package require util
+}
 
 proc network {w args} {
 	geekosphere::tbar::widget::network::makeNetwork $w $args

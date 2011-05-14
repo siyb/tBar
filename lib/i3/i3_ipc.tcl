@@ -1,8 +1,10 @@
 package provide i3_ipc 1.0
 
-package require logger
-package require unix_sockets
-package require hex
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require logger
+	package require unix_sockets
+	package require hex
+}
 
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::i3::ipc {

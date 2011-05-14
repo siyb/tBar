@@ -1,12 +1,14 @@
 package provide util 1.2
 
-package require logger
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require logger
+}
 
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::util {
-	
+
 	initLogger
-	
+
 	set sys(componentCounter) 0
 
 	# parses a procfile formatted like "item : value", spaces between : and strings is irrelevant

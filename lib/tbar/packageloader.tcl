@@ -235,7 +235,7 @@ namespace eval geekosphere::tbar::packageloader {
 		log "DEBUG" "Processing arguments: '$arguments' for '$proc'"
 		set generalPackageDependencies [[getRecordForProc $proc] cget -generalPackage]
 		foreach package $generalPackageDependencies {
-			if {![checkIfPackageCanBeLoaded $package]} {
+			if {$package ne "" && ![checkIfPackageCanBeLoaded $package]} {
 				log "WARNING" "The package '$proc' requested '$package' to be loaded, which is not installed on the system. Make sure to install all additional dependencies as well: $generalPackageDependencies"
 			}
 		}
@@ -268,7 +268,6 @@ namespace eval geekosphere::tbar::packageloader {
 	}
 
 	proc removeParameterFromCallList {parameterToRemove callList} {
-		puts "CALLLIST '$callList' '$parameterToRemove'"
 		set startPosition [lsearch $callList $parameterToRemove]
 		if {$startPosition == -1} { puts "PARAMETER $parameterToRemove not found";return $callList}
 		for {set endPosition [expr {$startPosition + 1}]} {$endPosition < [llength $callList]} {incr endPosition} {

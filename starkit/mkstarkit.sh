@@ -10,15 +10,15 @@
 
 # tclkit software
 # TODO: include all platforms here (array) and create a starkit for all available platforms
-TCLKITURL='http://tclkit.googlecode.com/files/tclkit-8.5.8-linux-ix86.gz'
-TCLKITSHA1='477331776ce8b67a7326c554c54f4688161679d7'
-SDXURL='http://tclkit.googlecode.com/files/sdx-20100310.kit'
-SDXSHA1='be3de2bc770764e269707a97741e3699d61e878d'
+TCLKITURL='http://tclkit.googlecode.com/files/tclkit-8.5.9-linux-ix86.gz'
+TCLKITSHA1='10f89b85befc68f0088f7895873eb45ab301051b'
+SDXURL='http://tclkit.googlecode.com/files/sdx-20110317.kit'
+SDXSHA1='1a77b0b5bc8cfcf2df2ef051a511e9187103ce0c'
 
 # Paths of libraries which are mandatory for the standard tbar distribution.
 # Make sure that each path contains a valid pkgIndex.tcl file.
 SQLITE='/usr/lib/sqlite3/'
-TCLLIB='/usr/share/tcltk/tcllib1.12/'
+TCLLIB='/usr/share/tcltk/tcllib1.13/'
 LIBTKIMG='/usr/lib/tcltk/Img1.3/'
 UNIXSOCKETS='/usr/lib/unix_sockets0.1/'
 

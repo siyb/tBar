@@ -23,13 +23,13 @@ namespace eval geekosphere::tbar::widget::cpu {
 	#
 	# cpu thermal information
 	dict set sys(thermal) sys.dir [file join / sys class thermal]
-	dict set sys(thermal) sys.file "temp"
+	dict set sys(thermal) sys.file "temp" 
 	dict set sys(thermal) sys.mod "1000"
 	dict set sys(thermal) core.dir [file join / sys devices platform]
-	dict set sys(thermal) core.file "temp1_input"
+	dict set sys(thermal) core.file "temp1_input" 
 	dict set sys(thermal) core.mod "1000"
 	dict set sys(thermal) proc.dir [file join / proc acpi thermal_zone]
-	dict set sys(thermal) proc.file "temperature"
+	dict set sys(thermal) proc.file "temperature" 
 	dict set sys(thermal) proc.mod "-1"
 	set sys(thermalSource) -1
 	set sys(cpu,temperature) "N/A"

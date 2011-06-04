@@ -119,7 +119,7 @@ setLogLevel "DEBUG"
 #		will be overridden by the -image option
 # -width - the width of the widget (use with caution)
 # -height - the height of the widget (use with caution)
-#
+# -onLeftMouseClick - code to be executed when notify widget receives a left mouse click event
 #addWidgetToBar notify notify1 1 -image "/home/user/someimage" -imageDimensions 10X10 -notifyAt {[file exists "/home/user/somefile"]}
 #addText " | " "red"
 

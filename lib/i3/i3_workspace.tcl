@@ -283,13 +283,23 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 	proc changeWorkspace {w workspace} {
 		variable sys
+		log "DEBUG" "Changing to workspace $workspace"
 		if {$sys($w,legacyMode)} {
-			log "DEBUG" "Using i3 legacy mode"
-			sendCommand $workspace
+			changeWorkspaceLegacy $workspace
 		} else {
-			sendCommand [list workspace $workspace]
+			changeWorkspaceNew $workspace
 		}
 		wm focusmodel . passive
+	}
+
+	proc changeWorkspaceLegacy {workspace} {
+		log "DEBUG" "Using i3 legacy mode: $workspace"
+		sendCommand $workspace
+	}
+
+	proc changeWorkspaceNew {workspace} {
+		log "DEBUG" "Using i3 new mode: $workspace"
+		sendCommand [list workspace $workspace]
 	}
 
 	proc action {w args} {

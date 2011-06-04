@@ -17,10 +17,10 @@ namespace eval geekosphere::tbar::packageloader {
 	# a record storing package information on proc (which "proc" needs which package), including proc
 	# parameters and their package dependency
 	set sys(procRecord) ""
-	
+
 	# a record for widget parameters package dependencies. this record is par of sys(procRecord)
 	set sys(parameterRecord) ""
-	
+
 	# stores the package loading error of the last package loading attempt
 	set sys(errorMessage) ""
 
@@ -51,7 +51,7 @@ namespace eval geekosphere::tbar::packageloader {
 		registerProcWithPackageLoader $proc
 		addParameterPackagesToProcRecord $proc $parameter $args
 	}
-	
+
 	# sets the namespace for the specified proc.
 	#
 	#	proc - the proc whose namespace to define
@@ -77,7 +77,7 @@ namespace eval geekosphere::tbar::packageloader {
 	#
 	# Namespace internal
 	#
-	
+
 	# init code moved here to prevent errors on pkgIndex creation
 	proc init {} {
 		variable sys
@@ -120,25 +120,25 @@ namespace eval geekosphere::tbar::packageloader {
 		$record configure -namespaceImports [list]
 		lappend sys(widgetRecords) $record
 	}
-	
+
 	# gets the namespace proc is related to
 	proc getProcRecordNamespace {proc} {
 		set record [getRecordForProc $proc]
 		return [$record cget -namespace]
 	}
-	
+
 	# gets all namespaces to import for proc
 	proc getProcRecordNamespaceImports {proc} {
 		set record [getRecordForProc $proc]
 		return [$record cget -namespaceImports]
 	}
-	
+
 	# sets the namespace proc is related to
 	proc setProcRecordNamespace {proc namespace} {
 		set record [getRecordForProc $proc]
 		$record configure -namespace $namespace
 	}
-	
+
 	# sets the namespace imports for proc
 	proc setProcRecordNamespaceImports {proc namespaces} {
 		set record [getRecordForProc $proc]
@@ -208,13 +208,13 @@ namespace eval geekosphere::tbar::packageloader {
 
 	# returns the complete list of parameter records of the given proc
 	proc getParameterRecordList {proc} {
-		variable sys 	
+		variable sys
 		if {[set record [getRecordForProc $proc]] != -1} {
 			return [$record cget -parameterPackages]
 		}
 		return -1
 	}
-	
+
 	# get the record, which stores general and parameter dependencies for the specified proc
 	proc getRecordForProc {proc} {
 		variable sys
@@ -249,7 +249,7 @@ namespace eval geekosphere::tbar::packageloader {
 				}
 			}
 		}
-		
+
 		set procNamespace [getProcRecordNamespace $proc]
 		if {$procNamespace ne ""} {
 			log "INFO" "Namspace is '$procNamespace', starting imports"
@@ -262,9 +262,9 @@ namespace eval geekosphere::tbar::packageloader {
 				log "WARNING" "Error importing '$ns' into '$procNamespace': $::errorInfo"
 			}
 		}
-		
+
 		log "DEBUG" "Argument list after processing for '$proc': '$arguments'"
-		return $arguments 
+		return $arguments
 	}
 
 	proc removeParameterFromCallList {parameterToRemove callList} {
@@ -276,7 +276,7 @@ namespace eval geekosphere::tbar::packageloader {
 				break;
 			}
 		}
-		return [lreplace $callList $startPosition $endPosition] 
+		return [lreplace $callList $startPosition $endPosition]
 	}
 
 	proc checkIfPackageCanBeLoaded {package} {
@@ -311,7 +311,6 @@ proc unknown args {
 		catch {$::procName {*}[geekosphere::tbar::packageloader::argumentProcessor $::procName $::callArgs]} retval retoptions
 		unset ::procName ::procArgs ::procBody
 		return {*}$retoptions $retval
-		
 	} else {
 		uplevel 1 [list _original_unknown {*}$args]
 	}

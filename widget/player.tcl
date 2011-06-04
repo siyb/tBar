@@ -1,3 +1,4 @@
+catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::player {
 
 	setNamespace player ::geekosphere::tbar::widget::player

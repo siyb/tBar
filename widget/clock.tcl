@@ -1,3 +1,4 @@
+catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::clock {
 
 	generallyRequires calClock util callib logger

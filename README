@@ -42,7 +42,7 @@ TOC
 
 2. Feature notes
 
-	2.1 User specific libraries and widgets
+	2.1 User specific libraries, widgets and snippets
 
 	From version 1.2 onwards, users are able to integrate custom libraries and widgets using folders located in their userland.
 	Place custom libraries (along with a pkgIndex.tcl file) in ~/.tbar/lib, in order to make the libraries accessible to tbar. You will
@@ -52,6 +52,10 @@ TOC
 	If you wish to install custom widgets on a per user basis (for your user only), create ~/.tbar/widget and copy the widget wrapper
 	files to be loaded there. The widget wrapper file must be named after the widget, e.g. widgetname foobar would imply foobar.tcl	as 
 	widget wrapper file name.
+
+	From version 1.4 onwards, users can create small snippets and place them in ~/.tbar/snips. Snippets are meant to decrease the config
+	file size. They should be used when a widget offers the execution of TCL code. Please check out the example snippet, located in
+	/usr/share/tbar/doc/examples/snippet.tcl for more information.
 
 	2.2 Automatic dependency management
 	

@@ -29,6 +29,10 @@ essential: pkgindex
 	mkdir -p $(DESTDIR)/etc/tbar/
 	mkdir -p $(DESTDIR)/usr/share/man/man1/
 	mkdir -p $(DESTDIR)/usr/bin/
+	mkdir -p $(DESTDIR)/usr/share/doc/tbar/
+
+	cp -r examples $(DESTDIR)/usr/share/doc/tbar/
+	cp -r config.tcl $(DESTDIR)/usr/share/doc/tbar/examples/
 
 	cp -r config.tcl $(DESTDIR)/etc/tbar/
 	gzip -c tbar.1 >> tbar.1.gz
@@ -60,7 +64,7 @@ deploy: clean
 	git archive --format=tar --prefix=$(deploy)/ $(gitv) . | gzip --best > $(deploy).tar.gz
 
 uninstall:
-	rm -rf $(DESTDIR)/etc/tbar/ $(DESTDIR)/usr/bin/tbar $(DESTDIR)/usr/lib/tbar/ $(DESTDIR)/usr/share/tbar/ $(DESTDIR)/usr/share/man/man1/tbar.1.gz
+	rm -rf $(DESTDIR)/etc/tbar/ $(DESTDIR)/usr/bin/tbar $(DESTDIR)/usr/lib/tbar/ $(DESTDIR)/usr/share/tbar/ $(DESTDIR)/usr/share/man/man1/tbar.1.gz $(DESTDIR)/usr/share/doc/tbar/
 
 clean:
 	rm -rf tbar.1.gz tbar.kit lib/pkgIndex.tcl $(deploy).tar.gz $(deploykit) $(deploykit).tar.gz tbar_$(version)_git_$(gitv) tbar_$(version)_git_$(gitv).tar.gz tbar_$(version)_kit_git_$(gitv) tbar_$(version)_kit_git_$(gitv).tar.gz

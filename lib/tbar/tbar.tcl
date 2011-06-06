@@ -49,12 +49,12 @@ namespace eval geekosphere::tbar {
 	#
 
 	# Variables holding system relevant information
-	set sys(bar,version) 1.3rc1
+	set sys(bar,version) experimental_1.4 
 	set sys(bar,toplevel) .
 	set sys(widget,dict) [dict create]
 	set sys(screen,width) 0
 	set sys(screen,height) 0
-
+	set sys(user,home) [file join $::env(HOME) .tbar]
 
 	# Initializes the bar
 	proc init {} {
@@ -185,7 +185,7 @@ namespace eval geekosphere::tbar {
 		variable conf
 		if {!$conf(sys,writeBugreport)} { return }
 		set timeStamp [clock format [clock seconds] -format "%m-%d-%Y@%H-%M"]
-		set bugreportPath [file join $::env(HOME) .tbar]
+		set bugreportPath $sys(user,home) 
 		if {![file exists $bugreportPath]} { return }
 		set file [string map {" " _} [file join $bugreportPath BUGREPORT_${timeStamp}]]
 		set fl [open $file a+]
@@ -361,9 +361,23 @@ $::errorCode"
 		set conf(sys,compatibilityMode) $mode
 	}
 
+	proc runSnippet {snippet} {
+		variable sys
+		set snippetFile [file join $sys(user,home) snips ${snippet}.tcl]
+		if {[file exists $snippetFile]} {
+			if {[catch {
+				source $snippetFile
+			} err]} {
+				log "WARNING" "Unable to load snippet '$snippet' $::errorInfo"
+			} else {
+				${snippet}::run
+			}
+		}
+	}
+
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
-	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode
+	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet
 }
 
 # GLOBAL NAMESPACE!

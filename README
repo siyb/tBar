@@ -55,7 +55,7 @@ TOC
 
 	From version 1.4 onwards, users can create small snippets and place them in ~/.tbar/snips. Snippets are meant to decrease the config
 	file size. They should be used when a widget offers the execution of TCL code. Please check out the example snippet, located in
-	/usr/share/tbar/doc/examples/snippet.tcl for more information.
+	/usr/share/doc/tbar/examples/snippet.tcl for more information.
 
 	2.2 Automatic dependency management
 	

@@ -49,13 +49,13 @@ namespace eval geekosphere::tbar {
 	#
 
 	# Variables holding system relevant information
-	set sys(bar,version) experimental_1.4 
+	set sys(bar,version) experimental_1.4
 	set sys(bar,toplevel) .
 	set sys(widget,dict) [dict create]
 	set sys(screen,width) 0
 	set sys(screen,height) 0
 	set sys(user,home) [file join $::env(HOME) .tbar]
-
+	set sys(snippets,sourcedSnippets) [list]
 	# Initializes the bar
 	proc init {} {
 		variable conf
@@ -363,16 +363,27 @@ $::errorCode"
 
 	proc runSnippet {snippet} {
 		variable sys
-		set snippetFile [file join $sys(user,home) snips ${snippet}.tcl]
-		if {[file exists $snippetFile]} {
+		set ::snippetFile [file join $sys(user,home) snips ${snippet}.tcl]
+		if {[file exists $::snippetFile]} {
 			if {[catch {
-				source $snippetFile
+				if {[hasSnippetBeenSources $::snippetFile] == -1} {
+					uplevel #0 {
+						namespace eval geekosphere::tbar::snippets { source $::snippetFile }
+					}
+					lappend sys(snippets,sourcedSnippets) $::snippetFile
+					unset ::snippetFile
+				}
 			} err]} {
 				log "WARNING" "Unable to load snippet '$snippet' $::errorInfo"
 			} else {
-				${snippet}::run
+				geekosphere::tbar::snippets::${snippet}::run
 			}
 		}
+	}
+
+	proc hasSnippetBeenSources {snippetFile} {
+		variable sys
+		return [lsearch $sys(snippets,sourcedSnippets) $snippetFile]
 	}
 
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \

@@ -24,27 +24,23 @@ endif
 
 pkgindex:
 	echo "pkg_mkIndex -verbose -direct lib/ */* */*/*" | tclsh8.5
-
-essential: pkgindex
+	
+install: pkgindex clean essential
+	mkdir -p $(DESTDIR)/usr/share/tbar/
+	mkdir -p $(DESTDIR)/usr/lib/tbar/
+	mkdir -p $(DESTDIR)/usr/share/doc/tbar/
 	mkdir -p $(DESTDIR)/etc/tbar/
 	mkdir -p $(DESTDIR)/usr/share/man/man1/
 	mkdir -p $(DESTDIR)/usr/bin/
-	mkdir -p $(DESTDIR)/usr/share/doc/tbar/
-
-	cp -r examples $(DESTDIR)/usr/share/doc/tbar/
-	cp -r config.tcl $(DESTDIR)/usr/share/doc/tbar/examples/
-
-	cp -r config.tcl $(DESTDIR)/etc/tbar/
-	gzip -c tbar.1 >> tbar.1.gz
-	cp tbar.1.gz $(DESTDIR)/usr/share/man/man1/
-
-install: clean essential
-	mkdir -p $(DESTDIR)/usr/share/tbar/
-	mkdir -p $(DESTDIR)/usr/lib/tbar/
 
 	cp -r tbar.tcl $(DESTDIR)/usr/bin/tbar
 	cp -r lib/* $(DESTDIR)/usr/lib/tbar/
 	cp -r widget/* $(DESTDIR)/usr/share/tbar/
+	cp -r config.tcl $(DESTDIR)/etc/tbar/
+	cp -r config.tcl $(DESTDIR)/usr/share/doc/tbar/examples/
+	cp -r examples $(DESTDIR)/usr/share/doc/tbar/
+	gzip -c tbar.1 >> tbar.1.gz
+	cp tbar.1.gz $(DESTDIR)/usr/share/man/man1/
 
 starkit: clean pkgindex
 	mkdir $(deploykit)

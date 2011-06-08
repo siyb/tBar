@@ -56,10 +56,18 @@ namespace eval geekosphere::tbar::i3::ipc {
 		log "INFO" "Diconnected, info: $sys(info_socket) event: $sys(event_socket)"
 	}
 
+	proc isConnected {} {
+		if {$sys(info_socket) != -1 && $sys(event_socket) != -1} {
+			return 1
+		} else {
+			return 0
+		}
+	}
+
 	proc readInfo {} {
 		variable sys
 		if {[catch {
-			set data [read -nonewline $sys(info_socket)]	
+			set data [read -nonewline $sys(info_socket)]
 			::geekosphere::tbar::util::hex::puthex $data
 			set messages [parseData $data]
 			if {$messages == -1} { # TODO: do error handling here }
@@ -201,7 +209,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 
 	}
 
-	namespace export connect disconnect addInfoListener addEventListener \
+	namespace export connect disconnect isConnected addInfoListener addEventListener \
 	getEvent getInfo sendCommand getWorkspaces getOutputs \
 	subscribeToOutput subscribeToWorkspace
 }

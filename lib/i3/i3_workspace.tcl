@@ -26,7 +26,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 	proc makeI3Workspace {w arguments} {
 		variable sys
-
+		set sys(currentWorkspace) -1;# should be the same on in all widgets!
 		set sys($w,originalCommand) ${w}_
 		set sys($w,workspace) [list]
 		set sys($w,focusColor) "blue"
@@ -150,7 +150,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		removeAllWorkspaceLabels $w
 		set sys($w,workspace) [list]
 		set sys($w,lastWorkspaceStatus) [dict create]
-		connect	
+		connect
 		subscribeToWorkspace
 		getWorkspaces
 		updateDisplay $w
@@ -175,6 +175,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 				setUrgentStatus $w $number 0
 			}
 			"+focus" {
+				set sys(currentWorkspace) $workspace
 				setActiveStatus $w $number 1
 			}
 			"-focus" {
@@ -184,6 +185,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 				error "Flag unknown: $kind"
 			}
 		}
+	}
+
+	proc getCurrentWorkspace {} {
+		variable sys
+		return $sys(currentWorkspace)
 	}
 
 	proc setUrgentStatus {w workspaceId status} {

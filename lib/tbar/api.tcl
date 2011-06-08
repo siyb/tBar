@@ -55,7 +55,6 @@ namespace eval geekosphere::api {
 					lappend r $p [info args $p]
 				}
 			}
-			puts "M: $r"
 			return $r
 		}
 	}
@@ -76,7 +75,8 @@ namespace eval geekosphere::api {
 		::geekosphere::tbar::api::$sys(currentApi)::${command} {*}$args
 	}
 
-	# Returns a list of all exported API procs
+	# Returns a list of all exported API procs of the currently
+	# selected API.
 	#
 	proc explore {} {
 		variable sys
@@ -86,6 +86,15 @@ namespace eval geekosphere::api {
 		}
 		return $r
 	}
+
+	# Returns a list of all registered APIs
+	#
+	proc exploreApis {} {
+		variable sys
+		return [dict keys $sys(registeredAPIs) *]
+	}
+	
+	namespace export useApi registerApi autocreateProcList call explore exploreApis
 
 	#
 	# Namespace internal

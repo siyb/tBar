@@ -166,7 +166,9 @@ namespace eval geekosphere::tbar::widget::battery {
 				if {[info exists sys($w,status)]} {
 					set sys($w,lastStatus) $sys($w,status);# saving last status
 				}
-				set sys($w,status) [dict get $chargeDict status]
+				if {[dict exists $chargeDict status]} {;# keep old status if status could not be read
+					set sys($w,status) [dict get $chargeDict status]
+				}
 
 				# reset warning / notification status if charger has been connected / disconnected etc
 				if {$sys($w,status) ne $sys($w,lastStatus)} {
@@ -406,7 +408,12 @@ namespace eval geekosphere::tbar::widget::battery {
 	# get the state of the battery
 	proc getStatus {batteryFolder} {
 		variable sys
-		set data [gets [set fl [open [file join $batteryFolder [dict get $sys(battery) status]] r]]];close $fl
+		set filePath [file join $batteryFolder [dict get $sys(battery) status]]
+		if {[file exists $filePath]} {
+			set data [gets [set fl [open $filePath r]]];close $fl
+		} else {
+			set data ""
+		}
 		return $data
 	}
 

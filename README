@@ -83,6 +83,18 @@ TOC
 		EXPERIMENTAL - Effects the deploy option only. Will create a version containing the git hash of the commit, which was used
 			       to create the build.
 
+	4.2 Versioning
+
+		Version numbering is not specified, but a version can be succeeded by a flag, indicating the state of the version. The following
+		example will illustrate how these successing flags should be understood.
+
+		1.4r1  - Release 1 of version 1.4. Releases may still contain bugs, if these bugs are considered to be critical (security, file
+			 or system integrity, tBar not usable, etc), a release may be revised. The "r" flag is used to mark revised releases. 
+		1.4rc1 - Release candidate 1 of version 1.4. A release candidate is a test version of an upcoming release and may still contain
+			 bugs and other glitches.
+		1.4e   - The e tag indicates that 1.4 is currently experimental, meaning that all work done on the experimental git branch will
+			 contribute to the future 1.4 release (i.e. version 1.4 has no rc / r, but the contents of the experimental git branch
+			 reflect the progress of the 1.4 release.)
 5. License
 
 	tBar is licensed under the terms of the GPL 3. Please refer to the LICENSE file for more information on the GPL 3.

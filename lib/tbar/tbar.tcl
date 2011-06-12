@@ -49,7 +49,7 @@ namespace eval geekosphere::tbar {
 	#
 
 	# Variables holding system relevant information
-	set sys(bar,version) experimental_1.4
+	set sys(bar,version) 1.4e
 	set sys(bar,toplevel) .
 	set sys(widget,dict) [dict create]
 	set sys(screen,width) 0
@@ -114,6 +114,12 @@ namespace eval geekosphere::tbar {
 		dict set sys(widget,dict) $name updateInterval $updateInterval
 		dict set sys(widget,dict) $name arguments $args
 		dict set sys(widget,dict) $name path [geekosphere::tbar::util::generateComponentName]
+	}
+
+	# check if a widget by name has been added to the bar using addWidgetToBar
+	proc widgetExistsInBar {name} {
+		variable sys
+		return [dict exists $sys(widget,dict) $name]
 	}
 
 	# load all widgets

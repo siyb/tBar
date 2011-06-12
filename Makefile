@@ -5,7 +5,7 @@ prefix = $(DESTDIR)
 #
 
 # tbar version
-version=1.3rc1
+version=1.4e
 
 # kit name
 deploykit=tbar_$(version)_kit

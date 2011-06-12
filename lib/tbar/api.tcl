@@ -34,10 +34,11 @@ namespace eval geekosphere::api {
 	#	api - the api to register.
 	#
 	proc registerApi {api} {
-		#package require $api
+		package require $api
 		if {[catch {
 			if {![isApiRegistered $api]} {
 				registerApiInStruct $api [::geekosphere::tbar::api::${api}::init]
+				log "INFO" "API '$api' registered"
 			}
 		} err]} {
 			log "WARNING" "API $api could not be loaded: $::errorInfo"
@@ -93,8 +94,6 @@ namespace eval geekosphere::api {
 		variable sys
 		return [dict keys $sys(registeredAPIs) *]
 	}
-	
-	namespace export useApi registerApi autocreateProcList call explore exploreApis
 
 	#
 	# Namespace internal
@@ -121,4 +120,6 @@ namespace eval geekosphere::api {
 			dict set sys(registeredAPIs) $api $proc $parameters
 		}
 	}
+	
+	namespace export registerApi useApi autocreateProcList call explore exploreApis
 }

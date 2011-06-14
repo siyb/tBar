@@ -1,8 +1,10 @@
+package provide api-i3 1.0
+
 package require api
 package require i3_ipc
 package require i3_workspace
 
-package provide api-i3
+catch { namespace import ::geekosphere::api::* }
 
 namespace eval geekosphere::tbar::api::api-i3 {
 	variable sys

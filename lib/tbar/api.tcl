@@ -73,7 +73,7 @@ namespace eval geekosphere::api {
 		if {[set parameterCount [getArgumentCountForProcInApi $sys(currentApi) $command]] != [set actualCount [llength $args]]} {
 			error "The parameter count of the proc '$command' for API '$sys(currentApi)' should be '$parameterCount' but was '$actualCount'"
 		}
-		::geekosphere::tbar::api::$sys(currentApi)::${command} {*}$args
+		return [::geekosphere::tbar::api::$sys(currentApi)::${command} {*}$args]
 	}
 
 	# Returns a list of all exported API procs of the currently

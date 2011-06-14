@@ -175,7 +175,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 				setUrgentStatus $w $number 0
 			}
 			"+focus" {
-				set sys(currentWorkspace) $workspace
+				set sys(currentWorkspace) $number 
 				setActiveStatus $w $number 1
 			}
 			"-focus" {
@@ -189,7 +189,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 	proc getCurrentWorkspace {} {
 		variable sys
-		return $sys(currentWorkspace)
+		if {[info exists sys(currentWorkspace)]} {
+			return $sys(currentWorkspace)
+		} else {
+			return -1
+		}
 	}
 
 	proc setUrgentStatus {w workspaceId status} {

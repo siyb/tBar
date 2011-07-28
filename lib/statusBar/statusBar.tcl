@@ -81,6 +81,12 @@ namespace eval geekosphere::statusBar {
 			set sys($w,displayText) [calcPercentage $sys($w,totalAmount) $rest]
 			set sys($w,displayGraphic) "\[ [returnBars $sys($w,barCharacter) $sys($w,displayText)] \]"
 			set sys($w,displayText) $sys($w,displayText)%
+		} elseif {$command eq "bind"} {
+			set splitRest [split $rest]
+			set key [lindex $splitRest 0]
+			set proc [lindex $splitRest 1]
+			bind ${w}.graphicsLabel $key $proc
+			bind ${w}.textLabel $key $proc
 		} else {
 			error "Command ${command} not supported"
 		}

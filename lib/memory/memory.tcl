@@ -28,7 +28,7 @@ namespace eval geekosphere::tbar::widget::memory {
 		if {[set sys($w,showWhat) [getOption "-showwhat" $arguments]] eq ""} { error "Specify showwhat using the -showwhat option" }
 		set sys($w,originalCommand) ${w}_
 		set sys(memData) [parseMemfile $sys(memFile)]
-		set sys($w,useSwap) [string is false -strict [getOption "-noswap" $arguments]]
+		set sys($w,useSwap) [string is false [getOption "-noswap" $arguments]]
 		frame $w
 		
 		#

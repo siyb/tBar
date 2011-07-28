@@ -171,7 +171,7 @@ namespace eval geekosphere::tbar::widget::battery {
 				}
 
 				# reset warning / notification status if charger has been connected / disconnected etc
-				if {$sys($w,status) ne $sys($w,lastStatus)} {
+				if {[info exists sys($w,status)] && $sys($w,status) ne $sys($w,lastStatus)} {
 					set sys($w,hasBeenWarned) 0
 					set sys($w,hasBeenNotified) 0
 				}
@@ -326,7 +326,7 @@ namespace eval geekosphere::tbar::widget::battery {
 	# draws the warning window if appropriate
 	proc drawWarnWindow {w} {
 		variable sys
-		if {$sys($w,warnat) != -1 && $sys($w,chargeInPercent) <= $sys($w,warnat) && ![winfo exists ${w}.warnWindow] && !$sys($w,hasBeenWarned) && $sys($w,status) ne "Charging" && $sys($w,status) ne "+"} {
+		if {$sys($w,warnat) != -1 && $sys($w,chargeInPercent) <= $sys($w,warnat) && ![winfo exists ${w}.warnWindow] && !$sys($w,hasBeenWarned) && [info exists sys($w,status)] && $sys($w,status) ne "Charging" && $sys($w,status) ne "+"} {
 			tk_dialog ${w}.warnWindow "Battery warning" "Warning, $sys($w,chargeInPercent)% battery left" "" 0 Ok
 			set sys($w,hasBeenWarned) 1
 		}

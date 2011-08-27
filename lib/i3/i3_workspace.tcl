@@ -245,8 +245,9 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	proc addWorkspace {w workspace} {
 		variable sys
 		set number [dict get $workspace num]
+		set name [dict get $workspace name]
 		if {![workspacePresent $w $number]} {
-			lappend sys($w,workspace) [list $number 0 0]
+			lappend sys($w,workspace) [list $number 0 0 $name]
 		}
 	}
 
@@ -263,23 +264,27 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 	proc updateDisplay {w} {
 		variable sys
-		set sortedWorkspaces [lsort -index 0 -integer $sys($w,workspace)]
+		if {[hasNamedWorkspace $w]} {
+			set sortedWorkspaces [lsort -index 3 $sys($w,workspace)]
+		} else {
+			set sortedWorkspaces [lsort -index 0 -integer $sys($w,workspace)]
+		}
 		foreach wspace $sortedWorkspaces {
 			set workspace [lindex $wspace 0]
+			set name [lindex $wspace 3]
 			# TODO: destroy is a dirty and slow hack, increase speed by only destroying "unsorted" windows
 			destroy ${w}.workspace${workspace}
 			if {![winfo exists ${w}.workspace${workspace}]} {
 				pack [label ${w}.workspace${workspace} \
-					-text $workspace \
+					-text $name \
 					-bg $sys($w,background) \
 					-fg $sys($w,foreground) \
 					-font $sys($w,font) \
 					-activeforeground $sys($w,rolloverFontColor)  \
 					-activebackground $sys($w,rolloverBackgroundColor) \
 					-highlightthickness 0 \
-					-width 2
 				] -side left
-				bind ${w}.workspace${workspace} <Button-1> [list geekosphere::tbar::widget::i3::workspace::changeWorkspace $w $workspace]
+				bind ${w}.workspace${workspace} <Button-1> [list geekosphere::tbar::widget::i3::workspace::changeWorkspace $w $name]
 			}
 			if {[getActiveStatus $w $workspace] == 1} {
 				${w}.workspace${workspace} configure -bg $sys($w,focusColor)
@@ -289,6 +294,16 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 				${w}.workspace${workspace} configure -bg $sys($w,background)
 			}
 		}
+	}
+	
+	proc hasNamedWorkspace {w} {
+		variable sys
+		foreach wspace $sys($w,workspace) {
+			if {[lindex $wspace 0] eq "null"} {
+				return 1
+			}
+		}
+		return 0
 	}
 
 	proc changeWorkspace {w workspace} {

@@ -1,4 +1,7 @@
-package provide googleweather
+package provide googleweather 1.0
+
+package require tdom
+package require http
 
 namespace eval geekosphere::googleweather {
 	variable sys
@@ -11,7 +14,33 @@ namespace eval geekosphere::googleweather {
 	set sys(location,city) ""
 	set sys(location,zipcode) ""
 
-	proc setLocationData {country county city zipcode} {
+	proc getCurrentCondition {weatherXmlForLocation} {
+		set currentInformationNode [$weatherXmlForLocation getElementsByTagName "current_conditions"]
+		foreach child [$currentInformationNode childNodes] {
+			dict set returnDict [$child nodeName] [$child getAttribute "data"]	
+		}
+		puts $returnDict
+	}
+
+	proc getWeatherXmlForLocation {} {
+		set invalidWeather 1
+
+		while {$invalidWeather} {
+			set url [getNextUrl]
+			set token [::http::geturl $url]
+			set data [::http::data $token]
+			::http::cleanup $token
+
+			set doc [dom parse $data]	
+			if {[$doc getElementsByTagName "problem_cause"] eq ""} {
+				set invalidWeather 0
+			}
+		}
+
+		return $doc
+	}
+
+	proc setLocationData {country state city zipcode} {
 		variable sys
 		set sys(location,country) $country
 		set sys(location,state) $state
@@ -21,19 +50,20 @@ namespace eval geekosphere::googleweather {
 
 	proc getNextFormat {} {
 		variable sys
-		switch $sys(urlFormat {
-			0 { return "$sys(location,zipcode),$sys(location,country)" }
-			1 { return "$sys(location,state),$sys(location,zipcode)" }
-			2 { return "$sys(location,city),$sys(location,state)" }
-			3 { return "$sys(location,city),$sys(location,country)" }
+		set ret ""
+		switch $sys(urlFormat) {
+			0 { set ret "$sys(location,zipcode),$sys(location,country)" }
+			1 { set ret "$sys(location,state),$sys(location,zipcode)" }
+			2 { set ret "$sys(location,city),$sys(location,state)" }
+			3 { set ret "$sys(location,city),$sys(location,country)" }
 		}
 		incr sys(urlFormat)
+		return $ret
 	}
 
 	proc getNextUrl {} {
 		variable sys
 		return "$sys(url)[getNextFormat]"
 	}
-
 }
 

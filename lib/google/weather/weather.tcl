@@ -17,12 +17,18 @@ namespace eval geekosphere::googleweather {
 	proc getCurrentCondition {weatherXmlForLocation} {
 		set currentInformationNode [$weatherXmlForLocation getElementsByTagName "current_conditions"]
 		foreach child [$currentInformationNode childNodes] {
-			dict set returnDict [$child nodeName] [$child getAttribute "data"]	
+			set nodeName [$child nodeName]
+			set data [$child getAttribute "data"]
+			if {$nodeName eq "icon"} {
+				set data "http://www.google.com${data}"
+			}
+			dict set returnDict $nodeName $data	
 		}
-		puts $returnDict
+		return $returnDict
 	}
 
 	proc getWeatherXmlForLocation {} {
+		variable sys
 		set invalidWeather 1
 
 		while {$invalidWeather} {
@@ -34,6 +40,7 @@ namespace eval geekosphere::googleweather {
 			set doc [dom parse $data]	
 			if {[$doc getElementsByTagName "problem_cause"] eq ""} {
 				set invalidWeather 0
+				set sys(urlFormat) 0
 			}
 		}
 
@@ -56,6 +63,7 @@ namespace eval geekosphere::googleweather {
 			1 { set ret "$sys(location,state),$sys(location,zipcode)" }
 			2 { set ret "$sys(location,city),$sys(location,state)" }
 			3 { set ret "$sys(location,city),$sys(location,country)" }
+			default { set sys(urlFormat) 0 }
 		}
 		incr sys(urlFormat)
 		return $ret
@@ -65,5 +73,7 @@ namespace eval geekosphere::googleweather {
 		variable sys
 		return "$sys(url)[getNextFormat]"
 	}
+
+	namespace export setLocationData getWeatherXmlForLocation getCurrentCondition
 }
 

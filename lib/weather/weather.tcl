@@ -32,7 +32,8 @@ namespace eval geekosphere::tbar::widget::weather {
 		set sys($w,unit) "c"
 
 		frame $w
-		pack [label ${w}.displayLabel]
+		pack [label ${w}.displayLabel] -side right
+		pack [label ${w}.displayText] -side right -padx 10
 
 		# rename widget so that it will not receive commands
 		uplevel #0 rename $w ${w}_
@@ -44,6 +45,7 @@ namespace eval geekosphere::tbar::widget::weather {
 		set sys($w,initialized) 1
 
 		bind ${w}.displayLabel <Button-1> [namespace code [list showWeatherDialog $w %W]]
+		bind ${w}.displayText <Button-1> [namespace code [list showWeatherDialog $w %W]]
 	}
 
 	proc action {w args} {
@@ -108,6 +110,11 @@ namespace eval geekosphere::tbar::widget::weather {
 					${w}.displayLabel configure -image $sys($w,imagedata)
 				}
 				set sys($w,currentWeatherInformation) $currentCondition
+				if {$sys($w,unit) eq "c"} {
+					${w}.displayText configure -text "[dict get $currentCondition temp_c] C"
+				} elseif {$sys($w,unit) eq "f"} {
+					${w}.displayText configure -text "[dict get $currentCondition temp_f] F"
+				}
 			} else {
 				set sys($w,stopPolling) 1
 			}
@@ -185,18 +192,21 @@ namespace eval geekosphere::tbar::widget::weather {
 		$sys($w,originalCommand) configure -bg $color
 		set sys($w,background) $color
 		${w}.displayLabel configure -bg $color
+		${w}.displayText configure -bg $color
 	}
 
 	proc changeForegroundColor {w color} {
 		variable sys
 		set sys($w,foreground) $color
 		${w}.displayLabel configure -fg $color
+		${w}.displayText configure -fg $color
 	}
 
 	proc changeFont {w font} {
 		variable sys
 		set sys($w,font) $font
 		${w}.displayLabel configure -font $font
+		${w}.displayText configure -font $font
 	}
 
 	proc changeHeight {w height} {
@@ -208,6 +218,7 @@ namespace eval geekosphere::tbar::widget::weather {
 	proc changeWidth {w width} {
 		variable sys
 		$sys($w,originalCommand) configure -width $width
+		${w}.displayText configure -width $width
 	}
 
 	proc setImagePath {w path} {

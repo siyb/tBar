@@ -30,7 +30,7 @@ namespace eval geekosphere::tbar::widget::weather {
 		set sys($w,imagedata) ""
 
 		set sys($w,stopPolling) 0
-		set sys($w,lastWeatherImageUrl) ""
+		set sys($w,currentWeatherInformation) ""
 
 		frame $w
 		pack [label ${w}.displayLabel]
@@ -43,6 +43,8 @@ namespace eval geekosphere::tbar::widget::weather {
 
 		# mark the widget as initialized
 		set sys($w,initialized) 1
+
+		bind ${w}.displayLabel <Button-1> [namespace code [list showWeatherDialog $w %W]]
 	}
 
 	proc action {w args} {
@@ -94,19 +96,29 @@ namespace eval geekosphere::tbar::widget::weather {
 
 			if {$currentCondition != -1} {
 				set iconUrl [dict get $currentCondition icon]
-				if {$sys($w,lastWeatherImageUrl) ne $iconUrl} {
+
+				# only attempt image rendering if the current weather condition differs from the last cached condiion
+				if {$sys($w,currentWeatherInformation) eq "" || ([dict exists $sys($w,currentWeatherInformation) icon] && [dict get $sys($w,currentWeatherInformation) icon] ne $iconUrl)} {
 					if {$sys($w,imagedata) ne ""} {
 						image delete $sys($w,imagedata)
 					}
-					set sys($w,lastWeatherImageUrl) $iconUrl 
-					set sys($w,imagedata) [image create photo -file [downloadImage $w $iconUrl]]
-					set sys($w,imagedata) [imageresize::resize $sys($w,imagedata) $sys($w,height) $sys($w,height)]
+					set sys($w,imagedata) [getImageDataFromUrl $w $iconUrl $sys($w,height)]
 					${w}.displayLabel configure -image $sys($w,imagedata)
-				}	
+				}
+				set sys($w,currentWeatherInformation) $currentCondition
 			} else {
 				set sys($w,stopPolling) 1
 			}
 		}
+	}
+
+	proc getImageDataFromUrl {w url height} {
+		variable sys
+		set imageData [image create photo -file [downloadImage $w $url]]
+		if {$height != -1} {
+			set imageData [imageresize::resize $imageData $height $height]
+		}
+		return $imageData
 	}
 
 	# download the image located at $url (if it hasn't been downloaded already) and returns the local path to the file
@@ -125,6 +137,32 @@ namespace eval geekosphere::tbar::widget::weather {
 		return $file
 	}
 
+	proc showWeatherDialog {w window} {
+		variable sys 
+		set windowName ${w}.weatherInfo
+		if {[winfo exists $windowName]} {
+			destroy $windowName
+		} else {
+			toplevel $windowName -bg $sys($w,background)
+			positionWindowRelativly $windowName $w
+			
+			pack [label ${windowName}.location -text "$sys($w,location,city), $sys($w,location,country)" -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)]
+			set xml [getWeatherXmlForLocation]
+			foreach weatherForecast [getWeatherForecasts $xml] {
+				renderForecastInformationRow $w [dict get $weatherForecast day_of_week] [dict get $weatherForecast icon] [dict get $weatherForecast high] [dict get $weatherForecast low]
+			}
+		}
+	}
+
+	proc renderForecastInformationRow {w dayOfWeek imageUrl maxTempFahrenheit minTempFahrenheit} {
+		variable sys
+		set dayOfWeekF [string tolower $dayOfWeek]
+		pack [frame ${w}.weatherInfo.${dayOfWeekF} -bg $sys($w,background)]
+		pack [label ${w}.weatherInfo.${dayOfWeekF}.image -image [getImageDataFromUrl $w $imageUrl -1] -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)] -side left
+		pack [label ${w}.weatherInfo.${dayOfWeekF}.dayOfWeek -text $dayOfWeek -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)] -side left 
+		pack [label ${w}.weatherInfo.${dayOfWeekF}.temperature -text "$minTempFahrenheit - $maxTempFahrenheit" -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)] -side right
+	}
+
 	#
 	# Widget configuration procs
 	#
@@ -132,16 +170,19 @@ namespace eval geekosphere::tbar::widget::weather {
 	proc changeBackgroundColor {w color} {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
+		set sys($w,background) $color
 		${w}.displayLabel configure -bg $color
 	}
 
 	proc changeForegroundColor {w color} {
 		variable sys
+		set sys($w,foreground) $color
 		${w}.displayLabel configure -fg $color
 	}
 
 	proc changeFont {w font} {
 		variable sys
+		set sys($w,font) $font
 		${w}.displayLabel configure -font $font
 	}
 

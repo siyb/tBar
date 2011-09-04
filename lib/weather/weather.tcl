@@ -32,6 +32,8 @@ namespace eval geekosphere::tbar::widget::weather {
 		set sys($w,stopPolling) 0
 		set sys($w,currentWeatherInformation) ""
 
+		set sys($w,unit) "c"
+
 		frame $w
 		pack [label ${w}.displayLabel]
 
@@ -72,6 +74,9 @@ namespace eval geekosphere::tbar::widget::weather {
 					}
 					"-imagepath" {
 						setImagePath $w $value
+					}
+					"-unit"	{
+						setUnit $w $value
 					}
 					"-country"	{ set sys($w,location,country) $value }
 					"-state"	{ set sys($w,location,state) $value }
@@ -146,7 +151,7 @@ namespace eval geekosphere::tbar::widget::weather {
 			toplevel $windowName -bg $sys($w,background)
 			positionWindowRelativly $windowName $w
 			
-			pack [label ${windowName}.location -text "$sys($w,location,city), $sys($w,location,country)" -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)]
+			pack [label ${windowName}.location -text "[string toupper $sys($w,location,city) 0 0], [string toupper $sys($w,location,country) 0 0]" -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)]
 			set xml [getWeatherXmlForLocation]
 			foreach weatherForecast [getWeatherForecasts $xml] {
 				renderForecastInformationRow $w [dict get $weatherForecast day_of_week] [dict get $weatherForecast icon] [dict get $weatherForecast high] [dict get $weatherForecast low]
@@ -154,9 +159,20 @@ namespace eval geekosphere::tbar::widget::weather {
 		}
 	}
 
+	proc toCelsius {fahrenheit} {
+		return [expr {round((${fahrenheit} - 32.0) * (5.0/9.0))}]
+	}
+
 	proc renderForecastInformationRow {w dayOfWeek imageUrl maxTempFahrenheit minTempFahrenheit} {
 		variable sys
 		set dayOfWeekF [string tolower $dayOfWeek]
+		if {$sys($w,unit) eq "c"} {
+			set maxTempFahrenheit "[toCelsius $maxTempFahrenheit] C"
+			set minTempFahrenheit "[toCelsius $minTempFahrenheit] C"
+		} else {
+			set maxTempFahrenheit "$maxTempFahrenheit F"
+			set minTempFahrenheit "$minTempFahrenheit F"
+		}
 		pack [frame ${w}.weatherInfo.${dayOfWeekF} -bg $sys($w,background)]
 		pack [label ${w}.weatherInfo.${dayOfWeekF}.image -image [getImageDataFromUrl $w $imageUrl -1] -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)] -side left
 		pack [label ${w}.weatherInfo.${dayOfWeekF}.dayOfWeek -text $dayOfWeek -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)] -side left 
@@ -203,5 +219,14 @@ namespace eval geekosphere::tbar::widget::weather {
 			file mkdir $path
 		}
 		set sys($w,imagepath) $path
+	}
+
+	proc setUnit {w unit} {
+		variable sys
+		if {$unit eq "f" || $unit eq "c"} {
+			set sys($w,unit) $unit
+		} else {
+			error "Unit '$unit' not supported"
+		}
 	}
 }

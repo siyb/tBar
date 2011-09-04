@@ -152,8 +152,10 @@ setLogLevel "DEBUG"
 # -zipcode - the zipcode of your area
 # -imagepath - the path weather images are downloaded to, generally, there
 # 		is no need to change this, will default to ~/.tbar/image
+# -unit - the unit the temperature will be displayed in, currently only supports "f" for
+#	fahrenheit and "c" for celsius. Defaults to celsius
 #
-#addWidgetToBar weather weather1 1 -country austria -state vienna -city vienna -zipcode 1190
+#addWidgetToBar weather weather1 1 -country austria -state vienna -city vienna -zipcode 1190 -unit "c"
 
 
 # Displays the time

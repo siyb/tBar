@@ -29,6 +29,8 @@ namespace eval geekosphere::tbar::widget::weather {
 		set sys($w,height) 1
 		set sys($w,imagedata) ""
 
+		set sys($w,stopPolling) 0
+
 		frame $w
 		pack [label ${w}.displayLabel]
 
@@ -83,17 +85,23 @@ namespace eval geekosphere::tbar::widget::weather {
 
 	proc updateWidget {w} {
 		variable sys
+		if {!$sys($w,stopPolling)} {
 		# setting location data for google weather foo
-		setLocationData $sys($w,location,country) $sys($w,location,state) $sys($w,location,city) $sys($w,location,zipcode)
-		set xml [getWeatherXmlForLocation]
-		set currentCondition [getCurrentCondition $xml]
-		
-		if {$sys($w,imagedata) ne ""} {
-			image delete $sys($w,imagedata)
+			setLocationData $sys($w,location,country) $sys($w,location,state) $sys($w,location,city) $sys($w,location,zipcode)
+			set xml [getWeatherXmlForLocation]
+			set currentCondition [getCurrentCondition $xml]
+
+			if {$currentCondition != -1} {
+				if {$sys($w,imagedata) ne ""} {
+					image delete $sys($w,imagedata)
+				}
+				set sys($w,imagedata) [image create photo -file [downloadImage $w [dict get $currentCondition icon]]]
+				set sys($w,imagedata) [imageresize::resize $sys($w,imagedata) $sys($w,height) $sys($w,height)]
+				${w}.displayLabel configure -image $sys($w,imagedata)
+			} else {
+				set sys($w,stopPolling) 1
+			}
 		}
-		set sys($w,imagedata) [image create photo -file [downloadImage $w [dict get $currentCondition icon]]]
-		set sys($w,imagedata) [imageresize::resize $sys($w,imagedata) $sys($w,height) $sys($w,height)]
-		${w}.displayLabel configure -image $sys($w,imagedata) 
 	}
 
 	# download the image located at $url (if it hasn't been downloaded already) and returns the local path to the file

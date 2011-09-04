@@ -2,8 +2,12 @@ package provide googleweather 1.0
 
 package require tdom
 package require http
+package require logger
 
+catch { namespace import ::geekopshere::util::logger::* }
 namespace eval geekosphere::googleweather {
+	initLogger
+
 	variable sys
 	set sys(url) "http://www.google.com/ig/api?weather="
 	
@@ -15,6 +19,7 @@ namespace eval geekosphere::googleweather {
 	set sys(location,zipcode) ""
 
 	proc getCurrentCondition {weatherXmlForLocation} {
+		if {$weatherXmlForLocation == -1} { return -1 }
 		set currentInformationNode [$weatherXmlForLocation getElementsByTagName "current_conditions"]
 		foreach child [$currentInformationNode childNodes] {
 			set nodeName [$child nodeName]
@@ -33,14 +38,18 @@ namespace eval geekosphere::googleweather {
 
 		while {$invalidWeather} {
 			set url [getNextUrl]
-			set token [::http::geturl $url]
-			set data [::http::data $token]
-			::http::cleanup $token
+			if {$url != -1} {
+				set token [::http::geturl $url]
+				set data [::http::data $token]
+				::http::cleanup $token
 
-			set doc [dom parse $data]	
-			if {[$doc getElementsByTagName "problem_cause"] eq ""} {
-				set invalidWeather 0
-				set sys(urlFormat) 0
+				set doc [dom parse $data]	
+				if {[$doc getElementsByTagName "problem_cause"] eq ""} {
+					set invalidWeather 0
+					set sys(urlFormat) 0
+				}
+			} else {
+				return -1	
 			}
 		}
 
@@ -57,13 +66,13 @@ namespace eval geekosphere::googleweather {
 
 	proc getNextFormat {} {
 		variable sys
-		set ret ""
+		set ret ","
 		switch $sys(urlFormat) {
 			0 { set ret "$sys(location,zipcode),$sys(location,country)" }
 			1 { set ret "$sys(location,state),$sys(location,zipcode)" }
 			2 { set ret "$sys(location,city),$sys(location,state)" }
 			3 { set ret "$sys(location,city),$sys(location,country)" }
-			default { set sys(urlFormat) 0 }
+			default { return -1 }
 		}
 		incr sys(urlFormat)
 		return $ret
@@ -71,7 +80,13 @@ namespace eval geekosphere::googleweather {
 
 	proc getNextUrl {} {
 		variable sys
-		return "$sys(url)[getNextFormat]"
+		set nextFormat [getNextFormat]
+		if {$nextFormat == -1} {
+			log "ERROR" "The data specified to the weather API does not return any results"	
+			return -1
+		} else {
+			return "$sys(url)${nextFormat}"
+		}
 	}
 
 	namespace export setLocationData getWeatherXmlForLocation getCurrentCondition

@@ -1,10 +1,12 @@
 catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::weather {
 	package require weather
-#	generallyRequires cpu barChart util logger
-#	setNamespace memory ::geekosphere::tbar::widget::cpu
-#	registerNamespaceImportsFor cpu \
-#		::geekosphere::tbar::util::*
+
+	generallyRequires weather googleweather http imageresize tdom logger
+	setNamespace weather ::geekosphere::tbar::widget::weather
+	registerNamespaceImportsFor weather \
+		::geekosphere::tbar::util::* \
+		::geekosphere::googleweather::*
 
 	proc init {path settingsList} {
 		pack [weather $path \

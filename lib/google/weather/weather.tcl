@@ -1,9 +1,5 @@
 package provide googleweather 1.0
 
-package require tdom
-package require http
-package require logger
-
 catch { namespace import ::geekopshere::util::logger::* }
 namespace eval geekosphere::googleweather {
 	initLogger

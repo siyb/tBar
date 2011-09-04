@@ -1,8 +1,5 @@
 package provide weather 1.0
 
-package require googleweather
-package require http
-package require imageresize
 proc weather {w args} {
 	geekosphere::tbar::widget::weather::makeWeather $w $args
 

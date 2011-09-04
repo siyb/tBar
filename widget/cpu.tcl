@@ -2,7 +2,7 @@ catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::cpu {
 
 	generallyRequires cpu barChart util logger
-	setNamespace memory ::geekosphere::tbar::widget::cpu
+	setNamespace cpu ::geekosphere::tbar::widget::cpu
 	registerNamespaceImportsFor cpu \
 		::geekosphere::tbar::util::*
 	

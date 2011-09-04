@@ -140,6 +140,22 @@ setLogLevel "DEBUG"
 #addWidgetToBar battery battery1 1 -warnAt 5 -lc "red" -hc "green" -mc "yellow" -notifyFullyCharged 1
 #addText " | " "red"
 
+# A simple weather widget. You do not have to specify all location settings
+# (-country, -state, -city, -zipcode) but the more you specify, the bigger
+# the chance that you will receive updates from the correct location.
+#
+# -fg / -foreground - the textcolor
+# -bg / -background - the background color
+# -country - the country your city lies in
+# -state - the state your city lies in
+# -city - your city
+# -zipcode - the zipcode of your area
+# -imagepath - the path weather images are downloaded to, generally, there
+# 		is no need to change this, will default to ~/.tbar/image
+#
+#addWidgetToBar weather weather1 1 -country austria -state vienna -city vienna -zipcode 1190
+
+
 # Displays the time
 #
 # -fg / -foreground - the text color

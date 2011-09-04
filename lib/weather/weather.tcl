@@ -30,6 +30,7 @@ namespace eval geekosphere::tbar::widget::weather {
 		set sys($w,imagedata) ""
 
 		set sys($w,stopPolling) 0
+		set sys($w,lastWeatherImageUrl) ""
 
 		frame $w
 		pack [label ${w}.displayLabel]
@@ -92,12 +93,16 @@ namespace eval geekosphere::tbar::widget::weather {
 			set currentCondition [getCurrentCondition $xml]
 
 			if {$currentCondition != -1} {
-				if {$sys($w,imagedata) ne ""} {
-					image delete $sys($w,imagedata)
-				}
-				set sys($w,imagedata) [image create photo -file [downloadImage $w [dict get $currentCondition icon]]]
-				set sys($w,imagedata) [imageresize::resize $sys($w,imagedata) $sys($w,height) $sys($w,height)]
-				${w}.displayLabel configure -image $sys($w,imagedata)
+				set iconUrl [dict get $currentCondition icon]
+				if {$sys($w,lastWeatherImageUrl) ne $iconUrl} {
+					if {$sys($w,imagedata) ne ""} {
+						image delete $sys($w,imagedata)
+					}
+					set sys($w,lastWeatherImageUrl) $iconUrl 
+					set sys($w,imagedata) [image create photo -file [downloadImage $w $iconUrl]]
+					set sys($w,imagedata) [imageresize::resize $sys($w,imagedata) $sys($w,height) $sys($w,height)]
+					${w}.displayLabel configure -image $sys($w,imagedata)
+				}	
 			} else {
 				set sys($w,stopPolling) 1
 			}

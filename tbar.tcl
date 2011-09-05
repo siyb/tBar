@@ -1,8 +1,30 @@
 #!/usr/bin/env tclsh
-if {$::tcl_version < 8.5} {
+
+proc checkValidTclVersion {checkPatchLevel minimumRequired} {
+	set min [split $minimumRequired "."]
+	if {$checkPatchLevel} {
+		set cur [split $::tcl_patchLevel "."]
+	} else {
+		set cur [split $::tcl_version "."]
+	}
+	set position 0
+	set valid 1
+	if {[llength $min] != [llength $cur]} {
+		set valid 0
+	} else {
+		foreach m $min c $cur {
+			if {$m > $c} {
+				set valid 0
+			}
+		}
+	}
+	return $valid
+}
+
+if {![checkValidTclVersion 0 8.5]} {
 	puts "tBar requires TCL 8.5 or higher to function correctly, $::tcl_version installed, exiting."
 	exit
-} elseif {$::tcl_version < 8.6 && $::tcl_patchLevel != "8.5.9"} {
+} elseif {![checkValidTclVersion 0 8.6] && ![checkValidTclVersion 1 8.5.9]} {
 	puts "You are running a version lower than TCL 8.5.9, you need to enable the compatibility mode in your config in order to run tBar"
 }
 

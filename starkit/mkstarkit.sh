@@ -1,5 +1,4 @@
 #!/bin/sh
-# TODO: create lib folder and place all libs there, instead of appending them in main.tcl manually (this is best practise iirc)
 
 # This script can be used to build a tbar starkit. Please check the settings
 # section and adjust the settings if required.

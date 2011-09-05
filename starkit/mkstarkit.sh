@@ -21,6 +21,7 @@ SQLITE='/usr/lib/sqlite3/'
 TCLLIB='/usr/share/tcltk/tcllib1.13/'
 LIBTKIMG='/usr/lib/tcltk/Img1.3/'
 UNIXSOCKETS='/usr/lib/unix_sockets0.1/'
+TDOM='/usr/lib/tcltk/tdom0.8.3/'
 
 #
 # CODE
@@ -31,6 +32,11 @@ fi
 
 if [ ! -d $SQLITE ]; then
 	echo "Sqlite could not be found"
+	exit
+fi
+
+if [ ! -d $TDOM ]; then
+	echo "tdom could not be found"
 	exit
 fi
 
@@ -54,10 +60,12 @@ pwd=`pwd`
 # copy source and library files
 cp -r ./ /tmp/tbar.vfs
 mv /tmp/tbar.vfs/starkit/main.tcl /tmp/tbar.vfs/
-cp -r $SQLITE /tmp/tbar.vfs/sqlite
-cp -r $TCLLIB /tmp/tbar.vfs/tcllib
-cp -r $LIBTKIMG /tmp/tbar.vfs/libtkimg
-cp -r $UNIXSOCKETS /tmp/tbar.vfs/unixsockets
+mkdir -p /tmp/tbar.vfs/lib/
+cp -r $SQLITE /tmp/tbar.vfs/lib/sqlite
+cp -r $TCLLIB /tmp/tbar.vfs/lib/tcllib
+cp -r $LIBTKIMG /tmp/tbar.vfs/lib/libtkimg
+cp -r $UNIXSOCKETS /tmp/tbar.vfs/lib/unixsockets
+cp -r $TDOM /tmp/tbar.vfs/lib/tdom
 
 # getting & unpacking & settings rights for tclkit software
 cd /tmp

@@ -6,7 +6,7 @@ namespace eval geekosphere::googleweather {
 
 	variable sys
 	set sys(url) "http://www.google.com/ig/api?weather="
-	
+
 	set sys(urlFormat) 0
 
 	set sys(location,country) ""

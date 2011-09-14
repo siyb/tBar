@@ -12,6 +12,7 @@ proc weather {w args} {
 catch { namespace import ::geekosphere::googleweather::* }
 catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::weather {
+	initLogger
 
 	proc makeWeather {w arguments} {
 		variable sys
@@ -93,7 +94,8 @@ namespace eval geekosphere::tbar::widget::weather {
 	proc updateWidget {w} {
 		variable sys
 		if {!$sys($w,stopPolling)} {
-		# setting location data for google weather foo
+			if {[catch {
+			# setting location data for google weather foo
 			setLocationData $sys($w,location,country) $sys($w,location,state) $sys($w,location,city) $sys($w,location,zipcode)
 			set xml [getWeatherXmlForLocation]
 			set currentCondition [getCurrentCondition $xml]
@@ -117,6 +119,9 @@ namespace eval geekosphere::tbar::widget::weather {
 				}
 			} else {
 				set sys($w,stopPolling) 1
+			}
+			} err]} {
+				log "WARNING" "Could not fetch weather data right now: $err"
 			}
 		}
 	}

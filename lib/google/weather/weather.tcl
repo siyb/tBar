@@ -51,7 +51,7 @@ namespace eval geekosphere::googleweather {
 		while {$invalidWeather} {
 			set url [getNextUrl]
 			if {$url != -1} {
-				set token [::http::geturl $url]
+				set token [::http::geturl $url -timeout 2000]
 				set data [::http::data $token]
 				::http::cleanup $token
 

@@ -105,7 +105,7 @@ namespace eval geekosphere::tbar::widget::weather {
 
 				# only attempt image rendering if the current weather condition differs from the last cached condiion
 				if {$sys($w,currentWeatherInformation) eq "" || ([dict exists $sys($w,currentWeatherInformation) icon] && [dict get $sys($w,currentWeatherInformation) icon] ne $iconUrl)} {
-					if {$sys($w,imagedata) ne ""} {
+					if {$sys($w,imagedata) ne "" && [imageExists $sys($w,imagedata)]} {
 						image delete $sys($w,imagedata)
 					}
 					set sys($w,imagedata) [getImageDataFromUrl $w $iconUrl $sys($w,height)]
@@ -123,6 +123,14 @@ namespace eval geekosphere::tbar::widget::weather {
 			} err]} {
 				log "WARNING" "Could not fetch weather data right now: $err"
 			}
+		}
+	}
+
+	proc imageExists {image} {
+		if {[lsearch [image names] $image] == -1} {
+			return 0
+		} else {
+			return 1
 		}
 	}
 

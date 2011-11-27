@@ -198,7 +198,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		set color [determineColorOfWidgetByBatteryStatus $w $fillStatus]
 		if {![winfo exists $canvasPath]} {
 			pack [canvas $canvasPath -bg $sys($w,background) -height $sys($w,height) -width $sys($w,width) -highlightthickness 0] -side left
-			pack [label $percentLabelPath -fg $sys($w,foreground) -bg $sys($w,background) -height $sys($w,height) -text ${fillStatus}%] -side right
+			pack [label $percentLabelPath -font $sys($w,font) -fg $sys($w,foreground) -bg $sys($w,background) -height $sys($w,height) -text ${fillStatus}%] -side right
 			set cWidth [$canvasPath cget -width]
 			set cHeight [$canvasPath cget -height]
 

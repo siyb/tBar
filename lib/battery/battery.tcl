@@ -194,9 +194,11 @@ namespace eval geekosphere::tbar::widget::battery {
 			error "Fillstatus must be between 0 and 100 percent"
 		}
 		set canvasPath ${w}.batterydisplay
+		set percentLabelPath ${w}.batterydisplayperc
 		set color [determineColorOfWidgetByBatteryStatus $w $fillStatus]
 		if {![winfo exists $canvasPath]} {
-			pack [canvas $canvasPath -bg $sys($w,background) -height $sys($w,height) -width $sys($w,width) -highlightthickness 0]
+			pack [canvas $canvasPath -bg $sys($w,background) -height $sys($w,height) -width $sys($w,width) -highlightthickness 0] -side left
+			pack [label $percentLabelPath -fg $sys($w,foreground) -bg $sys($w,background) -height $sys($w,height) -text ${fillStatus}%] -side right
 			set cWidth [$canvasPath cget -width]
 			set cHeight [$canvasPath cget -height]
 
@@ -224,6 +226,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			set sys($w,batterydisplay,cHeight) $cHeight
 			set sys($w,batterydisplay,endPoleY) $endPoleY
 		}
+		$percentLabelPath configure -text ${fillStatus}%
 
 		if {[info exists sys($w,lastBatteryStatusBox)]} {
 			$canvasPath delete $sys($w,lastBatteryStatusBox)

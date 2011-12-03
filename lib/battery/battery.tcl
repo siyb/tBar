@@ -30,7 +30,8 @@ namespace eval geekosphere::tbar::widget::battery {
 
 	dict set sys(battery) charge_now "charge_now"
 	dict set sys(battery) charge_full "charge_full"
-
+	
+	dict set sys(battery) power_now "power_now"
 	dict set sys(battery) current_now "current_now"
 
 	dict set sys(battery) present "present";# is the battery present
@@ -443,7 +444,16 @@ namespace eval geekosphere::tbar::widget::battery {
 	# get current now
 	proc getCurrentNow {batteryFolder} {
 		variable sys
-		set data [gets [set fl [open [file join $batteryFolder [dict get $sys(battery) current_now]] r]]];close $fl
+		set currentNow [file join $batteryFolder [dict get $sys(battery) current_now]]
+		set powerNow [file join $batteryFolder [dict get $sys(battery) power_now]]
+		if {[file exists $currentNow]} {
+			set readFrom $currentNow
+		} else if {[file exists $powerNow]} {
+			set readFrom $powerNow
+		} else {
+			log "ERROR" "Could not determine current power, current_now and power_now not present"
+		}
+		set data [gets [set fl [open $readFrom] r]];close $fl
 		return $data
 	}
 

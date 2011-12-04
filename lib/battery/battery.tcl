@@ -448,7 +448,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		set powerNow [file join $batteryFolder [dict get $sys(battery) power_now]]
 		if {[file exists $currentNow]} {
 			set readFrom $currentNow
-		} else if {[file exists $powerNow]} {
+		} elseif {[file exists $powerNow]} {
 			set readFrom $powerNow
 		} else {
 			log "ERROR" "Could not determine current power, current_now and power_now not present"

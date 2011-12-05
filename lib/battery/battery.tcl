@@ -453,7 +453,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		} else {
 			log "ERROR" "Could not determine current power, current_now and power_now not present"
 		}
-		set data [gets [set fl [open $readFrom] r]];close $fl
+		set data [gets [set fl [open $readFrom r]]];close $fl
 		return $data
 	}
 

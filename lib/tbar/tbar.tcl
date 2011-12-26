@@ -232,7 +232,7 @@ foreach sysArray [getSysArrays] {
 		puts $fl "ARRAYITEM=$item;$value"
 	}
 }
-puts $fl "ERRORINFO=$::errorInfo"
+puts $fl "ERRORINFO=[split $::errorInfo \n]"
 puts $fl "ERRORCODE=$::errorCode"
 close $fl
 }

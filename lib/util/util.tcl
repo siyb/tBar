@@ -11,6 +11,12 @@ namespace eval geekosphere::tbar::util {
 
 	set sys(componentCounter) 0
 
+	proc countLines {file} {
+		set count [llength [split [read [set fl [open $file r]]] "\n"]]
+		close $fl
+		return $count
+	}
+
 	# parses a procfile formatted like "item : value", spaces between : and strings is irrelevant
 	# returns a dict containing all values of lookForList
 	proc parseProcFile {file lookForList} {

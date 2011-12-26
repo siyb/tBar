@@ -30,7 +30,8 @@ namespace eval geekosphere::tbar::widget::battery {
 
 	dict set sys(battery) charge_now "charge_now"
 	dict set sys(battery) charge_full "charge_full"
-
+	
+	dict set sys(battery) power_now "power_now"
 	dict set sys(battery) current_now "current_now"
 
 	dict set sys(battery) present "present";# is the battery present
@@ -152,13 +153,16 @@ namespace eval geekosphere::tbar::widget::battery {
 	proc updateWidget {w} {
 		variable sys
 		if {![isBatteryPresent $w]} {;# the battery we are attempting to poll has been removed
+			log "TRACE" "battery unavailable, setting to 100%"
 			set sys($w,unavailable) 1
 			set sys($w,chargeInPercent) 100;# if we can't poll the battery, the fillstatus will be 100 (cable attached)
 			setBatteryDirs $w;# attempt to find battery, if non has been detected yet (battery path is empty)
 		} else {;# the battery we are attempting to poll is still present
 			if {[catch {
+				log "TRACE" "Calculating charge"
 				set chargeDict [calculateCharge $w]
 			} err]} {
+				log "TRACE" "Error while calculating charge: $::errorInfo"
 				set sys($w,chargeInPercent) 100
 			} else {
 				set sys($w,timeRemaining) [dict get $chargeDict time]
@@ -182,6 +186,8 @@ namespace eval geekosphere::tbar::widget::battery {
 		}
 		drawBatteryDisplay $w $sys($w,chargeInPercent)
 	}
+	
+	
 
 	#
 	# GUI related stuff
@@ -391,12 +397,16 @@ namespace eval geekosphere::tbar::widget::battery {
 		set remaining [getRemainingCapacity $w]
 		set status [getStatus $sys($w,batteryDir)]
 		set rate [getCurrentNow $sys($w,batteryDir)]
+		log "TRACE" "Battery info: total:$total remaining:$remaining status:$status rate:$rate"
 		dict set returnDict percent [expr {floor(min($remaining*1.0 / $total*1.0 * 100,100))}]
 		if {$status eq "+" || $status eq "Charging"} {
 			set timeLeft [expr {($total*1.0 - $remaining) / $rate}]
+			log "TRACE" "charging"
 		} elseif {$status eq "-" || $status eq "Discharging"} {
 			set timeLeft [expr {$remaining*1.0 / $rate}]
+			log "TRACE" "discharging"
 		} else {
+			log "TRACE" "can't determine if charging or discharging"
 			set timeLeft -1
 			dict set returnDict time "N/A"
 			return $returnDict
@@ -434,7 +444,16 @@ namespace eval geekosphere::tbar::widget::battery {
 	# get current now
 	proc getCurrentNow {batteryFolder} {
 		variable sys
-		set data [gets [set fl [open [file join $batteryFolder [dict get $sys(battery) current_now]] r]]];close $fl
+		set currentNow [file join $batteryFolder [dict get $sys(battery) current_now]]
+		set powerNow [file join $batteryFolder [dict get $sys(battery) power_now]]
+		if {[file exists $currentNow]} {
+			set readFrom $currentNow
+		} elseif {[file exists $powerNow]} {
+			set readFrom $powerNow
+		} else {
+			log "ERROR" "Could not determine current power, current_now and power_now not present"
+		}
+		set data [gets [set fl [open $readFrom r]]];close $fl
 		return $data
 	}
 

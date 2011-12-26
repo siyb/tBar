@@ -196,10 +196,14 @@ namespace eval geekosphere::tbar {
 		variable sys
 		variable conf
 		if {!$conf(sys,writeBugreport)} { return 0}
-		set timeStamp [clock format [clock seconds] -format "%m-%d-%Y@%H-%M"]
+		set timeStamp [clock seconds]
 		set bugreportPath $sys(user,home)
 		if {![file exists $bugreportPath]} { return -1 }
-		set file [string map {" " _} [file join $bugreportPath BUGREPORT_${timeStamp}]]
+		set bugreportPath [file join $bugreportPath bugreport]
+		if {![file exists $bugreportPath]} {
+			file mkdir $bugreportPath
+		}
+		set file [string map {" " _} [file join $bugreportPath ${timeStamp}]]
 		set fl [open $file a+]
 		puts $fl "
 Bugreport

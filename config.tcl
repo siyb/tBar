@@ -162,7 +162,7 @@ setLogLevel "DEBUG"
 # -city - your city
 # -zipcode - the zipcode of your area
 # -imagepath - the path weather images are downloaded to, generally, there
-# 		is no need to change this, will default to ~/.tbar/image
+# 		is no need to change this, will default to ~/.tbar/cache/image
 # -unit - the unit the temperature will be displayed in, currently only supports "f" for
 #	fahrenheit and "c" for celsius. Defaults to celsius
 #

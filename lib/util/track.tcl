@@ -61,9 +61,13 @@ namespace eval geekosphere::tbar::util::track {
 
 	proc sendTrackingRequest {query} {
 		variable sys
-		set token [::http::geturl $sys(url) -query $query]
-		set data [::http::data $token]
-		::http::cleanup $token
+		if {[catch {
+			set token [::http::geturl $sys(url) -query $query]
+			set data [::http::data $token]
+			::http::cleanup $token
+		}]} {
+			log "WARNING" "Tracking not possible, connection could not be established"
+		}
 	}
 }
 

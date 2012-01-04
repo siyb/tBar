@@ -1,20 +1,23 @@
 CREATE TABLE widget (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	type TEXT,
-	updateinterval INTEGER
+	type TEXT UNIQUE
 );
 
 CREATE TABLE widgetargument (
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
-	argument TEXT
+	argument TEXT UNIQUE
 );
 
-CREATE TABLE widget_widgetargument (
+CREATE TABLE userwidget (
+	uid INTEGER,
+	timestamp INTEGER,
 	widgetId INTEGER,
-	widgetargumentID INTEGER,
+	widgetargumentId INTEGER,
+	updateinterval INTEGER,
 	value TEXT,
 	FOREIGN KEY(widgetId) REFERENCES widget(id),
 	FOREIGN KEY(widgetargumentId) REFERENCES widgetargument(id)
+	CONSTRAINT uc_userwidget UNIQUE (widgetId, widgetargumentId, updateinterval, value, uid)
 );
 
 CREATE TABLE error (
@@ -38,7 +41,7 @@ CREATE TABLE errorconfig (
 	FOREIGN KEY(errorId) REFERENCES error(id)
 );
 
-CREATE TABLE widgetsysarray (
+CREATE TABLE errorsysarray (
 	errorId,
 	id INTEGER PRIMARY KEY AUTOINCREMENT,
 	sysarray TEXT,
@@ -46,3 +49,4 @@ CREATE TABLE widgetsysarray (
 	value TEXT,
 	FOREIGN KEY(errorId) REFERENCES error(id)
 );
+

@@ -229,7 +229,7 @@ addText " | " "red"
 #		if showwhat is 1, free memory will be displayed
 # -noswap - will prevent the swappart of the widget to be diplayed (memory only)
 #		setting this to 1 will disable swap
-#
+# -renderstatusbar - if set to 0, the memory status will not be visualized, instead only the percentage of free/used memory will be shown
 addWidgetToBar memory memory1 5 -gc blue -bc | -showwhat 0
 addText " | " "red"
 

@@ -18,7 +18,8 @@ namespace eval geekosphere::statusBar {
 		# vars that can be set by the coder
 		set sys($w,totalAmount) "100";# total amount of the thing to be measured
 		set sys($w,barCharacter) "|";# the character that will make up the graphic
-		
+		set sys($w,renderbar) 1;# if set to 0, only the percentage will be shown, not the graphical representation
+
 		# vars that can not be set by the coder
 		set sys($w,originalCommand) ${w}_;# the name of the original frame command
 		set sys($w,displayText) "N/A";# the text displayed in the textLabel label
@@ -72,6 +73,9 @@ namespace eval geekosphere::statusBar {
 					"-font" {
 						changeFont $w $value
 					}
+					"-renderstatusbar" {
+						set sys($w,renderbar) $value
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -79,7 +83,11 @@ namespace eval geekosphere::statusBar {
 			}
 		} elseif {$command eq "update"} {
 			set sys($w,displayText) [calcPercentage $sys($w,totalAmount) $rest]
-			set sys($w,displayGraphic) "\[ [returnBars $sys($w,barCharacter) $sys($w,displayText)] \]"
+			if {$sys($w,renderbar)} {
+				set sys($w,displayGraphic) "\[ [returnBars $sys($w,barCharacter) $sys($w,displayText)] \]"
+			} else {
+				set sys($w,displayGraphic) ""
+			}
 			set sys($w,displayText) $sys($w,displayText)%
 		} elseif {$command eq "bind"} {
 			set splitRest [split $rest]

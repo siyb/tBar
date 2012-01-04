@@ -29,6 +29,7 @@ namespace eval geekosphere::tbar::widget::memory {
 		set sys($w,originalCommand) ${w}_
 		set sys(memData) [parseMemfile $sys(memFile)]
 		set sys($w,useSwap) [string is false [getOption "-noswap" $arguments]]
+		set renderStatusBar [string is true [getOption "-renderstatusbar" $arguments]] 
 		frame $w
 		
 		#
@@ -39,21 +40,23 @@ namespace eval geekosphere::tbar::widget::memory {
 		pack [statusBar ${w}.memorystatus \
 			-ta [string trimright [dict get $sys(memData) "MemTotal"] "kB"] \
 			-bc "|" \
-		] -side left
-		
-		
-		#
+			-renderstatusbar $renderStatusBar \
+			] -side left
+
+
+		#	
 		# Swap
 		#
 		if {$sys($w,useSwap)} {
 			pack [label ${w}.swap] -side left
-			
+
 			pack [statusBar ${w}.swapstatus \
 				-ta [string trimright [dict get $sys(memData) "SwapTotal"] "kB"] \
 				-bc "|" \
-			] -side left
+				-rederstatusbar $renderStatusBar \
+				] -side left
 		}
-		
+
 		if {$sys($w,showWhat)} {
 			${w}.memory configure -text "FreeMem: "
 			if {$sys($w,useSwap)} { ${w}.swap configure -text "FreeSwap: " }
@@ -61,7 +64,7 @@ namespace eval geekosphere::tbar::widget::memory {
 			${w}.memory configure -text "UsedMem: "
 			if {$sys($w,useSwap)} { ${w}.swap configure -text "UsedSwap: " }
 		}
-		
+
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_
 
@@ -132,7 +135,10 @@ namespace eval geekosphere::tbar::widget::memory {
 						if {[isInitialized $w]} { error "Showwhat cannot be modified after widget has been initialized" }
 					}
 					"-noswap" {
-						if {[isInitialized $w]} { error "Showwhat cannot be modified after widget has been initialized" }
+						if {[isInitialized $w]} { error "Noswap cannot be modified after widget has been initialized" }
+					}
+					"-renderstatusbar" {
+						if {[isInitialized $w]} { error "Renderstatusbar cannot be modified after widget has been initialized" }
 					}
 					"-font" {
 						changeFont $w $value

@@ -57,6 +57,7 @@ namespace eval geekosphere::tbar {
 	set sys(screen,height) 0
 	set sys(user,home) [file join $::env(HOME) .tbar]
 	set sys(snippets,sourcedSnippets) [list]
+
 	# Initializes the bar
 	proc init {} {
 		variable conf
@@ -75,7 +76,12 @@ namespace eval geekosphere::tbar {
 	}
 
 	proc track {} {
-		::geekosphere::tbar::util::track::trackWidgets
+		variable conf
+		if {$conf(sys,track)} {
+			::geekosphere::tbar::util::track::trackWidgets
+		} else {
+			log "INFO" "Tracking disabled"
+		}
 	}
 
 	proc createBar {} {
@@ -388,7 +394,7 @@ close $fl
 
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
-	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet
+	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet setTrack
 }
 
 # GLOBAL NAMESPACE!

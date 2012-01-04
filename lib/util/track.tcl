@@ -6,8 +6,8 @@ package require logger
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::util::track {
 	variable sys
-	
-	set sys(url) "http://siyb.mount.at/"
+
+	set sys(url) "http://tbar.mount.at/track.cgi"
 
 	initLogger
 
@@ -41,9 +41,10 @@ namespace eval geekosphere::tbar::util::track {
 		}
 		set query [::http::formatQuery \
 			id $uid \
+			version $::geekosphere::tbar::sys(bar,version) \
 			widgets $::geekosphere::tbar::sys(widget,dict)]
 		sendTrackingRequest $query
-		log "INFO" "Widgets tracked"		
+		log "INFO" "Widgets tracked"
 	}
 
 	proc trackBug {bugreport} {
@@ -54,6 +55,7 @@ namespace eval geekosphere::tbar::util::track {
 		}
 		set query [::http::formatQuery \
 			id [getUid] \
+			version $::geekosphere::tbar::sys(bar,version) \
 			report $bugreport]
 		sendTrackingRequest $query
 		log "INFO" "Bugreport sent"
@@ -64,6 +66,7 @@ namespace eval geekosphere::tbar::util::track {
 		if {[catch {
 			set token [::http::geturl $sys(url) -query $query]
 			set data [::http::data $token]
+			log "INFO" "Data returned by tracking server (data that has been sent): $data"
 			::http::cleanup $token
 		}]} {
 			log "WARNING" "Tracking not possible, connection could not be established"

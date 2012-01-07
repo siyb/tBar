@@ -212,8 +212,6 @@ namespace eval geekosphere::tbar {
 		set file [string map {" " _} [file join $bugreportPath ${timeStamp}]]
 		set fl [open $file a+]
 		puts $fl "
-Bugreport
-
 DATETIME=[clock format [clock seconds] -format "%+"]]
 TBARVERSION=$sys(bar,version)
 HOSTNAME=[info hostname]
@@ -241,6 +239,7 @@ foreach sysArray [getSysArrays] {
 puts $fl "ERRORINFO=[split $::errorInfo \n]"
 puts $fl "ERRORCODE=$::errorCode"
 close $fl
+return $file
 }
 
 	# CONFIG PROCS

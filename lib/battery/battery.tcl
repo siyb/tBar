@@ -253,12 +253,15 @@ namespace eval geekosphere::tbar::widget::battery {
 			if {[info exists sys($w,batteryChargeSymbol)]} { $canvasPath delete $sys($w,batteryChargeSymbol) }
 			set status [getStatus $sys($w,batteryDir)]
 			set symbol "?"
+			set sizeModifier 3.2
 			if {$status eq "Discharging" || $status == "-"} { 
 				set symbol "-"
+				set sizeModifier 2.5
 			} elseif {$status eq "Charging" || $status eq "+"} {
 				set symbol "+"
+				set sizeModifier 2.5
 			}
-			font configure $tmpFont -size [expr {round($sys($w,batterydisplay,cWidth) / 2.5)}] -weight bold
+			font configure $tmpFont -size [expr {round($sys($w,batterydisplay,cWidth) / $sizeModifier)}] -weight bold
 			set sys($w,batteryChargeSymbol) \
 				[$canvasPath create text \
 					[expr {$sys($w,batterydisplay,cWidth)  / 2}] [expr {($sys($w,batterydisplay,cHeight) / 2) + ($sys($w,batterydisplay,cHeight) / 10)}] \

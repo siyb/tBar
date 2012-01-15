@@ -33,13 +33,14 @@ managers. It provides basic system monitoring facilities such as:
 * i3 desktop switcher widget
 .TP
 * Simple widget API
-
+.TP
+* Weather widget, using the inofficial google weather API
 .SH OPTIONS
 .TP
 \fB\-\-config\fR \fIFILE\fR
 specifies a config file to use instead of the global / user configuration file
 
-.SH FILES
+.SH FILES AND DIRECTORIES
 .TP
 .I /etc/tbar/config.tcl
 global configuration file
@@ -53,11 +54,20 @@ user specific widget directory, place widgets here in order to make them loadabl
 .I ~/.tbar/lib
 user specific library directory, place libraries along with a pkgIndex.tcl file here in order to make them loadable by tBar
 .TP
+.I ~/.tbar/cache
+the default cache directory
+.TP
+.I ~/.tbar/bugreport
+user specific crashfiles
+.TP
 .I ~/.tbar/icaldata
 sqlite database storing user specific calendar data
 .TP
 .I ~/.tbar/log
 tBar logfile
+.TP
+.I ~/.tbar/uid
+the uid file, containing a pseudo unique id, will only be created and used if tracking has been explicitly enabled
 
 .SH BUGS
 Send bug reports to <siyb@geekosphere.org>

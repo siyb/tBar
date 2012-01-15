@@ -2,7 +2,7 @@ catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::clock {
 
 	generallyRequires calClock util callib logger
-	parameterRequires calClock -ical icalCalClock logger sqlite3 ical
+	parameterRequires calClock -ical icalCalClock logger sqlite3 ical struct::tree
 	setNamespace calClock ::geekosphere::tbar::widget::notify
 	registerNamespaceImportsFor calClock \
 		::geekosphere::tbar::util::* \

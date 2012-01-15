@@ -7,6 +7,7 @@ TOC
 2. Feature notes
 	2.1 User specific libraries and widgets
 	2.2 Automatic dependency management
+	2.3 Tracking
 3. Widget notes
 4. Misc notes
 5. License
@@ -62,6 +63,33 @@ TOC
 	From version 1.4 onwards, tBar manages dependencies automatically. Packages are loaded on demand and warning messages are logged
 	if a package is not available. tBar knows about widget dependency on the widget and parameter level. It will remove parameters
 	from widgets, which require packages, that are not installed, thus preventing widget loading errors.
+
+	2.3 Tracking
+	
+	From version 1.4 onwards, tBar supports automatic tracking. It is disabled by default, but can be enabled in order to provide
+	useful information to tBar developers. Since privacy and transparancy is important, this paragraph states what, how and why something
+	is being tracked.
+
+	What is being tracked?
+	- Currently, only used widgets, their configuration and runtime exceptions (errors) are being tracked.
+
+	How will this data be tracked?
+	- The data is send to a webservice using http post. The source code of the webservice is included in tBar and can be reviewed. In
+	order to assign data to a certain tBar user, an anonymous pseudo uid (unique id) will be generated.
+
+	Where do I find my tracking uid and what is it composed of?
+	- The tracking uid can be found in $HOME/.tbar/uid. The algorithm that is used to create the uid can be found below:
+		1) get current timestamp
+		2) multiply with random number
+		3) remove decimal point
+		4) trim result to 9 numbers
+
+	Why should I enable tracking?
+	- The major objective is automatic bugtracking and faster bug fixing. The widget usage statistics provide a rough overview of features
+	commonly used, thus allowing to prioritize feature enhancements and bug fixes.
+
+	I don't trust you, where can I find the tracking code?
+	- The actual tracking code can be found in lib/util/track.tcl, tracking happens in lib/tbar/tbar.tcl.
 
 3. Widget notes
 

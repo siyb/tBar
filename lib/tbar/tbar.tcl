@@ -2,7 +2,7 @@ package provide tbar 1.2
 
 package require util
 package require logger
-
+package require track
 # TODO 1.x: hdd widget, temperature, free/used
 # TODO 1.x: instead of throwing an error if a package (ie sqlite) can not be required, use the widget wrapper to test if package is available (catch) and remove corresponding parameter or widget
 # TODO 1.x: language files
@@ -41,6 +41,7 @@ namespace eval geekosphere::tbar {
 	set conf(widgets,position) "left"
 
 	set conf(sys,writeBugreport) 1
+	set conf(sys,track) 0
 	set conf(sys,killOnError) 0
 	set conf(sys,compatibilityMode) 0
 
@@ -56,6 +57,7 @@ namespace eval geekosphere::tbar {
 	set sys(screen,height) 0
 	set sys(user,home) [file join $::env(HOME) .tbar]
 	set sys(snippets,sourcedSnippets) [list]
+
 	# Initializes the bar
 	proc init {} {
 		variable conf
@@ -70,6 +72,16 @@ namespace eval geekosphere::tbar {
 		lappend conf(widget,path) [file join / usr share tbar]
 		lappend conf(widget,path) [file join widget]
 		loadWidgets
+		track
+	}
+
+	proc track {} {
+		variable conf
+		if {$conf(sys,track)} {
+			::geekosphere::tbar::util::track::trackWidgets
+		} else {
+			log "INFO" "Tracking disabled"
+		}
 	}
 
 	proc createBar {} {
@@ -189,64 +201,47 @@ namespace eval geekosphere::tbar {
 	proc saveBugreport {message} {
 		variable sys
 		variable conf
-		if {!$conf(sys,writeBugreport)} { return }
-		set timeStamp [clock format [clock seconds] -format "%m-%d-%Y@%H-%M"]
-		set bugreportPath $sys(user,home) 
-		if {![file exists $bugreportPath]} { return }
-		set file [string map {" " _} [file join $bugreportPath BUGREPORT_${timeStamp}]]
+		if {!$conf(sys,writeBugreport)} { return 0}
+		set timeStamp [clock seconds]
+		set bugreportPath $sys(user,home)
+		if {![file exists $bugreportPath]} { return -1 }
+		set bugreportPath [file join $bugreportPath bugreport]
+		if {![file exists $bugreportPath]} {
+			file mkdir $bugreportPath
+		}
+		set file [string map {" " _} [file join $bugreportPath ${timeStamp}]]
 		set fl [open $file a+]
 		puts $fl "
 Bugreport
 
-DATE/TIME: [clock format [clock seconds] -format "%+"]]
-VERSION: $sys(bar,version)
-HOSTNAME: [info hostname]
-EXECUTABLE: [info nameofexecutable]
-SCRIPT: [info script]
+DATETIME=[clock format [clock seconds] -format "%+"]]
+TBARVERSION=$sys(bar,version)
+HOSTNAME=[info hostname]
+EXECUTABLE=[info nameofexecutable]
+SCRIPT=[info script]
+TCL=[info patchlevel]
+OS=$::tcl_platform(os)
+OSVERSION=$::tcl_platform(osVersion)
+THREADED=$::tcl_platform(threaded)
+MACHINE=$::tcl_platform(machine)"
 
-SYSTEM:
--------
-TCL:          [info patchlevel]
-OS:           $::tcl_platform(os)
-OSVersion:    $::tcl_platform(osVersion)
-Threaded:     $::tcl_platform(threaded)
-Machine:      $::tcl_platform(machine)
-
-PACKAGES:
----------"
-		foreach item [info loaded] {
-			puts $fl "$item"
-		}
-			puts $fl "
-SETTINGS:
----------"
-
-		foreach {item value} [array get geekosphere::tbar::conf] {
-			puts $fl "$item ---> $value"
-		}
-
-		puts $fl "
-WIDGETS:
--------"
-
-		foreach sysArray [getSysArrays] {
-			puts $fl "\n${sysArray}\n"
-			foreach {item value} [array get $sysArray] {
-				puts $fl "$item --> $value"
-			}
-		}
-
-		puts $fl "
-ERRORINFO:
-----------
-$::errorInfo
-
-ERRORCODE:
-----------
-$::errorCode"
-		close $fl
-		log "INFO" "Bugreport written to $file"
+foreach item [info loaded] {
+	set sitem [split $item]
+	puts $fl "PACKAGE=[lindex $sitem 0];[lindex $sitem 1]"
+}
+foreach {item value} [array get geekosphere::tbar::conf] {
+	puts $fl "CONFIG=${item};${value}"
+}
+foreach sysArray [getSysArrays] {
+	puts $fl "ARRAYNAME=${sysArray}"
+	foreach {item value} [array get $sysArray] {
+		puts $fl "ARRAYITEM=$item;$value"
 	}
+}
+puts $fl "ERRORINFO=[split $::errorInfo \n]"
+puts $fl "ERRORCODE=$::errorCode"
+close $fl
+}
 
 	# CONFIG PROCS
 
@@ -367,6 +362,11 @@ $::errorCode"
 		set conf(sys,compatibilityMode) $mode
 	}
 
+	proc setTrack {doTrack} {
+		variable conf
+		set conf(sys,track) $doTrack
+	}
+
 	proc runSnippet {snippet} {
 		variable sys
 		set ::snippetFile [file join $sys(user,home) snips ${snippet}.tcl]
@@ -394,13 +394,17 @@ $::errorCode"
 
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
-	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet
+	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet setTrack
 }
 
 # GLOBAL NAMESPACE!
 initLogger
 proc bgerror {message} {
-	geekosphere::tbar::saveBugreport $message
+	set bugreportFile [geekosphere::tbar::saveBugreport $message]
+	if {$bugreportFile != -1 && $bugreportFile != 0 && $::geekosphere::tbar::conf(sys,track)} {
+		set data [read [set fl [open $bugreportFile]]]; close $fl
+		::geekosphere::tbar::util::track::trackBug $data
+	}
 	log "ERROR" "Background error encountered ${::errorInfo}"
 	if {$geekosphere::tbar::conf(sys,killOnError)} {
 		log "FATAL" "Background error encountered, system is configured to shutdown!"

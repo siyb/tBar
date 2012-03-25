@@ -16,7 +16,7 @@ SDXSHA1='1a77b0b5bc8cfcf2df2ef051a511e9187103ce0c'
 
 # Paths of libraries which are mandatory for the standard tbar distribution.
 # Make sure that each path contains a valid pkgIndex.tcl file.
-SQLITE='/usr/lib/sqlite3/'
+SQLITE='/usr/lib/tcltk/sqlite3'
 TCLLIB='/usr/share/tcltk/tcllib1.13/'
 LIBTKIMG='/usr/lib/tcltk/Img1.3/'
 UNIXSOCKETS='/usr/lib/unix_sockets0.1/'

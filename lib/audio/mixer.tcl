@@ -1,5 +1,8 @@
 package provide mixer 1.0
 
+# TODO: dep management in widget
+package require amixer
+package require logger
 if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require logger
 	package require amixer
@@ -22,7 +25,6 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc makeMixer {w arguments} {
 		variable sys
 		set sys($w,originalCommand) ${w}_
-
 		# create an array containing all controldevices
 		# listed by amixer
 		geekosphere::amixer::updateControlList
@@ -93,15 +95,21 @@ namespace eval geekosphere::tbar::widget::mixer {
 		}
 		foreach device [geekosphere::amixer::getControlDeviceList] {
 			set deviceInformation [geekosphere::amixer::getInformationOnDevice $device]
-			puts "DI: $deviceInformation"
-			set info [geekosphere::amixer::getControlDeviceInfo $device]
 			if {[shouldDeviceBeShown $w $device]} {
-				set type [dict get $deviceInformation "type"]
+				puts "deviceInformation: $deviceInformation"	
+				set meta [dict get $deviceInformation "meta"]
+				set info [dict get $deviceInformation "info"]
+
+				set name [dict get $info "name"]
+				set type [dict get $meta "type"]
 				if {$type eq "BOOLEAN"} {
-					drawSwitch $w [dict get $info "name"] ${w}.mixerWindow.${device} $device
+					drawSwitch $w $deviceInformation ${w}.mixerWindow.${device}
 				} elseif {$type eq "INTEGER"} {
-					drawVolumeControl $w [dict get $info "name"] ${w}.mixerWindow.${device}
+					drawVolumeControl $w $deviceInformation ${w}.mixerWindow.${device}
+				} elseif {$type eq "ENUMERATED"} {
+					drawEnumerated $w $deviceInformation ${w}.mixerWindow.${device}
 				}
+				incr sys($w,devicelinecounter)
 			}
 		}
 		pack [label ${w}.mixerWindow.l -text "\n\n\n\n\n\n\n\n" -bg $sys($w,background)] -expand 1 -fill y
@@ -114,28 +122,39 @@ namespace eval geekosphere::tbar::widget::mixer {
 	}
 
 	# draws a single volume scrollbar element
-	proc drawVolumeControl {w name path} {
+	proc drawVolumeControl {w infoDict path} {
 		variable sys
-		set controlPath ${path}
-		pack [frame $controlPath -bg $sys($w,background)] -fill y -expand 1 -side right 
-		pack [label ${controlPath}.label -text "$name" -bg $sys($w,background) -font $sys($w,font) -fg $sys($w,foreground)] -side top
-		pack [scrollbar ${controlPath}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $controlPath] -bg $sys($w,background)] -expand 1 -fill y 
-		${controlPath}.bar set 0.0 0.0
+		drawItemHeader $w $path $infoDict
+		pack [scrollbar ${path}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $path] -bg $sys($w,background)] -expand 1 -fill y
+		${path}.bar set 0.0 0.0
 	}
 
 	# draws a switch control element
-	proc drawSwitch {w name path device} {
+	proc drawSwitch {w infoDict path} {
 		variable sys
-		set controlPath ${path}
-		pack [frame $controlPath -bg $sys($w,background)] -fill y -expand 1 -side right
-		pack [label ${controlPath}.label -text "$name" -bg $sys($w,background) -font $sys($w,font) -fg $sys($w,foreground)] -side top
-		pack [checkbutton ${controlPath}.cb \
+		set info [dict get $infoDict "info"]
+		set device [dict get $info "numid"]
+		drawItemHeader $w $path $infoDict
+		pack [checkbutton ${path}.cb \
 			-bg $sys($w,background) \
 			-font $sys($w,font) \
 			-fg $sys($w,foreground) \
 			-highlightbackground $sys($w,background) \
 			-activebackground $sys($w,background) \
 			-variable sys(checkboxes,$device)]
+	}
+
+	proc drawEnumerated {w infoDict path} {
+		variable sys
+		drawItemHeader $w $path $infoDict
+		pack [ttk::combobox ${path}.cb -values [dict get $infoDict "items"]]
+	}
+
+	proc drawItemHeader {w path infoDict} {
+		variable sys
+		set info [dict get $infoDict "info"]
+		pack [frame $path -bg $sys($w,background)] -fill y -expand 1 -side right
+                pack [label ${path}.label -text [dict get $info "name"] -bg $sys($w,background) -font $sys($w,font) -fg $sys($w,foreground)] -side top
 	}
 
 	# the action handler for the volume scrollbars

@@ -126,7 +126,23 @@ namespace eval geekosphere::tbar::widget::mixer {
 		variable sys
 		drawItemHeader $w $path $infoDict
 		pack [scrollbar ${path}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $path $infoDict] -bg $sys($w,background)] -expand 1 -fill y
-		${path}.bar set 0.0 0.0
+		set setBarTo [expr {1.0 - [getPercentageFromDevice $infoDict] / 100.0}]
+		log "TRACE" "Setting bar to $setBarTo"
+		${path}.bar set $setBarTo $setBarTo
+	}
+
+	proc getPercentageFromDevice {infoDict} {
+		set meta [dict get $infoDict "meta"]
+		set max [dict get $meta "max"]
+		set values [dict get $infoDict values]
+		puts $values	
+		# since we do not support multi channels, we are using the max value of all chans to display the device
+		if {[llength $values] == 2} {
+			set current [expr {max([lindex $values 0],[lindex $values 1])}]
+		} else {
+			set current $values
+		}
+		return [expr {round($current / ($max / 100.0))}]
 	}
 
 	# draws a switch control element
@@ -188,6 +204,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc setVolumeAccordingToScrollBar {infoDict scrollbarLevel} {
 		set level [expr {round(100 - ([lindex $scrollbarLevel 0] * 100))}]
+		log "TRACE" "Bar moved to $level"
 		geekosphere::amixer::setDevicePercent $infoDict $level
 	}
 	

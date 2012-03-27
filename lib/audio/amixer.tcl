@@ -31,14 +31,6 @@ namespace eval geekosphere::amixer {
 		}
 	}
 
-	# returns the information gathered by updateControlList, a dict with two keys
-	# iface and name
-	proc getControlDeviceInfo {numid} {
-		variable sys
-		if {![dict exists $sys(amixerControls) $numid]} { error "Control with numid='$numid' does not exist" }
-		dict get $sys(amixerControls) $numid
-	}
-
 	# returns a sorted list containing the numid of all devices
 	proc getControlDeviceList {} {
 		variable sys
@@ -52,14 +44,8 @@ namespace eval geekosphere::amixer {
 		set data [read [set fl [open |[list amixer cget numid=$numid]]]];close $fl
 		set returnDict [dict create]
 		foreach line [split $data "\n"] {
-			puts "LINE $line"
 			set trimmedLine [string trim $line]
 			set splitLine [split $trimmedLine]
-			puts "SPLITLINE $splitLine"
-			# first line
-			if {[llength $splitLine] < 2} {
-				continue
-			}
 
 			set lineMarker [lindex $splitLine 0]
 			set values [split [lindex $splitLine 1] ","]
@@ -73,7 +59,6 @@ namespace eval geekosphere::amixer {
 			# device meta data
 			} elseif {$lineMarker eq ";"} {
 				set startString [string range $values 0 3]
-				puts "STARTSTRING $startString VALUES $splitLine"
 				
 				# presumably first line -> key=value
 				if {[llength $values] > 1} {
@@ -94,9 +79,15 @@ namespace eval geekosphere::amixer {
 				foreach value $values {
 					dict lappend returnDict values $value
 				}	
+			# first line
+			} else {
+				set values [split $splitLine ","]
+				foreach value $values {
+					set splitValue [split $value "="]
+					dict set returnDict info [dict set info [lindex $splitValue 0] [lindex $splitValue 1]]
+				}
 			}
 		}
-		puts "RETURNDICT $returnDict"
 		return $returnDict
 	}
 }

@@ -125,7 +125,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc drawVolumeControl {w infoDict path} {
 		variable sys
 		drawItemHeader $w $path $infoDict
-		pack [scrollbar ${path}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $path] -bg $sys($w,background)] -expand 1 -fill y
+		pack [scrollbar ${path}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $path $infoDict] -bg $sys($w,background)] -expand 1 -fill y
 		${path}.bar set 0.0 0.0
 	}
 
@@ -160,11 +160,12 @@ namespace eval geekosphere::tbar::widget::mixer {
 	# the action handler for the volume scrollbars
 	proc changeYView {args} {
 		set path [lindex $args 0]
-		set command [lindex $args 1]
-		set number [lindex $args 2]
+		set infoDict [lindex $args 1]
+		set command [lindex $args 2]
+		set number [lindex $args 3]
 		set postfix ""
-		if {[llength $args] == 4} {
-			set postfix [lindex $args 3]
+		if {[llength $args] == 5} {
+			set postfix [lindex $args 4]
 		}
 		switch $command {
 			"moveto" {
@@ -182,6 +183,10 @@ namespace eval geekosphere::tbar::widget::mixer {
 				${path}.bar set $newVal $newVal
 			}
 		}
+		setVolumeAccordingToScrollBar $infoDict [${path}.bar get]
+	}
+
+	proc setVolumeAccordingToScrollBar {infoDict scrollbarLevel} {
 	}
 	
 	proc shouldDeviceBeShown {w numid} {

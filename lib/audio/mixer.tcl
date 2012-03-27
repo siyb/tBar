@@ -187,6 +187,8 @@ namespace eval geekosphere::tbar::widget::mixer {
 	}
 
 	proc setVolumeAccordingToScrollBar {infoDict scrollbarLevel} {
+		set level [expr {round(100 - ([lindex $scrollbarLevel 0] * 100))}]
+		geekosphere::amixer::setDevicePercent $infoDict $level
 	}
 	
 	proc shouldDeviceBeShown {w numid} {

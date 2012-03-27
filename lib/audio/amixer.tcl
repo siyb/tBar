@@ -90,4 +90,12 @@ namespace eval geekosphere::amixer {
 		}
 		return $returnDict
 	}
+
+	# set the device specified by infoDict to percentage
+	# infoDict is a dict returned by getInformationOnDevice 
+	proc setDevicePercent {infoDict percentage} {
+		set info [dict get $infoDict "info"]
+		set command [list amixer cset numid=[dict get $info "numid"] ${percentage}]
+		set data [read [set cmd [open |$command]]]; close $cmd
+	}	
 }

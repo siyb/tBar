@@ -1,6 +1,8 @@
 package provide amixer 1.0
 
 namespace eval geekosphere::amixer {
+	variable sys
+	set sys(amixerControls) [dict create]
 
 	# sets or updates the sys(amixerControls) dictionary. This dictionary will store
 	# device information of each device found.
@@ -48,91 +50,53 @@ namespace eval geekosphere::amixer {
 	# and parse its output to create a return dict
 	proc getInformationOnDevice {numid} {
 		set data [read [set fl [open |[list amixer cget numid=$numid]]]];close $fl
-		set tmpKey "";# stores the current tmpKey of a key/value pair
-		set tmpValue "";# stores the current tmpValue of a key/value pair
-		set type "";# stores the type of the device
-		set items 0;# if type ==  ENUMERATED, this var will store how many items can be parsed
-		set readingItems 0;# is 1 if we are currently reading in items
-		set readingItemsEndLine 0;# the line of the last item
-		set readingKey 1;# is 1 if we are currently reading the key part of ley=value, when 0, we are reading the value
-		set informationDict [dict create];# the dict that stores the parsed data
-		set lineNumber 1;# the current line number we are on
-		set insideString 0;# a flag to determine if the parser is currently within a string
-		set valuesToRead 0;# number of values to read
-		set readingValues 0;# flag to signal parser that values should be read
-		for {set i 0} {$i < [string length $data]} {incr i} {
-			set letter [string index $data $i]
-			if {$readingValues == 2} {
-				set valueBuffer ""
-				dict lappend informationDict values $tmpValue
-				for {} {$i < [string length $data]} {incr i} {
-					set letter [string index $data $i]
-					if {$letter eq "," || $letter eq "\n"} {
-						dict lappend informationDict values $valueBuffer
-						set valueBuffer ""
-						incr valuesToRead -1
-					} else {
-						append valueBuffer $letter
-					}
-					if {$valuesToRead == 0} { break }
-				}
-				set tmpKey ""; set tmpValue ""
-				set readingValues 0
+		set returnDict [dict create]
+		foreach line [split $data "\n"] {
+			puts "LINE $line"
+			set trimmedLine [string trim $line]
+			set splitLine [split $trimmedLine]
+			puts "SPLITLINE $splitLine"
+			# first line
+			if {[llength $splitLine] < 2} {
 				continue
 			}
-			if {$letter eq "|" || $letter eq ";" || $letter eq ":" || $letter eq ","} {
-				set readingKey 1
 
-				if {$tmpKey eq "type"} { 
-					set type $tmpValue
-				} elseif {$tmpKey eq "values"} {
-					if {$readingValues == 0} {
-						set valuesToRead [expr {$tmpValue -1}]
-					}
-					incr readingValues
-					set tmpKey ""
-					continue
+			set lineMarker [lindex $splitLine 0]
+			set values [split [lindex $splitLine 1] ","]
+
+			# db line (maybe something else too Oo)
+			if {$lineMarker eq "|"} {
+				foreach value $values {
+					set splitValue [split $value "="]
+					dict set returnDict db_[lindex $splitValue 0] [lindex $splitValue 1]
 				}
+			# device meta data
+			} elseif {$lineMarker eq ";"} {
+				set startString [string range $values 0 3]
+				puts "STARTSTRING $startString VALUES $splitLine"
 				
-				if {[info exists type] && $type eq "ENUMERATED" && $tmpKey eq "items"} { 
-					set items $tmpValue
-					set readingItems 1
-					set readingItemsEndLine [expr {$lineNumber + $items}]
-					set tmpKey ""; set tmpValue ""
-					continue
-				}
-				if {$readingItems} {
-					dict lappend informationDict items $tmpKey
-					if {$lineNumber == $readingItemsEndLine} {
-						set readingItems 0
+				# presumably first line -> key=value
+				if {[llength $values] > 1} {
+					foreach value $values {
+						set splitValue [split $value "="]
+						dict set returnDict meta [dict set meta [lindex $splitValue 0] [lindex $splitValue 1]]
 					}
-				} else {
-					if {$tmpKey ne ""} { dict set informationDict $tmpKey $tmpValue }
 				}
 
-				set tmpKey ""; set tmpValue ""
-				continue
-			}
-			if {$letter eq "'"} {
-				set insideString [expr {!$insideString}]
-			}
-			if {$letter eq " " && !$insideString} {
-				continue
-			}
-			if {$letter eq "\n"} { 
-				incr lineNumber
-				continue
-			}
-			if {$letter eq "="} {
-				set readingKey 0 
-				continue
-			}
-			if {$readingKey} {
-				append tmpKey $letter
-			} else {
-				append tmpValue $letter
+				# enumerated (maybe other types provide items as well?!)
+				if {$startString eq "Item"} {
+					dict lappend returnDict items [lindex [regexp -inline "'(.*)'" $splitLine] 1]
+				}
+			# values line
+			} elseif {$lineMarker eq ":"} {
+				set splitLine [split $line "="]
+				set values [split [lindex $splitLine 1] ","]
+				foreach value $values {
+					dict lappend returnDict values $value
+				}	
 			}
 		}
-		return $informationDict
+		puts "RETURNDICT $returnDict"
+		return $returnDict
 	}
 }

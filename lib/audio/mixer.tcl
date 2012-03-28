@@ -25,6 +25,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc makeMixer {w arguments} {
 		variable sys
 		set sys($w,originalCommand) ${w}_
+		set sys($w,activatedDevices) [list] 
 		# create an array containing all controldevices
 		# listed by amixer
 		geekosphere::amixer::updateControlList
@@ -98,6 +99,10 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc drawAllVolumeControls {w} {
 		variable sys
+		if {[llength $sys($w,activatedDevices)] == 0} {
+			puts "Nothing to draw, specify at least one device"
+			return
+		}
 		if {[winfo exists ${w}.mixerWindow]} {
 			destroy ${w}.mixerWindow
 			return

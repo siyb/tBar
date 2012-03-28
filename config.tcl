@@ -168,6 +168,16 @@ setLogLevel "DEBUG"
 #
 #addWidgetToBar weather weather1 1 -country austria -state vienna -city vienna -zipcode 1190 -unit "c"
 
+# This mixer widget enables controlling audio devices using amixer.
+# Note that amixer _must_ be installed to use this widget
+#
+# -fg / -foreground - the textcolor
+# -bg / -background - the background color
+# -height - adjust the height of the widget (buttons)
+# -width - adjust the width of the widgets
+# -devices - a list of devices that should be controlled used this widget.
+#            check "amixer controls" for a list of available devices (use numid here!)
+#addWidgetToBar mixer mixer1 1 -devices [list 1 2 3]
 
 # Displays the time
 #
@@ -288,7 +298,3 @@ addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 # -setipcpath - sets the path to the i3 ipc socket 
 # -legacymode - takes a boolean value, use this to support i3 versions before INSERTVERSION HERE
 #addWidgetToBar i3_workspace i3_workspace1 0
-
-# This mixer widget enables controlling audio devices using amixer.
-# Note that amixer _must_ be installed to use this widget
-#addWidgetToBar mixer mixer1 0

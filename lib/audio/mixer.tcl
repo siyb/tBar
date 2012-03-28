@@ -79,6 +79,15 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc updateWidget {w} {
 		variable sys
+		foreach device $sys($w,activatedDevices) {
+			set infoDict [geekosphere::amixer::getInformationOnDevice $device]
+			set path [getPathByDevice $w $device]
+			set meta [dict get $infoDict "meta"]
+			set type [dict get $meta "type"]
+			if {$type eq "INTEGER"} {
+				setScrollbarValueFromInfoDict $path $infoDict
+			}
+		}
 	}
 
 	#
@@ -103,22 +112,20 @@ namespace eval geekosphere::tbar::widget::mixer {
 				set name [dict get $info "name"]
 				set type [dict get $meta "type"]
 				if {$type eq "BOOLEAN"} {
-					drawSwitch $w $deviceInformation ${w}.mixerWindow.${device}
+					drawSwitch $w $deviceInformation [getPathByDevice $w $device]
 				} elseif {$type eq "INTEGER"} {
-					drawVolumeControl $w $deviceInformation ${w}.mixerWindow.${device}
+					drawVolumeControl $w $deviceInformation [getPathByDevice $w $device]
 				} elseif {$type eq "ENUMERATED"} {
-					drawEnumerated $w $deviceInformation ${w}.mixerWindow.${device}
+					drawEnumerated $w $deviceInformation [getPathByDevice $w $device]
 				}
-				incr sys($w,devicelinecounter)
 			}
 		}
 		pack [label ${w}.mixerWindow.l -text "\n\n\n\n\n\n\n\n" -bg $sys($w,background)] -expand 1 -fill y
 		positionWindowRelativly ${w}.mixerWindow $w
 	}
 
-	# updates the volume control bar
-	proc updateVolumeControl {path volume} {
-	
+	proc getPathByDevice {w device} {
+		return ${w}.mixerWindow.${device}
 	}
 
 	# draws a single volume scrollbar element
@@ -126,9 +133,18 @@ namespace eval geekosphere::tbar::widget::mixer {
 		variable sys
 		drawItemHeader $w $path $infoDict
 		pack [scrollbar ${path}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $path $infoDict] -bg $sys($w,background)] -expand 1 -fill y
-		set setBarTo [expr {1.0 - [getPercentageFromDevice $infoDict] / 100.0}]
-		log "TRACE" "Setting bar to $setBarTo"
-		${path}.bar set $setBarTo $setBarTo
+		setScrollbarValueFromInfoDict $path $infoDict
+	}
+
+	proc setScrollbarValueFromInfoDict {path infoDict} {
+		if {[winfo exists ${path}.bar]} {
+			set setBarTo [getScrollbarValueFromDevice $infoDict]
+			${path}.bar set $setBarTo $setBarTo
+		}
+	}
+
+	proc getScrollbarValueFromDevice {infoDict} {
+		return [expr {1.0 - [getPercentageFromDevice $infoDict] / 100.0}]
 	}
 
 	proc getPercentageFromDevice {infoDict} {

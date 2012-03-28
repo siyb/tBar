@@ -87,6 +87,9 @@ namespace eval geekosphere::tbar::widget::mixer {
 			if {$type eq "INTEGER"} {
 				setScrollbarValueFromInfoDict $path $infoDict
 			}
+			if {$type eq "BOOLEAN"} {
+				setCheckboxAccordingToDevice $infoDict
+			}
 		}
 	}
 
@@ -173,7 +176,29 @@ namespace eval geekosphere::tbar::widget::mixer {
 			-fg $sys($w,foreground) \
 			-highlightbackground $sys($w,background) \
 			-activebackground $sys($w,background) \
-			-variable sys(checkboxes,$device)]
+			-variable geekosphere::tbar::widget::mixer::sys(checkboxes,$device) \
+			-command [list geekosphere::tbar::widget::mixer::setBooleanAccordingToCheckbox $infoDict]]
+		setCheckboxAccordingToDevice $infoDict
+	}
+
+	proc setBooleanAccordingToCheckbox {infoDict} {
+		variable sys
+		set info [dict get $infoDict "info"]
+		geekosphere::amixer::setDeviceBoolean $infoDict $sys(checkboxes,[dict get $info "numid"])
+	}
+
+	proc setCheckboxAccordingToDevice {infoDict} {
+		variable sys
+		set info [dict get $infoDict "info"]
+		set sys(checkboxes,[dict get $info "numid"]) [amixerOnOffToBool [dict get $infoDict "values"]]
+	}
+
+	proc amixerOnOffToBool {input} {
+		if {$input eq "on"} {
+			return 1
+		} else {
+			return 0
+		}
 	}
 
 	proc drawEnumerated {w infoDict path} {

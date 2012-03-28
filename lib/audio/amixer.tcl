@@ -97,5 +97,12 @@ namespace eval geekosphere::amixer {
 		set info [dict get $infoDict "info"]
 		set command [list amixer cset numid=[dict get $info "numid"] "${percentage}%"]
 		set data [read [set cmd [open |$command]]]; close $cmd
+	}
+
+	proc setDeviceBoolean {infoDict bool} {
+		if {$bool != 1 && $bool != 0} { error "Must be 1 or 0" }
+		set info [dict get $infoDict "info"]
+		set command [list amixer cset numid=[dict get $info "numid"] $bool]
+		set data [read [set cmd [open |$command]]]; close $cmd
 	}	
 }

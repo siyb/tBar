@@ -90,12 +90,11 @@ namespace eval geekosphere::tbar::widget::mixer {
 			if {$type eq "BOOLEAN"} {
 				setCheckboxAccordingToDevice $infoDict
 			}
+			if {$type eq "ENUMERATED"} {
+				setComboboxAccordingToEnum $path $infoDict
+			}
 		}
 	}
-
-	#
-	# GUI related stuff
-	#
 
 	proc drawAllVolumeControls {w} {
 		variable sys
@@ -105,6 +104,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 		} else {
 			toplevel ${w}.mixerWindow -bg $sys($w,background) -height 400 
 		}
+		checkDevicesValid $w
 		foreach device [geekosphere::amixer::getControlDeviceList] {
 			set deviceInformation [geekosphere::amixer::getInformationOnDevice $device]
 			if {[shouldDeviceBeShown $w $device]} {
@@ -125,6 +125,24 @@ namespace eval geekosphere::tbar::widget::mixer {
 		}
 		pack [label ${w}.mixerWindow.l -text "\n\n\n\n\n\n\n\n" -bg $sys($w,background)] -expand 1 -fill y
 		positionWindowRelativly ${w}.mixerWindow $w
+	}
+
+	proc checkDevicesValid {w} {
+		variable sys
+		foreach d $sys($w,activatedDevices) {
+			if {![isDeviceAvailable $d]} {
+				puts "Device with id $d is not available, check output of amixer controls"
+			}
+		}
+	}
+
+	proc isDeviceAvailable {numid} {
+		foreach device [geekosphere::amixer::getControlDeviceList] {
+			if  {$device == $numid} {
+				return 1
+			}
+		}
+		return 0
 	}
 
 	proc getPathByDevice {w device} {
@@ -154,7 +172,6 @@ namespace eval geekosphere::tbar::widget::mixer {
 		set meta [dict get $infoDict "meta"]
 		set max [dict get $meta "max"]
 		set values [dict get $infoDict values]
-		puts $values	
 		# since we do not support multi channels, we are using the max value of all chans to display the device
 		if {[llength $values] == 2} {
 			set current [expr {max([lindex $values 0],[lindex $values 1])}]
@@ -205,6 +222,22 @@ namespace eval geekosphere::tbar::widget::mixer {
 		variable sys
 		drawItemHeader $w $path $infoDict
 		pack [ttk::combobox ${path}.cb -values [dict get $infoDict "items"]]
+		setComboboxAccordingToEnum $path $infoDict
+		${path}.cb current 0
+		bind ${path}.cb <<ComboboxSelected>> [list geekosphere::tbar::widget::mixer::setEnumAccordingToCombobox $path $infoDict]
+	}
+
+	proc setEnumAccordingToCombobox {path infoDict} {
+		set values [${path}.cb cget -values]
+		set enum [lindex $values [${path}.cb current]]
+		geekosphere::amixer::setDeviceEnum $infoDict $enum
+	}
+
+	proc setComboboxAccordingToEnum {path infoDict} {
+		if {[winfo exists ${path}.cb]} {
+			set currentValue [dict get $infoDict "values"]
+			${path}.cb current $currentValue
+		}
 	}
 
 	proc drawItemHeader {w path infoDict} {

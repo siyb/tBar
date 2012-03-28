@@ -2,7 +2,6 @@ package provide amixer 1.0
 
 namespace eval geekosphere::amixer {
 	variable sys
-	set sys(amixerControls) [dict create]
 
 	# sets or updates the sys(amixerControls) dictionary. This dictionary will store
 	# device information of each device found.
@@ -105,4 +104,10 @@ namespace eval geekosphere::amixer {
 		set command [list amixer cset numid=[dict get $info "numid"] $bool]
 		set data [read [set cmd [open |$command]]]; close $cmd
 	}	
+
+	proc setDeviceEnum {infoDict enum} {
+		set info [dict get $infoDict "info"]
+		set command [list amixer cset numid=[dict get $info "numid"] $enum]
+		set data [read [set cmd [open |$command]]]; close $cmd
+	}
 }

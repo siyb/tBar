@@ -221,9 +221,8 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc drawEnumerated {w infoDict path} {
 		variable sys
 		drawItemHeader $w $path $infoDict
-		pack [ttk::combobox ${path}.cb -values [dict get $infoDict "items"]]
+		pack [ttk::combobox ${path}.cb -values [dict get $infoDict "items"] -state readonly]
 		setComboboxAccordingToEnum $path $infoDict
-		${path}.cb current 0
 		bind ${path}.cb <<ComboboxSelected>> [list geekosphere::tbar::widget::mixer::setEnumAccordingToCombobox $path $infoDict]
 	}
 

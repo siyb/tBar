@@ -32,7 +32,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 		frame ${w}
 
-		pack [label ${w}.mixer -text "MIXER"]
+		pack [label ${w}.mixer -text "M"]
 		bind ${w}.mixer <Button-1> [namespace code [list drawAllVolumeControls $w]]
 
 		uplevel #0 rename $w ${w}_
@@ -64,6 +64,9 @@ namespace eval geekosphere::tbar::widget::mixer {
 					}
 					"-devices" {
 						setDevices $w $value
+					}
+					"-label" {
+						setLabel $w $value
 					}
 					default {
 						error "${opt} not supported"
@@ -329,5 +332,9 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc setDevices {w devices} {
 		variable sys
 		set sys($w,activatedDevices) $devices
+	}
+
+	proc setLabel {w label} {
+		${w}.mixer configure -text $label
 	}
 }

@@ -222,11 +222,9 @@ namespace eval geekosphere::tbar::widget::mixer {
 		} else {
 			set barPath ${path}.bar
 		}
-		puts "BARPATH $barPath"
 		if {[winfo exists $barPath]} {
 			set setBarTo [getScrollbarValueFromDevice $infoDict]
 			$barPath set $setBarTo $setBarTo
-			puts "BARPATH OK"
 		}
 	}
 
@@ -260,7 +258,13 @@ namespace eval geekosphere::tbar::widget::mixer {
 		set info [dict get $infoDict "info"]
 		set device [dict get $info "numid"]
 		drawItemFrame $w $path
-		set cb [checkbutton ${path}.cb \
+		if {$multi} {
+			set sbpath [getMultiDeviceCheckboxPath $path $infoDict]
+		} else {
+			set sbpath ${path}.cb
+		}
+		log "INFO" "Drawing $infoDict in $sbpath"
+		set cb [checkbutton $sbpath \
 			-bg $sys($w,background) \
 			-font $sys($w,font) \
 			-fg $sys($w,foreground) \
@@ -288,6 +292,13 @@ namespace eval geekosphere::tbar::widget::mixer {
 		variable sys
 		set info [dict get $infoDict "info"]
 		set sys(checkboxes,[dict get $info "numid"]) [amixerOnOffToBool [dict get $infoDict "values"]]
+	}
+
+	proc getMultiDeviceCheckboxPath {containerPath infoDict} {
+		set info [dict get $infoDict "info"]
+		set p ${containerPath}.cb_[dict get $info "numid"]
+		log "INFO" "path determined: $p"
+		return $p
 	}
 
 	proc amixerOnOffToBool {input} {

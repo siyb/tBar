@@ -142,7 +142,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc renderDeviceAccordingToType {w deviceList {multidevice 0}} {
 		if {![isValidDeviceDeclaration $deviceList]} {
-			log "WARN" "Illegal device declaration"
+			log "WARNING" "Illegal device declaration, you may only define two devices for multidisplay and if you do, they mustn't be the same"
 			return
 		}
 		set devicePath [getPathByDevice $w $deviceList $multidevice]
@@ -184,7 +184,15 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc isValidDeviceDeclaration {device} {
 		set l [llength $device]
-		return [expr {$l == 2 || $l == 1}]
+		if {$l == 2 || $l == 1} {
+			if {[lindex $device 0] == [lindex $device 1]} {
+				return 0
+			} else {
+				return 1
+			}
+		} else {
+			return 0
+		}
 	}
 
 	proc getPathByDevice {w device multidevice} {

@@ -195,7 +195,8 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc drawVolumeControl {w infoDict path multi} {
 		variable sys
 		drawItemFrame $w $path
-		set sb [scrollbar [getMultiDeviceScrollbarPath $path $infoDict] -command [list geekosphere::tbar::widget::mixer::changeYView $path $infoDict] -bg $sys($w,background)]
+		set sbpath [getMultiDeviceScrollbarPath $path $infoDict]
+		set sb [scrollbar $sbpath -command [list geekosphere::tbar::widget::mixer::changeYView $sbpath $infoDict] -bg $sys($w,background)]
 		if {$multi} {
 			drawItemHeaderGrid $w $path $infoDict
 			insertWidgetIntoNextGridRow $path $sb
@@ -220,7 +221,9 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc getMultiDeviceScrollbarPath {containerPath infoDict} {
 		set info [dict get $infoDict "info"]
-		return ${containerPath}.bar_[dict get $info "numid"]
+		set p ${containerPath}.bar_[dict get $info "numid"]
+		log "INFO" "path determined: $p"
+		return $p
 	}
 
 	proc getScrollbarValueFromDevice {infoDict} {
@@ -355,10 +358,10 @@ namespace eval geekosphere::tbar::widget::mixer {
 		}
 		switch $command {
 			"moveto" {
-				${path}.bar set $number $number
+				$path set $number $number
 			}
 			"scroll" {
-				set pos [lindex [${path}.bar get] 0]
+				set pos [lindex [${path} get] 0]
 				if {$postfix eq "pages"} {
 					set factor 0.1
 				} elseif {$postfix eq "units"} {
@@ -366,10 +369,10 @@ namespace eval geekosphere::tbar::widget::mixer {
 				}
 
 				set newVal [expr {$pos + ($number * $factor)}]
-				${path}.bar set $newVal $newVal
+				$path set $newVal $newVal
 			}
 		}
-		setVolumeAccordingToScrollBar $infoDict [${path}.bar get]
+		setVolumeAccordingToScrollBar $infoDict [$path get]
 	}
 
 	proc setVolumeAccordingToScrollBar {infoDict scrollbarLevel} {

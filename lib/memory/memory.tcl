@@ -53,7 +53,7 @@ namespace eval geekosphere::tbar::widget::memory {
 			pack [statusBar ${w}.swapstatus \
 				-ta [string trimright [dict get $sys(memData) "SwapTotal"] "kB"] \
 				-bc "|" \
-				-rederstatusbar $renderStatusBar \
+				-renderstatusbar $renderStatusBar \
 				] -side left
 		}
 

@@ -83,22 +83,26 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc updateWidget {w} {
 		variable sys
+		log "TRACE" "updating"
 		foreach d $sys($w,activatedDevices) {
-			foreach device $d { 
+			set multi [isMultiDevice $d]
+			log "TRACE" "updating device(list): $d"
+			foreach device $d {
+				log "TRACE" "updating device: $device"
 				if {![isValidDeviceDeclaration $device]} {
 					log "WARN" "Device declaration illegal, please specify a single or a multidevice (max 2 devices)"
 					return
 				}
 				set infoDict [geekosphere::amixer::getInformationOnDevice $device]
-				if {[isMultiDevice $device]} {
-					set path [getPathByDevice $w $device 1]
+				if {$multi} {
+					set path [getPathByDevice $w $d 1]
 				} else {
 					set path [getPathByDevice $w $device 0]
 				}
 				set meta [dict get $infoDict "meta"]
 				set type [dict get $meta "type"]
 				if {$type eq "INTEGER"} {
-					setScrollbarValueFromInfoDict $path $infoDict
+					setScrollbarValueFromInfoDict $path $infoDict $multi
 				}
 				if {$type eq "BOOLEAN"} {
 					setCheckboxAccordingToDevice $infoDict
@@ -195,7 +199,12 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc drawVolumeControl {w infoDict path multi} {
 		variable sys
 		drawItemFrame $w $path
-		set sbpath [getMultiDeviceScrollbarPath $path $infoDict]
+		if {$multi} {
+			set sbpath [getMultiDeviceScrollbarPath $path $infoDict]
+		} else {
+			set sbpath ${path}.bar
+		}
+		log "INFO" "Drawing $infoDict in $sbpath"
 		set sb [scrollbar $sbpath -command [list geekosphere::tbar::widget::mixer::changeYView $sbpath $infoDict] -bg $sys($w,background)]
 		if {$multi} {
 			drawItemHeaderGrid $w $path $infoDict
@@ -213,9 +222,11 @@ namespace eval geekosphere::tbar::widget::mixer {
 		} else {
 			set barPath ${path}.bar
 		}
+		puts "BARPATH $barPath"
 		if {[winfo exists $barPath]} {
 			set setBarTo [getScrollbarValueFromDevice $infoDict]
 			$barPath set $setBarTo $setBarTo
+			puts "BARPATH OK"
 		}
 	}
 

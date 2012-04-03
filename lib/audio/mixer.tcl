@@ -20,7 +20,6 @@ proc mixer {w args} {
 }
 catch {namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::widget::mixer {
-	initLogger
 
 	proc makeMixer {w arguments} {
 		variable sys
@@ -33,10 +32,11 @@ namespace eval geekosphere::tbar::widget::mixer {
 		frame ${w}
 
 		pack [label ${w}.mixer -text "M"]
-		bind ${w}.mixer <Button-1> [namespace code [list drawAllVolumeControls $w]]
+		bind ${w}.mixer <Button-1> [namespace code [list drawAllControls $w]]
 
 		uplevel #0 rename $w ${w}_
 		action $w configure $arguments
+		initLogger
 	}
 
 	proc action {w args} {
@@ -83,27 +83,37 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc updateWidget {w} {
 		variable sys
-		foreach device $sys($w,activatedDevices) {
-			set infoDict [geekosphere::amixer::getInformationOnDevice $device]
-			set path [getPathByDevice $w $device]
-			set meta [dict get $infoDict "meta"]
-			set type [dict get $meta "type"]
-			if {$type eq "INTEGER"} {
-				setScrollbarValueFromInfoDict $path $infoDict
-			}
-			if {$type eq "BOOLEAN"} {
-				setCheckboxAccordingToDevice $infoDict
-			}
-			if {$type eq "ENUMERATED"} {
-				setComboboxAccordingToEnum $path $infoDict
+		foreach d $sys($w,activatedDevices) {
+			foreach device $d { 
+				if {![isValidDeviceDeclaration $device]} {
+					log "WARN" "Device declaration illegal, please specify a single or a multidevice (max 2 devices)"
+					return
+				}
+				set infoDict [geekosphere::amixer::getInformationOnDevice $device]
+				if {[isMultiDevice $device]} {
+					set path [getPathByDevice $w $device 1]
+				} else {
+					set path [getPathByDevice $w $device 0]
+				}
+				set meta [dict get $infoDict "meta"]
+				set type [dict get $meta "type"]
+				if {$type eq "INTEGER"} {
+					setScrollbarValueFromInfoDict $path $infoDict
+				}
+				if {$type eq "BOOLEAN"} {
+					setCheckboxAccordingToDevice $infoDict
+				}
+				if {$type eq "ENUMERATED"} {
+					setComboboxAccordingToEnum $path $infoDict
+				}
 			}
 		}
 	}
 
-	proc drawAllVolumeControls {w} {
+	proc drawAllControls {w} {
 		variable sys
 		if {[llength $sys($w,activatedDevices)] == 0} {
-			puts "Nothing to draw, specify at least one device"
+			log "WARNING" "Nothing to draw, specify at least one device"
 			return
 		}
 		if {[winfo exists ${w}.mixerWindow]} {
@@ -112,34 +122,46 @@ namespace eval geekosphere::tbar::widget::mixer {
 		} else {
 			toplevel ${w}.mixerWindow -bg $sys($w,background) -height 400 
 		}
-		checkDevicesValid $w
-		foreach device [geekosphere::amixer::getControlDeviceList] {
-			set deviceInformation [geekosphere::amixer::getInformationOnDevice $device]
-			if {[shouldDeviceBeShown $w $device]} {
-				puts "deviceInformation: $deviceInformation"	
-				set meta [dict get $deviceInformation "meta"]
-				set info [dict get $deviceInformation "info"]
+		foreach device $sys($w,activatedDevices) {
+			set deviceCountInItem [llength $device]
+			if {$deviceCountInItem == 1} {
+				renderDeviceAccordingToType $w $device
+			} elseif {$deviceCountInItem == 2} {
+				renderDeviceAccordingToType $w $device 1 
+			} else {
+				error "Can't bundle more than two devices: $device"
 
-				set name [dict get $info "name"]
-				set type [dict get $meta "type"]
-				if {$type eq "BOOLEAN"} {
-					drawSwitch $w $deviceInformation [getPathByDevice $w $device]
-				} elseif {$type eq "INTEGER"} {
-					drawVolumeControl $w $deviceInformation [getPathByDevice $w $device]
-				} elseif {$type eq "ENUMERATED"} {
-					drawEnumerated $w $deviceInformation [getPathByDevice $w $device]
-				}
 			}
 		}
 		pack [label ${w}.mixerWindow.l -text "\n\n\n\n\n\n\n\n" -bg $sys($w,background)] -expand 1 -fill y
 		positionWindowRelativly ${w}.mixerWindow $w
 	}
 
-	proc checkDevicesValid {w} {
-		variable sys
-		foreach d $sys($w,activatedDevices) {
-			if {![isDeviceAvailable $d]} {
-				puts "Device with id $d is not available, check output of amixer controls"
+	proc renderDeviceAccordingToType {w deviceList {multidevice 0}} {
+		if {![isValidDeviceDeclaration $deviceList]} {
+			log "WARN" "Illegal device declaration"
+			return
+		}
+		set devicePath [getPathByDevice $w $deviceList $multidevice]
+		
+		foreach device $deviceList {
+			if {[isDeviceAvailable $device]} {
+				set deviceInformation [geekosphere::amixer::getInformationOnDevice $device]
+				log "INFO" "deviceInformation: $deviceInformation" 
+				set meta [dict get $deviceInformation "meta"]
+				set info [dict get $deviceInformation "info"]
+
+				set name [dict get $info "name"]
+				set type [dict get $meta "type"]
+				if {$type eq "BOOLEAN"} {
+					drawSwitch $w $deviceInformation $devicePath $multidevice
+				} elseif {$type eq "INTEGER"} {
+					drawVolumeControl $w $deviceInformation $devicePath $multidevice
+				} elseif {$type eq "ENUMERATED"} {
+					drawEnumerated $w $deviceInformation $devicePath $multidevice
+				}
+			} else {
+				log "WARNING" "Device does not exist: $deviceList"
 			}
 		}
 	}
@@ -153,15 +175,35 @@ namespace eval geekosphere::tbar::widget::mixer {
 		return 0
 	}
 
-	proc getPathByDevice {w device} {
+	proc isMultiDevice {device} {
+		return [expr {[llength $device] == 2}]
+	}
+
+	proc isValidDeviceDeclaration {device} {
+		set l [llength $device]
+		return [expr {$l == 2 || $l == 1}]
+	}
+
+	proc getPathByDevice {w device multidevice} {
+		if {$multidevice} {
+			set device [join $device _]
+			log "INFO" "Multidevice path: $device"
+		}
 		return ${w}.mixerWindow.${device}
 	}
 
 	# draws a single volume scrollbar element
-	proc drawVolumeControl {w infoDict path} {
+	proc drawVolumeControl {w infoDict path multi} {
 		variable sys
-		drawItemHeader $w $path $infoDict
-		pack [scrollbar ${path}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $path $infoDict] -bg $sys($w,background)] -expand 1 -fill y
+		drawItemFrame $w $path
+		set sb [scrollbar ${path}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $path $infoDict] -bg $sys($w,background)]
+		if {$multi} {
+			drawItemHeaderGrid $w $path $infoDict
+			insertWidgetIntoNextGridRow $path $sb
+		} else {
+			drawItemHeader $w $path $infoDict
+			pack $sb -expand 1 -fill y 
+		}
 		setScrollbarValueFromInfoDict $path $infoDict
 	}
 
@@ -190,12 +232,12 @@ namespace eval geekosphere::tbar::widget::mixer {
 	}
 
 	# draws a switch control element
-	proc drawSwitch {w infoDict path} {
+	proc drawSwitch {w infoDict path multi} {
 		variable sys
 		set info [dict get $infoDict "info"]
 		set device [dict get $info "numid"]
-		drawItemHeader $w $path $infoDict
-		pack [checkbutton ${path}.cb \
+		drawItemFrame $w $path
+		set cb [checkbutton ${path}.cb \
 			-bg $sys($w,background) \
 			-font $sys($w,font) \
 			-fg $sys($w,foreground) \
@@ -203,6 +245,13 @@ namespace eval geekosphere::tbar::widget::mixer {
 			-activebackground $sys($w,background) \
 			-variable geekosphere::tbar::widget::mixer::sys(checkboxes,$device) \
 			-command [list geekosphere::tbar::widget::mixer::setBooleanAccordingToCheckbox $infoDict]]
+		if {$multi} {
+			drawItemHeaderGrid $w $path $infoDict
+			insertWidgetIntoNextGridRow $path $cb
+		} else {
+			drawItemHeader $w $path $infoDict
+			pack $cb
+		}
 		setCheckboxAccordingToDevice $infoDict
 	}
 
@@ -226,10 +275,17 @@ namespace eval geekosphere::tbar::widget::mixer {
 		}
 	}
 
-	proc drawEnumerated {w infoDict path} {
+	proc drawEnumerated {w infoDict path multi} {
 		variable sys
-		drawItemHeader $w $path $infoDict
-		pack [ttk::combobox ${path}.cb -values [dict get $infoDict "items"] -state readonly]
+		drawItemFrame $w $path
+		set cb [ttk::combobox ${path}.cb -values [dict get $infoDict "items"] -state readonly]
+		if {$multi} {
+			drawItemHeaderGrid $w $path $infoDict
+			insertWidgetIntoNextGridRow $path $cb
+		} else {
+			drawItemHeader $w $path $infoDict
+			pack $cb
+		}
 		setComboboxAccordingToEnum $path $infoDict
 		bind ${path}.cb <<ComboboxSelected>> [list geekosphere::tbar::widget::mixer::setEnumAccordingToCombobox $path $infoDict]
 	}
@@ -250,8 +306,32 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc drawItemHeader {w path infoDict} {
 		variable sys
 		set info [dict get $infoDict "info"]
-		pack [frame $path -bg $sys($w,background)] -fill y -expand 1 -side right
                 pack [label ${path}.label -text [dict get $info "name"] -bg $sys($w,background) -font $sys($w,font) -fg $sys($w,foreground)] -side top
+	}
+
+	proc drawItemHeaderGrid {w containerPath infoDict} {
+		variable sys
+		set info [dict get $infoDict "info"]
+		set label [label [getMultiWidgetLabelPath $containerPath $infoDict] -text [dict get $info "name"] -bg $sys($w,background) -font $sys($w,font) -fg $sys($w,foreground)]
+		insertWidgetIntoNextGridRow $containerPath $label
+	}
+
+	proc insertWidgetIntoNextGridRow {containerPath widgetPath} {
+		set nextFreeRow [lindex [grid size $containerPath] 1]
+		grid $widgetPath -row $nextFreeRow
+		log "INFO" "Placing $widgetPath in $nextFreeRow using $containerPath with size [grid size $containerPath]"
+	}
+
+	proc getMultiWidgetLabelPath {containerPath infoDict} {
+		set info [dict get $infoDict "info"]
+		return ${containerPath}.label_[dict get $info "numid"]
+	}
+
+	proc drawItemFrame {w path} {
+		variable sys
+		if {![winfo exists $path]} {
+			pack [frame $path -bg $sys($w,background)] -fill y -expand 1 -side right
+		}
 	}
 
 	# the action handler for the volume scrollbars

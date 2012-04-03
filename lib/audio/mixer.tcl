@@ -129,8 +129,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 			} elseif {$deviceCountInItem == 2} {
 				renderDeviceAccordingToType $w $device 1 
 			} else {
-				error "Can't bundle more than two devices: $device"
-
+				log "WARNING" "Can't bundle more than two devices: $device"
 			}
 		}
 		pack [label ${w}.mixerWindow.l -text "\n\n\n\n\n\n\n\n" -bg $sys($w,background)] -expand 1 -fill y
@@ -196,7 +195,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc drawVolumeControl {w infoDict path multi} {
 		variable sys
 		drawItemFrame $w $path
-		set sb [scrollbar ${path}.bar -command [list geekosphere::tbar::widget::mixer::changeYView $path $infoDict] -bg $sys($w,background)]
+		set sb [scrollbar [getMultiDeviceScrollbarPath $path $infoDict] -command [list geekosphere::tbar::widget::mixer::changeYView $path $infoDict] -bg $sys($w,background)]
 		if {$multi} {
 			drawItemHeaderGrid $w $path $infoDict
 			insertWidgetIntoNextGridRow $path $sb
@@ -204,14 +203,24 @@ namespace eval geekosphere::tbar::widget::mixer {
 			drawItemHeader $w $path $infoDict
 			pack $sb -expand 1 -fill y 
 		}
-		setScrollbarValueFromInfoDict $path $infoDict
+		setScrollbarValueFromInfoDict $path $infoDict $multi
 	}
 
-	proc setScrollbarValueFromInfoDict {path infoDict} {
-		if {[winfo exists ${path}.bar]} {
-			set setBarTo [getScrollbarValueFromDevice $infoDict]
-			${path}.bar set $setBarTo $setBarTo
+	proc setScrollbarValueFromInfoDict {path infoDict multi} {
+		if {$multi} {
+			set barPath [getMultiDeviceScrollbarPath $path $infoDict] 
+		} else {
+			set barPath ${path}.bar
 		}
+		if {[winfo exists $barPath]} {
+			set setBarTo [getScrollbarValueFromDevice $infoDict]
+			$barPath set $setBarTo $setBarTo
+		}
+	}
+
+	proc getMultiDeviceScrollbarPath {containerPath infoDict} {
+		set info [dict get $infoDict "info"]
+		return ${containerPath}.bar_[dict get $info "numid"]
 	}
 
 	proc getScrollbarValueFromDevice {infoDict} {
@@ -312,7 +321,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc drawItemHeaderGrid {w containerPath infoDict} {
 		variable sys
 		set info [dict get $infoDict "info"]
-		set label [label [getMultiWidgetLabelPath $containerPath $infoDict] -text [dict get $info "name"] -bg $sys($w,background) -font $sys($w,font) -fg $sys($w,foreground)]
+		set label [label [getMultiDeviceLabelPath $containerPath $infoDict] -text [dict get $info "name"] -bg $sys($w,background) -font $sys($w,font) -fg $sys($w,foreground)]
 		insertWidgetIntoNextGridRow $containerPath $label
 	}
 
@@ -322,7 +331,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 		log "INFO" "Placing $widgetPath in $nextFreeRow using $containerPath with size [grid size $containerPath]"
 	}
 
-	proc getMultiWidgetLabelPath {containerPath infoDict} {
+	proc getMultiDeviceLabelPath {containerPath infoDict} {
 		set info [dict get $infoDict "info"]
 		return ${containerPath}.label_[dict get $info "numid"]
 	}

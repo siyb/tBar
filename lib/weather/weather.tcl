@@ -11,6 +11,24 @@ proc weather {w args} {
 
 catch { namespace import ::geekosphere::googleweather::* }
 catch { namespace import ::geekosphere::tbar::util::* }
+namespace eval geekosphere::tbar::gfx::weather {
+	# base64 encoded png
+	set sys(base64,refresh) \
+"iVBORw0KGgoAAAANSUhEUgAAAA8AAAARCAYAAAACCvahAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A
+/wD/oL2nkwAAAAlwSFlzAAALEgAACxIB0t1+/AAAAAd0SU1FB9wEChUrM+BYzbQAAAESSURBVDjL
+ndJPK4RRFMfxj7+ZZCH5EyUWbLwCsVAWs5yFvfdh5zXI0m6ykZSsKC+ALNQ0W5tBjYWSKMmMzb26
+3Z5nyKlbz33O73v+3UNvq6GNNf+wHXTRwT4GfgOWcIDHBOyE71uMFUEzOAyiohMDvGM+BWdDb7mw
+CL7HSASHcZkJPtBAK4G/UM/LXc8yPGE1+HaTYLWiXusJ+InlxLeBJibKpvuQwOcY+us7DmI6ubdD
+9jIbx3YY2JXQY8x81mMR+nCazcdJcnnFXAk8hedEewHVLNodJpMK+kO5zUy3BRVcZ+/8hmPs4Qgv
+mb+B0VjSYliCsu3K/6/kPS2ECXZ7nJsiMFoFm6HUuOutMNRq8P/YNyTqeCUX26VfAAAAAElFTkSu
+QmCC"
+	catch {
+	if {[geekosphere::tbar::gfx::isAvailable]} {
+		set sys(image,refresh) [image create photo -data $sys(base64,refresh)]
+	}
+	}
+}
+
 namespace eval geekosphere::tbar::widget::weather {
 	initLogger
 
@@ -33,6 +51,7 @@ namespace eval geekosphere::tbar::widget::weather {
 		set sys($w,unit) "c"
 
 		frame $w
+		pack [button ${w}.manualupdate -command [list geekosphere::tbar::widget::weather::updateWidget $w]] -side right
 		pack [label ${w}.displayLabel] -side right
 		pack [label ${w}.displayText] -side right -padx 10
 
@@ -47,6 +66,12 @@ namespace eval geekosphere::tbar::widget::weather {
 
 		bind ${w}.displayLabel <Button-1> [namespace code [list showWeatherDialog $w %W]]
 		bind ${w}.displayText <Button-1> [namespace code [list showWeatherDialog $w %W]]
+		
+		if {[geekosphere::tbar::gfx::isAvailable]} {
+			${w}.manualupdate configure -image $geekosphere::tbar::gfx::weather::sys(image,refresh) -highlightthickness 0 -relief flat
+		} else {
+			${w}.manualupdate configure -text "R" -highlightthickness 0 -relief flat
+		}
 	}
 
 	proc action {w args} {
@@ -99,7 +124,7 @@ namespace eval geekosphere::tbar::widget::weather {
 			setLocationData $sys($w,location,country) $sys($w,location,state) $sys($w,location,city) $sys($w,location,zipcode)
 			set xml [getWeatherXmlForLocation]
 			set currentCondition [getCurrentCondition $xml]
-
+			log "INFO" "currentCondition: $currentCondition"
 			if {$currentCondition != -1} {
 				set iconUrl [dict get $currentCondition icon]
 
@@ -121,7 +146,7 @@ namespace eval geekosphere::tbar::widget::weather {
 				set sys($w,stopPolling) 1
 			}
 			} err]} {
-				log "WARNING" "Could not fetch weather data right now: $err"
+				log "WARNING" "Could not fetch weather data right now: $::errorInfo "
 			}
 		}
 	}
@@ -206,6 +231,7 @@ namespace eval geekosphere::tbar::widget::weather {
 		set sys($w,background) $color
 		${w}.displayLabel configure -bg $color
 		${w}.displayText configure -bg $color
+		${w}.manualupdate configure -bg $color -activebackground $color
 	}
 
 	proc changeForegroundColor {w color} {
@@ -213,6 +239,8 @@ namespace eval geekosphere::tbar::widget::weather {
 		set sys($w,foreground) $color
 		${w}.displayLabel configure -fg $color
 		${w}.displayText configure -fg $color
+		${w}.manualupdate configure -fg $color -activeforeground $color
+
 	}
 
 	proc changeFont {w font} {
@@ -220,6 +248,7 @@ namespace eval geekosphere::tbar::widget::weather {
 		set sys($w,font) $font
 		${w}.displayLabel configure -font $font
 		${w}.displayText configure -font $font
+		${w}.manualupdate configure -font $font
 	}
 
 	proc changeHeight {w height} {

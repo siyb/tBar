@@ -14,6 +14,7 @@ catch {
 	namespace import ::geekosphere::tbar::util::logger::*
 	namespace import ::geekosphere::tbar::util::*
 }
+
 namespace eval geekosphere::tbar {
 	initLogger;# init logger for this namespace
 
@@ -395,6 +396,22 @@ return $file
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
 	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet setTrack \
 	getWidgetAlignment
+}
+namespace eval geekosphere::tbar::gfx {
+	initLogger
+	variable sys
+	set sys(gfx,imgAvailable) 1
+	if {[catch {
+		package require Img
+	} err]} {
+		log "WARN" "Could not load Img package in geekosphere::tbar::gfx, some images might not be displayed properly!"
+		set sys(gfx,imgAvailable) 0
+	}
+
+	proc isAvailable {} {
+		variable sys
+		return $sys(gfx,imgAvailable)
+	}
 }
 
 # GLOBAL NAMESPACE!

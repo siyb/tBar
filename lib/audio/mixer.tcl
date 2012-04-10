@@ -198,7 +198,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc getPathByDevice {w device multidevice} {
 		if {$multidevice} {
 			set device [join $device _]
-			log "INFO" "Multidevice path: $device"
+			log "TRACE" "Multidevice path: $device"
 		}
 		return ${w}.mixerWindow.${device}
 	}
@@ -239,7 +239,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc getMultiDeviceScrollbarPath {containerPath infoDict} {
 		set info [dict get $infoDict "info"]
 		set p ${containerPath}.bar_[dict get $info "numid"]
-		log "INFO" "path determined: $p"
+		log "TRACE" "path determined: $p"
 		return $p
 	}
 

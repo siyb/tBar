@@ -148,6 +148,7 @@ namespace eval geekosphere::tbar::widget::weather {
 			} err]} {
 				log "WARNING" "Could not fetch weather data right now: $::errorInfo "
 			}
+			$xml delete
 		}
 	}
 
@@ -198,6 +199,7 @@ namespace eval geekosphere::tbar::widget::weather {
 			foreach weatherForecast [getWeatherForecasts $xml] {
 				renderForecastInformationRow $w [dict get $weatherForecast day_of_week] [dict get $weatherForecast icon] [dict get $weatherForecast high] [dict get $weatherForecast low]
 			}
+			$xml delete
 		}
 	}
 

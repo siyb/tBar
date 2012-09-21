@@ -9,6 +9,7 @@ namespace eval geekosphere::yahooweather {
 
 	variable sys
 	set sys(url) "http://query.yahooapis.com/v1/public/yql"
+	set sys(imageBaseUrl) "http://l.yimg.com/a/i/us/we/52/"
 
 	set sys(location,country) ""
 	set sys(location,city) ""
@@ -20,25 +21,34 @@ namespace eval geekosphere::yahooweather {
 		
 		dict set ret "temp_c" [round $temperatureC]
 		dict set ret "temp_f" $temperatureF
-		dict set ret "icon" [getImageUrl $weatherXmlForLocation]
+		dict set ret "icon" [getImageUrlForCurrentWeather $weatherXmlForLocation]
 		
 		return $ret
 	}
 	
-	proc getImageUrl {weatherXmlForLocation} {
-		set discription [$weatherXmlForLocation getElementsByTagName "description"]
-		set html [dom parse -html [[lindex $discription 1] asText]]
-		set img [$html getElementsByTagName "img"]
-		return [$img getAttribute "src"]
+	proc getImageUrlForCurrentWeather {weatherXmlForLocation} {
+		return  [getImageUrlByCode [[$weatherXmlForLocation getElementsByTagName "yweather:condition"] getAttribute "code"]]
+	}
+	
+	proc getImageUrlByCode {code} {
+		variable sys
+		return $sys(imageBaseUrl)$code
 	}
 
 	proc getWeatherForecasts {weatherXmlForLocation} {
+		foreach forecast [$weatherXmlForLocation getElementsByTagName "yweather:forecast"] {
+			dict set ret day [$forecast getAttribute "day_of_week"]
+			dict set ret icon [getImageUrlByCode [$forecast getAttribute "code"]]
+			dict set ret high [$forecast getAttribute "high"]
+			dict set ret low [$forecast getAttribute "low"]
+		}
+		return $ret
 	}
 
 	proc getWeatherXmlForLocation {} {
 		variable sys
 		puts [geekosphere::yahooweather::YQL::getWeatherForeCastForLocationQuery $sys(location,country) $sys(location,city)]]]
-		set data [::http::data [set token [::http::geturl $sys(url) -query [geekosphere::yahooweather::YQL::getWeatherForeCastForLocationQuery $sys(location,country) $sys(location,city)]]]]
+		set data [::http::data [set token [::http::geturl $sys(url) -query [geekosphere::yahooweather::YQL::getCurrentWeatherForLocationQuery $sys(location,country) $sys(location,city)]]]]
 		::http::cleanup $token
 		puts $data
 		return [dom parse $data]
@@ -51,7 +61,7 @@ namespace eval geekosphere::yahooweather {
 	}
 	
 	namespace eval geekosphere::yahooweather::YQL {
-		proc getWeatherForeCastForLocationQuery {country city} {
+		proc getCurrentWeatherForLocationQuery {country city} {
 			return [::http::formatQuery "q" "select * from weather.forecast where location in (select id from weather.search where query=\"${country}, ${city}\")" "format" "xml" "env" "store://datatables.org/alltableswithkeys"]
 		 }
 		

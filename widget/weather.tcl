@@ -2,7 +2,7 @@ catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::weather {
 	package require weather
 
-	generallyRequires weather googleweather http imageresize tdom logger yahooweather
+	generallyRequires weather http imageresize tdom logger yahooweather
 	setNamespace weather ::geekosphere::tbar::widget::weather
 	registerNamespaceImportsFor weather \
 		::geekosphere::tbar::util::* \

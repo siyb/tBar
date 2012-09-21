@@ -196,7 +196,9 @@ namespace eval geekosphere::tbar::widget::weather {
 			
 			pack [label ${windowName}.location -text "[string toupper $sys($w,location,city) 0 0], [string toupper $sys($w,location,country) 0 0]" -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)]
 			set xml [getWeatherXmlForLocation]
-			foreach weatherForecast [getWeatherForecasts $xml] {
+			set forecasts [getWeatherForecasts $xml] 
+			log "INFO" "Forecasts -> $forecasts"
+			foreach weatherForecast $forecasts {
 				renderForecastInformationRow $w [dict get $weatherForecast day_of_week] [dict get $weatherForecast icon] [dict get $weatherForecast high] [dict get $weatherForecast low]
 			}
 			$xml delete

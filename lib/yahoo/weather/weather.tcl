@@ -58,6 +58,3 @@ namespace eval geekosphere::yahooweather {
 	}
 	namespace export setLocationData getWeatherXmlForLocation getCurrentCondition getWeatherForecasts
 }
-
-geekosphere::yahooweather::setLocationData "Austria" "" "Vienna" ""
-geekosphere::yahooweather::getCurrentCondition [geekosphere::yahooweather::getWeatherXmlForLocation]

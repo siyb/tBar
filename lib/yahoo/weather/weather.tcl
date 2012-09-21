@@ -32,25 +32,26 @@ namespace eval geekosphere::yahooweather {
 	
 	proc getImageUrlByCode {code} {
 		variable sys
-		return $sys(imageBaseUrl)$code
+		return $sys(imageBaseUrl)${code}.gif
 	}
 
 	proc getWeatherForecasts {weatherXmlForLocation} {
+		set ret [list]
 		foreach forecast [$weatherXmlForLocation getElementsByTagName "yweather:forecast"] {
-			dict set ret day [$forecast getAttribute "day_of_week"]
-			dict set ret icon [getImageUrlByCode [$forecast getAttribute "code"]]
-			dict set ret high [$forecast getAttribute "high"]
-			dict set ret low [$forecast getAttribute "low"]
+			dict set tmp day_of_week [$forecast getAttribute "day"]
+			dict set tmp icon [getImageUrlByCode [$forecast getAttribute "code"]]
+			dict set tmp high [$forecast getAttribute "high"]
+			dict set tmp low [$forecast getAttribute "low"]
+			lappend ret $tmp
 		}
 		return $ret
 	}
 
 	proc getWeatherXmlForLocation {} {
 		variable sys
-		puts [geekosphere::yahooweather::YQL::getWeatherForeCastForLocationQuery $sys(location,country) $sys(location,city)]]]
+		puts [geekosphere::yahooweather::YQL::getCurrentWeatherForLocationQuery $sys(location,country) $sys(location,city)]]]
 		set data [::http::data [set token [::http::geturl $sys(url) -query [geekosphere::yahooweather::YQL::getCurrentWeatherForLocationQuery $sys(location,country) $sys(location,city)]]]]
 		::http::cleanup $token
-		puts $data
 		return [dom parse $data]
 	}
 

@@ -6,7 +6,8 @@ namespace eval geekosphere::tbar::wrapper::weather {
 	setNamespace weather ::geekosphere::tbar::widget::weather
 	registerNamespaceImportsFor weather \
 		::geekosphere::tbar::util::* \
-		::geekosphere::googleweather::*
+		::geekosphere::googleweather::* \
+		::geekosphere::yahooweather::*
 
 	proc init {path settingsList} {
 		pack [weather $path \

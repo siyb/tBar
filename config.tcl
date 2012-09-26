@@ -241,6 +241,7 @@ addText " | " "red"
 # -noswap - will prevent the swappart of the widget to be diplayed (memory only)
 #		setting this to 1 will disable swap
 # -renderstatusbar - if set to 0, the memory status will not be visualized, instead only the percentage of free/used memory will be shown
+# -notext - if set to 1, there will be no display text -> more compact widget
 addWidgetToBar memory memory1 5 -gc blue -bc | -showwhat 0
 addText " | " "red"
 
@@ -269,7 +270,7 @@ addText " | " "red"
 # -useSpeedstep - if this option is enabled and your kernel configuration / hw
 #		allows speedstepping, the cup widget will utilize speedstepping to
 #		obtain realtime cpu statistics and display you to them on demand
-#
+# -notext	- if set to 1, there will be no display text -> more compact widget
 addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1 -useSpeedstep 1
 #addEventTo cpu1 <Button-1> exec /usr/bin/urxvt -e htop &
 

@@ -56,15 +56,20 @@ namespace eval geekosphere::tbar::widget::memory {
 				-renderstatusbar $renderStatusBar \
 				] -side left
 		}
-
-		if {$sys($w,showWhat)} {
-			${w}.memory configure -text "FreeMem: "
-			if {$sys($w,useSwap)} { ${w}.swap configure -text "FreeSwap: " }
+		if {[getOption "-notext" $arguments] == 1} {
+			set memtext ""
+			set swaptext ""
+		} elseif {$sys($w,showWhat)} {
+			set memtext "FreeMem: "
+			set swaptext "FreeSwap: "
 		} else {
-			${w}.memory configure -text "UsedMem: "
-			if {$sys($w,useSwap)} { ${w}.swap configure -text "UsedSwap: " }
+			set memtext "UsedMem: "
+			set swaptext "UsedSwap: "
 		}
 
+		${w}.memory configure -text $memtext
+		if {$sys($w,useSwap)} { ${w}.swap configure -text $swaptext }
+		
 		# rename widgets so that it will not receive commands
 		uplevel #0 rename $w ${w}_
 
@@ -142,6 +147,8 @@ namespace eval geekosphere::tbar::widget::memory {
 					}
 					"-font" {
 						changeFont $w $value
+					}
+					"-notext" {
 					}
 					default {
 						error "${opt} not supported"

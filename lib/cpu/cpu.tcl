@@ -100,7 +100,9 @@ namespace eval geekosphere::tbar::widget::cpu {
 		}
 
 		if {$sys($w,showLoad)} {
-			if {$sys($w,showTotalLoad)} {
+			if {[getOption "-notext" $arguments] == 1} {
+				set displayText ""
+			} elseif {$sys($w,showTotalLoad)} {
 				set displayText "CPU Total Load:"
 			} else {
 				set displayText "CPU Load $sys($w,device):"
@@ -204,6 +206,8 @@ namespace eval geekosphere::tbar::widget::cpu {
 					}
 					"-font" {
 						changeFont $w $value
+					}
+					"-notext" {
 					}
 					default {
 						error "${opt} not supported"

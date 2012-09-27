@@ -216,7 +216,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 		set sb [scrollbar $sbpath -command [list geekosphere::tbar::widget::mixer::changeYView $sbpath $infoDict] -bg $sys($w,background)]
 		if {$multi} {
 			drawItemHeaderGrid $w $path $infoDict
-			insertWidgetIntoNextGridRow $path $sb
+			insertWidgetIntoNextGridRow $path $sb 5
 		} else {
 			drawItemHeader $w $path $infoDict
 			pack $sb -expand 1 -fill y 
@@ -358,10 +358,10 @@ namespace eval geekosphere::tbar::widget::mixer {
 		insertWidgetIntoNextGridRow $containerPath $label
 	}
 
-	proc insertWidgetIntoNextGridRow {containerPath widgetPath} {
-		set nextFreeRow [lindex [grid size $containerPath] 1]
-		grid $widgetPath -row $nextFreeRow
-		log "INFO" "Placing $widgetPath in $nextFreeRow using $containerPath with size [grid size $containerPath]"
+	proc insertWidgetIntoNextGridRow {containerPath widgetPath {rowspan 1}} {
+		grid $widgetPath -rowspan $rowspan
+		grid configure $widgetPath -sticky ns
+		log "INFO" "Placing $widgetPath using $containerPath with size [grid size $containerPath] and rowspan $rowspan"
 	}
 
 	proc getMultiDeviceLabelPath {containerPath infoDict} {

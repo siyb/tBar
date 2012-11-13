@@ -1,6 +1,34 @@
 namespace import ::tcl::mathop::*
 namespace eval geekosphere::tbar::widget::menu {
 
+
+	namespace eval autocomplete {
+		variable toComplete
+		variable completeList
+		variable currentPositionInCompleteList
+		set toComplete ""
+		set completeList [list]
+		set currentPositionInCompleteList 0
+		proc getNextSuggestion {toCompl completeLi} {
+			variable toComplete
+			variable completeList
+			variable currentPositionInCompleteList
+			if {$toComplete ne $toCompl || $completeList ne $completeLi} {
+				set currentPositionInCompleteList 0
+				set toComplete $toCompl
+				set completeList $completeLi
+			}
+
+			set filteredList [lsearch -all -inline $completeList $toCompl*]
+			
+			incr currentPositionInCompleteList
+			if {$currentPositionInCompleteList > [llength $filteredList]} {
+				set currentPositionInCompleteList 0
+			}
+			return [lindex $filteredList $currentPositionInCompleteList]
+		}
+	}
+
 	proc fillListBoxWithExecutables {listBox executables} {
 		$listBox delete 0 end
 		foreach item $executables {
@@ -39,8 +67,8 @@ namespace eval geekosphere::tbar::widget::menu {
 			}
 		}
 		if {$key eq "Tab"} {
-		}
-		if {$key ne "Return" && $key ne "Up" && $key ne "Down"} {
+			handleTab $entry $listBox 
+		} elseif {$key ne "Return" && $key ne "Up" && $key ne "Down"} {
 			handleOtherKey $listBox
 		}
 	}
@@ -65,7 +93,8 @@ namespace eval geekosphere::tbar::widget::menu {
 	}
 
 	proc handleTab {entry listBox} {
-
+		$entry delete 0 end
+		$entry insert 0 [geekosphere::tbar::widget::menu::autocomplete::getNextSuggestion [$entry get] [$listBox get 0 end]]
 	}
 
 	proc handleOtherKey {listBox} {

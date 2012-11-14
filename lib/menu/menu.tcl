@@ -95,12 +95,22 @@ namespace eval geekosphere::tbar::widget::menu {
 	proc handleTab {entry listBox} {
 		$entry delete 0 end
 		$entry insert 0 [geekosphere::tbar::widget::menu::autocomplete::getNextSuggestion [$entry get] [$listBox get 0 end]]
+		selectListBoxItemByString $listBox [$entry get]
 	}
 
 	proc handleOtherKey {listBox} {
 		after 10 {
 			geekosphere::tbar::widget::menu::fillListBoxWithExecutables .box [geekosphere::tbar::widget::menu::filterExecutables [.e get]]
 			.box selection set 0
+		}
+	}
+
+	proc selectListBoxItemByString {listBox string} {
+		set items [$listBox get 0 end]
+		set indexOfString [lsearch $items $string]
+		if {$indexOfString != -1} {
+			$listBox selection clear 0 end
+			$listBox selection set $indexOfString $indexOfString
 		}
 	}
 

@@ -79,7 +79,7 @@ namespace eval geekosphere::tbar::widget::menu {
 		if {$key eq "Tab"} {
 			handleTab $entry $listBox 
 		} elseif {$key ne "Return" && $key ne "Up" && $key ne "Down"} {
-			handleOtherKey $listBox
+			handleOtherKey $entry $listBox
 		}
 	}
 
@@ -119,12 +119,10 @@ namespace eval geekosphere::tbar::widget::menu {
 		selectListBoxItemByString $listBox [$entry get]
 	}
 
-	proc handleOtherKey {listBox} {
-		after 10 {
-			geekosphere::tbar::widget::menu::fillListBoxWithExecutables .box [geekosphere::tbar::widget::menu::filterExecutables [.e get]]
-			geekosphere::tbar::widget::menu::autocomplete::reset
-			.box selection set 0
-		}
+	proc handleOtherKey {entry listBox} {
+		geekosphere::tbar::widget::menu::fillListBoxWithExecutables $listBox [geekosphere::tbar::widget::menu::filterExecutables [$entry get]]
+		geekosphere::tbar::widget::menu::autocomplete::reset
+		$listBox selection set 0
 	}
 
 	proc selectListBoxItemByString {listBox string} {
@@ -137,20 +135,25 @@ namespace eval geekosphere::tbar::widget::menu {
 		}
 	}
 
+	proc createBindings {listBox entry} {
+		bind $entry <KeyRelease> [list geekosphere::tbar::widget::menu::handleEntryKeyPress $entry $listBox %K]
+		bind $listBox <ButtonRelease-1> [list geekosphere::tbar::widget::menu::updateListBox $listBox $entry]
+	}
+
+	proc updateListBox {listBox entry} {
+		$entry delete 0 end
+		$entry insert 0 [$listBox get [$listBox curselection]]
+	}
+
+
 	# testcode
 	package require Tk
 	pack [listbox .box -selectmode single] -fill both -expand 1
 	pack [entry .e] -fill both -side bottom
 	geekosphere::tbar::widget::menu::fillListBoxWithExecutables .box [geekosphere::tbar::widget::menu::filterExecutables ""]
-	bind .e <Key> {
-		geekosphere::tbar::widget::menu::handleEntryKeyPress .e .box %K
-	}
-	bind .box <Button-1> {
-		after 10 {
-			.e delete 0 end
-			.e insert 0 [.box get [.box curselection]]
-		}
-	}
+	
+	createBindings .box .e
+
 	.box configure -takefocus 0 -exportselection 0
 }
 

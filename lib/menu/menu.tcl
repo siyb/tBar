@@ -38,8 +38,7 @@ namespace eval geekosphere::tbar::widget::menu {
 
 	proc filterExecutables {filterString} {
 		set executables [getExecutablesInPath]
-		# TODO: make type of matching configurable e.g. filter*, *filter, *filter*, etc
-		return [lsearch -all -inline $executables *$filterString*]
+		return [lsearch -all -inline $executables $filterString*]
 	}
 
 	proc getExecutablesInPath {} {
@@ -57,7 +56,6 @@ namespace eval geekosphere::tbar::widget::menu {
 
 	proc handleEntryKeyPress {entry listBox key} {
 		set curselection [$listBox curselection]
-		if {$curselection ne ""} {
 			if {$key eq "Return"} {
 				handleReturn $entry $listBox $curselection
 			} elseif {$key eq "Up"} {
@@ -65,15 +63,17 @@ namespace eval geekosphere::tbar::widget::menu {
 			} elseif {$key eq "Down"} {
 				handleDown $listBox $curselection
 			}
-		}
-		if {$key eq "Tab"} {
-			handleTab $entry $listBox 
-		} elseif {$key ne "Return" && $key ne "Up" && $key ne "Down"} {
-			handleOtherKey $listBox
-		}
+			if {$key eq "Tab"} {
+				handleTab $entry $listBox 
+			} elseif {$key ne "Return" && $key ne "Up" && $key ne "Down"} {
+				handleOtherKey $listBox
+			}
 	}
 
 	proc handleReturn {entry listBox curselection} {
+		if {$curselection eq ""} {
+			return
+		}
 		set command [$listBox get $curselection $curselection]
 		open |$command r
 		$entry delete 0 end
@@ -81,13 +81,21 @@ namespace eval geekosphere::tbar::widget::menu {
 	}
 
 	proc handleUp {listBox curselection} {
-		set newSelection [- $curselection 1]
+		if {$curselection eq ""} {
+			set newSelection 0
+		} else {
+			set newSelection [- $curselection 1]
+		}
 		$listBox selection clear 0 end
 		$listBox selection set $newSelection
 	}
 
 	proc handleDown {listBox curselection} {
-		set newSelection [+ $curselection 1]
+		if {$curselection eq ""} {
+			set newSelection 0
+		} else {
+			set newSelection [+ $curselection 1]
+		}
 		$listBox selection clear 0 end
 		$listBox selection set $newSelection
 	}
@@ -96,6 +104,7 @@ namespace eval geekosphere::tbar::widget::menu {
 		$entry delete 0 end
 		$entry insert 0 [geekosphere::tbar::widget::menu::autocomplete::getNextSuggestion [$entry get] [$listBox get 0 end]]
 		selectListBoxItemByString $listBox [$entry get]
+		focus $entry
 	}
 
 	proc handleOtherKey {listBox} {
@@ -109,6 +118,7 @@ namespace eval geekosphere::tbar::widget::menu {
 		set items [$listBox get 0 end]
 		set indexOfString [lsearch $items $string]
 		if {$indexOfString != -1} {
+			puts "$indexOfString -> $string"
 			$listBox selection clear 0 end
 			$listBox selection set $indexOfString $indexOfString
 		}
@@ -123,6 +133,7 @@ namespace eval geekosphere::tbar::widget::menu {
 		puts %K
 		geekosphere::tbar::widget::menu::handleEntryKeyPress .e .box %K
 	}
+	.box configure -takefocus 0 -exportselection 0
 }
 
 

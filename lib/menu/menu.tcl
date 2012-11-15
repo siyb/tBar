@@ -104,7 +104,6 @@ namespace eval geekosphere::tbar::widget::menu {
 		$entry delete 0 end
 		$entry insert 0 [geekosphere::tbar::widget::menu::autocomplete::getNextSuggestion [$entry get] [$listBox get 0 end]]
 		selectListBoxItemByString $listBox [$entry get]
-		focus $entry
 	}
 
 	proc handleOtherKey {listBox} {
@@ -118,9 +117,9 @@ namespace eval geekosphere::tbar::widget::menu {
 		set items [$listBox get 0 end]
 		set indexOfString [lsearch $items $string]
 		if {$indexOfString != -1} {
-			puts "$indexOfString -> $string"
 			$listBox selection clear 0 end
 			$listBox selection set $indexOfString $indexOfString
+			$listBox see $indexOfString
 		}
 	}
 

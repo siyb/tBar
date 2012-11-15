@@ -6,9 +6,7 @@ namespace eval geekosphere::tbar::widget::menu {
 		variable toComplete
 		variable completeList
 		variable currentPositionInCompleteList
-		set toComplete ""
-		set completeList [list]
-		set currentPositionInCompleteList 0
+
 		proc getNextSuggestion {toCompl completeLi} {
 			variable toComplete
 			variable completeList
@@ -27,6 +25,21 @@ namespace eval geekosphere::tbar::widget::menu {
 			}
 			return [lindex $filteredList $currentPositionInCompleteList]
 		}
+
+		proc reset {} {
+			variable toComplete
+			variable completeList
+			variable currentPositionInCompleteList
+			set toComplete ""
+			set completeList [list]
+			set currentPositionInCompleteList 0
+		}
+
+		proc initialize {} {
+			reset
+		}
+
+		initialize
 	}
 
 	proc fillListBoxWithExecutables {listBox executables} {
@@ -109,6 +122,7 @@ namespace eval geekosphere::tbar::widget::menu {
 	proc handleOtherKey {listBox} {
 		after 10 {
 			geekosphere::tbar::widget::menu::fillListBoxWithExecutables .box [geekosphere::tbar::widget::menu::filterExecutables [.e get]]
+			geekosphere::tbar::widget::menu::autocomplete::reset
 			.box selection set 0
 		}
 	}
@@ -138,7 +152,6 @@ namespace eval geekosphere::tbar::widget::menu {
 		}
 	}
 	.box configure -takefocus 0 -exportselection 0
-	# BUG: tab to a value, delete field, type first letter of value, tab again
 }
 
 

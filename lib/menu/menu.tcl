@@ -138,6 +138,7 @@ namespace eval geekosphere::tbar::widget::menu {
 	proc createBindings {listBox entry} {
 		bind $entry <KeyRelease> [list geekosphere::tbar::widget::menu::handleEntryKeyPress $entry $listBox %K]
 		bind $listBox <ButtonRelease-1> [list geekosphere::tbar::widget::menu::updateListBox $listBox $entry]
+		.box configure -takefocus 0 -exportselection 0
 	}
 
 	proc updateListBox {listBox entry} {
@@ -147,14 +148,12 @@ namespace eval geekosphere::tbar::widget::menu {
 
 
 	# testcode
-	package require Tk
-	pack [listbox .box -selectmode single] -fill both -expand 1
-	pack [entry .e] -fill both -side bottom
-	geekosphere::tbar::widget::menu::fillListBoxWithExecutables .box [geekosphere::tbar::widget::menu::filterExecutables ""]
-	
-	createBindings .box .e
-
-	.box configure -takefocus 0 -exportselection 0
+	#package require Tk
+	#pack [listbox .box -selectmode single] -fill both -expand 1
+	#pack [entry .e] -fill both -side bottom
+	#geekosphere::tbar::widget::menu::fillListBoxWithExecutables .box [geekosphere::tbar::widget::menu::filterExecutables ""]
+	#
+	#createBindings .box .e
 }
 
 

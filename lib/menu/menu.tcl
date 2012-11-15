@@ -56,18 +56,18 @@ namespace eval geekosphere::tbar::widget::menu {
 
 	proc handleEntryKeyPress {entry listBox key} {
 		set curselection [$listBox curselection]
-			if {$key eq "Return"} {
-				handleReturn $entry $listBox $curselection
-			} elseif {$key eq "Up"} {
-				handleUp $listBox $curselection
-			} elseif {$key eq "Down"} {
-				handleDown $listBox $curselection
-			}
-			if {$key eq "Tab"} {
-				handleTab $entry $listBox 
-			} elseif {$key ne "Return" && $key ne "Up" && $key ne "Down"} {
-				handleOtherKey $listBox
-			}
+		if {$key eq "Return"} {
+			handleReturn $entry $listBox $curselection
+		} elseif {$key eq "Up"} {
+			handleUp $listBox $curselection
+		} elseif {$key eq "Down"} {
+			handleDown $listBox $curselection
+		}
+		if {$key eq "Tab"} {
+			handleTab $entry $listBox 
+		} elseif {$key ne "Return" && $key ne "Up" && $key ne "Down"} {
+			handleOtherKey $listBox
+		}
 	}
 
 	proc handleReturn {entry listBox curselection} {
@@ -129,10 +129,16 @@ namespace eval geekosphere::tbar::widget::menu {
 	pack [entry .e] -fill both -side bottom
 	geekosphere::tbar::widget::menu::fillListBoxWithExecutables .box [geekosphere::tbar::widget::menu::filterExecutables ""]
 	bind .e <Key> {
-		puts %K
 		geekosphere::tbar::widget::menu::handleEntryKeyPress .e .box %K
 	}
+	bind .box <Button-1> {
+		after 10 {
+			.e delete 0 end
+			.e insert 0 [.box get [.box curselection]]
+		}
+	}
 	.box configure -takefocus 0 -exportselection 0
+	# BUG: tab to a value, delete field, type first letter of value, tab again
 }
 
 

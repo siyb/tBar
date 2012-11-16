@@ -1,7 +1,8 @@
 package provide menulib 1.0
 namespace import ::tcl::mathop::*
 namespace eval geekosphere::tbar::widget::menu {
-
+	variable sys
+	set sys(entryKeyPressCallback) ""
 
 	namespace eval autocomplete {
 		variable toComplete
@@ -69,6 +70,11 @@ namespace eval geekosphere::tbar::widget::menu {
 	}
 
 	proc handleEntryKeyPress {entry listBox key} {
+		
+		if {$sys(entryKeyPressCallback) ne ""} {
+			$sys(entryKeyPressCallback)
+		}
+
 		set curselection [$listBox curselection]
 		if {$key eq "Return"} {
 			handleReturn $entry $listBox $curselection
@@ -137,7 +143,7 @@ namespace eval geekosphere::tbar::widget::menu {
 	}
 
 	proc configureListBox {listBox entry} {
-		bind $listBox <ButtonRelease-1> [list geekosphere::tbar::widget::menu::updateListBox $listBox $entry]
+		bind $listBox <ButtonRelease-1> [list geekosphere::tbar::widget::menu::updateEntry $listBox $entry]
 		$listBox configure -takefocus 0 -exportselection 0
 	}
 
@@ -145,12 +151,18 @@ namespace eval geekosphere::tbar::widget::menu {
 		bind $entry <KeyRelease> [list geekosphere::tbar::widget::menu::handleEntryKeyPress $entry $listBox %K]
 	}
 
-	proc updateListBox {listBox entry} {
+	proc updateEntry {listBox entry} {
 		$entry delete 0 end
 		$entry insert 0 [$listBox get [$listBox curselection]]
 	}
 
-
+	proc setEntryKeyCallback {callBack} {
+		variable sys
+		if {[info procs $callBack] eq ""} {
+			error "Invalid proc $callBack"
+		}
+		set sys(entryKeyPressCallback) $callBack
+	}
 	# testcode
 	#package require Tk
 	#pack [listbox .box -selectmode single] -fill both -expand 1

@@ -1,3 +1,4 @@
+package provide menulib 1.0
 namespace import ::tcl::mathop::*
 namespace eval geekosphere::tbar::widget::menu {
 

@@ -136,10 +136,13 @@ namespace eval geekosphere::tbar::widget::menu {
 		}
 	}
 
-	proc createBindings {listBox entry} {
-		bind $entry <KeyRelease> [list geekosphere::tbar::widget::menu::handleEntryKeyPress $entry $listBox %K]
+	proc configureListBox {listBox entry} {
 		bind $listBox <ButtonRelease-1> [list geekosphere::tbar::widget::menu::updateListBox $listBox $entry]
-		.box configure -takefocus 0 -exportselection 0
+		$listBox configure -takefocus 0 -exportselection 0
+	}
+
+	proc configureEntry {listBox entry} {
+		bind $entry <KeyRelease> [list geekosphere::tbar::widget::menu::handleEntryKeyPress $entry $listBox %K]
 	}
 
 	proc updateListBox {listBox entry} {

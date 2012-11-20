@@ -78,7 +78,7 @@ namespace eval geekosphere::tbar::widget::network {
 				setBandwidthInfoInLabel $sys($w,infoWindow).${device} $device $tx $rx
 				$sys($w,infoWindow).${device} configure -fg $sys($w,foreground) -bg $sys($w,background)
 			} else {
-				pack [label $sys($w,infoWindow).${device} -fg $sys($w,foreground) -bg $sys($w,background)] -anchor w
+				pack [label $sys($w,infoWindow).${device} -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font)] -anchor w
 				setBandwidthInfoInLabel $sys($w,infoWindow).${device} $device $tx $rx
 				bind $sys($w,infoWindow).${device} <Button-1> [namespace code [list changeMainDevice $w $device %W]]
 			}
@@ -250,6 +250,7 @@ namespace eval geekosphere::tbar::widget::network {
 
 	proc changeFont {w font} {
 		variable sys
+		set sys($w,font) $font
 		${w}.network configure -font $font
 	}
 }

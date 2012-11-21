@@ -3,6 +3,7 @@ namespace import ::tcl::mathop::*
 namespace eval geekosphere::tbar::widget::automenu {
 	variable sys
 	set sys(entryKeyPressCallback) ""
+	set sys(window) .
 
 	namespace eval autocomplete {
 		variable toComplete
@@ -72,7 +73,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 	proc handleEntryKeyPress {entry listBox key} {
 		variable sys		
 		if {$sys(entryKeyPressCallback) ne ""} {
-			$sys(entryKeyPressCallback)
+			$sys(entryKeyPressCallback) $sys(window)
 		}
 
 		set curselection [$listBox curselection]
@@ -156,12 +157,13 @@ namespace eval geekosphere::tbar::widget::automenu {
 		$entry insert 0 [$listBox get [$listBox curselection]]
 	}
 
-	proc setEntryKeyCallback {callBack} {
+	proc setEntryKeyCallback {callBack window} {
 		variable sys
 		if {[info procs $callBack] eq ""} {
 			error "Invalid proc $callBack"
 		}
 		set sys(entryKeyPressCallback) $callBack
+		set sys(window) $window
 	}
 }
 

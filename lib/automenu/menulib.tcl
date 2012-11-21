@@ -70,7 +70,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 	}
 
 	proc handleEntryKeyPress {entry listBox key} {
-		
+		variable sys		
 		if {$sys(entryKeyPressCallback) ne ""} {
 			$sys(entryKeyPressCallback)
 		}
@@ -122,13 +122,13 @@ namespace eval geekosphere::tbar::widget::automenu {
 
 	proc handleTab {entry listBox} {
 		$entry delete 0 end
-		$entry insert 0 [geekosphere::tbar::widget::menu::autocomplete::getNextSuggestion [$entry get] [$listBox get 0 end]]
+		$entry insert 0 [geekosphere::tbar::widget::automenu::autocomplete::getNextSuggestion [$entry get] [$listBox get 0 end]]
 		selectListBoxItemByString $listBox [$entry get]
 	}
 
 	proc handleOtherKey {entry listBox} {
-		geekosphere::tbar::widget::menu::fillListBoxWithExecutables $listBox [geekosphere::tbar::widget::menu::filterExecutables [$entry get]]
-		geekosphere::tbar::widget::menu::autocomplete::reset
+		geekosphere::tbar::widget::automenu::fillListBoxWithExecutables $listBox [geekosphere::tbar::widget::automenu::filterExecutables [$entry get]]
+		geekosphere::tbar::widget::automenu::autocomplete::reset
 		$listBox selection set 0
 	}
 
@@ -143,12 +143,12 @@ namespace eval geekosphere::tbar::widget::automenu {
 	}
 
 	proc configureListBox {listBox entry} {
-		bind $listBox <ButtonRelease-1> [list geekosphere::tbar::widget::menu::updateEntry $listBox $entry]
+		bind $listBox <ButtonRelease-1> [list geekosphere::tbar::widget::automenu::updateEntry $listBox $entry]
 		$listBox configure -takefocus 0 -exportselection 0
 	}
 
 	proc configureEntry {listBox entry} {
-		bind $entry <KeyRelease> [list geekosphere::tbar::widget::menu::handleEntryKeyPress $entry $listBox %K]
+		bind $entry <KeyRelease> [list geekosphere::tbar::widget::automenu::handleEntryKeyPress $entry $listBox %K]
 	}
 
 	proc updateEntry {listBox entry} {
@@ -163,13 +163,6 @@ namespace eval geekosphere::tbar::widget::automenu {
 		}
 		set sys(entryKeyPressCallback) $callBack
 	}
-	# testcode
-	#package require Tk
-	#pack [listbox .box -selectmode single] -fill both -expand 1
-	#pack [entry .e] -fill both -side bottom
-	#geekosphere::tbar::widget::menu::fillListBoxWithExecutables .box [geekosphere::tbar::widget::menu::filterExecutables ""]
-	#
-	#createBindings .box .e
 }
 
 

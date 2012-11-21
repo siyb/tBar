@@ -22,10 +22,13 @@ namespace eval geekosphere::tbar::widget::automenu {
 		set sys($w,listBox) $sys($w,toplevel).lb
 		
 		frame $w
-		
-		pack [entry ${w}$sys($w,entry)]
+		pack [entry ${w}$sys($w,entry)] -side right
 		setEntryKeyCallback callBack
 		configureEntry $sys($w,listBox) ${w}$sys($w,entry)
+
+		bind ${w}$sys($w,entry) <Button-1> {
+			focus -force %W
+		}
 
 		uplevel #0 rename $w ${w}_
 	}
@@ -63,7 +66,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 	}
 
 	proc callBack {} {
-		if {![winfo exists $sys($w,toplevel)} {
+		if {![winfo exists $sys($w,toplevel)]} {
 			toplevel $sys($w,toplevel)
 			pack [listbox $sys($w,listBox)]
 			configureListBox $sys($w,listBox) $sys($w,entry)

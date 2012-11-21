@@ -1,3 +1,6 @@
+#
+# THIS PACKAGE IS OBSOLETE SINCE GOOGLE DISABLED THE WEATHER API!
+#
 package provide googleweather 1.0
 
 catch { namespace import ::geekopshere::util::logger::* }

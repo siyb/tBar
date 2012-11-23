@@ -71,6 +71,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 			toplevel $sys($w,toplevel)
 			pack [listbox $sys($w,listBox)]
 			configureListBox $sys($w,listBox) $sys($w,entry)
+			positionWindowRelativly $sys($w,toplevel) ${w}$sys($w,entry)
 		}
 	}
 

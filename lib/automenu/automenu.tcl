@@ -31,6 +31,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 		}
 
 		uplevel #0 rename $w ${w}_
+		action $w configure $arguments
 	}
 
 	proc action {w args} {
@@ -69,7 +70,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 		variable sys
 		if {![winfo exists $sys($w,toplevel)]} {
 			toplevel $sys($w,toplevel)
-			pack [listbox $sys($w,listBox)]
+			pack [listbox $sys($w,listBox) -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)]
 			configureListBox $sys($w,listBox) $sys($w,entry)
 			positionWindowRelativly $sys($w,toplevel) ${w}$sys($w,entry)
 		}
@@ -85,25 +86,32 @@ namespace eval geekosphere::tbar::widget::automenu {
 		variable sys
 		$sys($w,originalCommand) configure -bg $color
 		set sys($w,background) $color
-		$sys($w,entry) configure -bg $color
-		$sys($w,toplevel) configure -bg $color
-		$sys($w,listBox) configure -bg $color
+		${w}$sys($w,entry) configure -bg $color
+
+		if {[winfo exists $sys($w,toplevel)]} {
+			$sys($w,toplevel) configure -bg $color
+			$sys($w,listBox) configure -bg $color
+		}
 	}
 
 	proc changeForegroundColor {w color} {
 		variable sys
 		set sys($w,foreground) $color
-		$sys($w,entry) configure -fg $color
-		$sys($w,toplevel) configure -fg $color
-		$sys($w,listBox) configure -fg $color
+		${w}$sys($w,entry) configure -fg $color
 
+		if {[winfo exists $sys($w,toplevel)]} {
+			$sys($w,toplevel) configure -fg $color
+			$sys($w,listBox) configure -fg $color
+		}
 	}
 
 	proc changeFont {w font} {
 		variable sys
 		set sys($w,font) $font
-		$sys($w,entry) configure -font $font
-		$sys($w,listBox) configure -font $font
+		${w}$sys($w,entry) configure -font $font
+		if {[winfo exists $sys($w,toplevel)]} {
+			$sys($w,listBox) configure -font $font
+		}
 	}
 
 	proc changeHeight {w height} {

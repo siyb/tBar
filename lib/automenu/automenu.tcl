@@ -71,7 +71,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 		if {![winfo exists $sys($w,toplevel)]} {
 			toplevel $sys($w,toplevel)
 			pack [listbox $sys($w,listBox) -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)]
-			configureListBox $sys($w,listBox) $sys($w,entry)
+			configureListBox $sys($w,listBox) ${w}$sys($w,entry)
 			positionWindowRelativly $sys($w,toplevel) ${w}$sys($w,entry)
 		}
 		if {$eventProcessed && $key eq "Return" && [winfo exists $sys($w,toplevel)]} {

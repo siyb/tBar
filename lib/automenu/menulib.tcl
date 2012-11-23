@@ -121,6 +121,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 		}
 		$listBox selection clear 0 end
 		$listBox selection set $newSelection
+		$listBox see $newSelection
 		$entry delete 0 end
 		$entry insert 0 [$listBox get $newSelection]
 	}
@@ -133,6 +134,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 		}
 		$listBox selection clear 0 end
 		$listBox selection set $newSelection
+		$listBox see $newSelection
 		$entry delete 0 end
 		$entry insert 0 [$listBox get $newSelection]
 	}

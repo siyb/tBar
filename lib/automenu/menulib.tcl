@@ -1,6 +1,13 @@
 package provide menulib 1.0
-namespace import ::tcl::mathop::*
+package require logger
+catch {
+	namespace import ::geekosphere::tbar::util::logger::*
+	namespace import ::tcl::mathop::*
+}
 namespace eval geekosphere::tbar::widget::automenu {
+	
+	initLogger
+
 	variable sys
 	set sys(entryKeyPressCallback) ""
 	set sys(window) .
@@ -73,9 +80,8 @@ namespace eval geekosphere::tbar::widget::automenu {
 	proc handleEntryKeyPress {entry listBox key} {
 		variable sys		
 		if {$sys(entryKeyPressCallback) ne ""} {
-			$sys(entryKeyPressCallback) $sys(window)
+			$sys(entryKeyPressCallback) $sys(window) 0 $key
 		}
-
 		set curselection [$listBox curselection]
 		if {$key eq "Return"} {
 			handleReturn $entry $listBox $curselection
@@ -89,6 +95,10 @@ namespace eval geekosphere::tbar::widget::automenu {
 		} elseif {$key ne "Return" && $key ne "Up" && $key ne "Down"} {
 			handleOtherKey $entry $listBox
 		}
+		if {$sys(entryKeyPressCallback) ne ""} {
+			$sys(entryKeyPressCallback) $sys(window) 1 $key
+		}
+
 	}
 
 	proc handleReturn {entry listBox curselection} {
@@ -96,7 +106,12 @@ namespace eval geekosphere::tbar::widget::automenu {
 			return
 		}
 		set command [$listBox get $curselection $curselection]
-		open |$command r
+
+		if {[catch {
+			open |$command r
+		} err]} {
+			log "WARNING" "Command: $command could not be executed. $::errorInfo"
+		}
 		$entry delete 0 end
 		fillListBoxWithExecutables $listBox [filterExecutables ""]
 	}

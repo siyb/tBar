@@ -86,9 +86,9 @@ namespace eval geekosphere::tbar::widget::automenu {
 		if {$key eq "Return"} {
 			handleReturn $entry $listBox $curselection
 		} elseif {$key eq "Up"} {
-			handleUp $listBox $curselection
+			handleUp $entry $listBox $curselection
 		} elseif {$key eq "Down"} {
-			handleDown $listBox $curselection
+			handleDown $entry $listBox $curselection
 		}
 		if {$key eq "Tab"} {
 			handleTab $entry $listBox 
@@ -108,6 +108,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 		set command [$listBox get $curselection $curselection]
 
 		if {[catch {
+			log "INFO" "Executing open |$command r"
 			open |$command r
 		} err]} {
 			log "WARNING" "Command: $command could not be executed. $::errorInfo"
@@ -116,7 +117,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 		fillListBoxWithExecutables $listBox [filterExecutables ""]
 	}
 
-	proc handleUp {listBox curselection} {
+	proc handleUp {entry listBox curselection} {
 		if {$curselection eq ""} {
 			set newSelection 0
 		} else {
@@ -124,9 +125,11 @@ namespace eval geekosphere::tbar::widget::automenu {
 		}
 		$listBox selection clear 0 end
 		$listBox selection set $newSelection
+		$entry delete 0 end
+		$entry insert 0 [$listBox get $newSelection]
 	}
 
-	proc handleDown {listBox curselection} {
+	proc handleDown {entry listBox curselection} {
 		if {$curselection eq ""} {
 			set newSelection 0
 		} else {
@@ -134,6 +137,8 @@ namespace eval geekosphere::tbar::widget::automenu {
 		}
 		$listBox selection clear 0 end
 		$listBox selection set $newSelection
+		$entry delete 0 end
+		$entry insert 0 [$listBox get $newSelection]
 	}
 
 	proc handleTab {entry listBox} {
@@ -164,7 +169,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 	}
 
 	proc configureEntry {listBox entry} {
-		bind $entry <KeyRelease> [list geekosphere::tbar::widget::automenu::handleEntryKeyPress $entry $listBox %K]
+		bind $entry <KeyRelease> [list geekosphere::tbar::widget::automenu::handleEntryKeyPress $entry $listBox %K]		
 	}
 
 	proc updateEntry {listBox entry} {

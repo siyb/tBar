@@ -102,11 +102,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 	}
 
 	proc handleReturn {entry listBox curselection} {
-		if {$curselection eq ""} {
-			return
-		}
-		set command [$listBox get $curselection $curselection]
-
+		set command [$entry get]
 		if {[catch {
 			log "INFO" "Executing open |$command r"
 			open |$command r

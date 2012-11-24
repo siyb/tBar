@@ -13,6 +13,27 @@
 # number, removing any decimal separators and trimming the result to 9 digits.
 setTrack 0
 
+# This setting enables the IPC server, that allows external communication with tBar.
+# The IPC server will create a socket running on 127.0.0.1 using the port provided
+# by setIPCPort, which by default only allows connections from localhost.
+#
+# A user / program can send IPC messages to the IPC server by either connecting to
+# the socket directly or by using the --ipc parameter of tBar.
+#
+# Each tBar widget may register IPC procs with the IPC service, if a proc i not registered,
+# the IPC call will fail. The example below shows a typical ipc call, in this case the call
+# will be redirected to the ipc_focus proc of the automenu widget.
+#
+# 	tbar --ipc ::geekosphere::tbar::widget::automenu#ipc_focus
+#
+# Widgets should inform users if IPC calls are possible and provide information on
+# how to call the procs in question.
+#
+useIPC 1
+
+# The port of the IPC server
+setIPCPort 9999
+
 # set this to 1 if you wish to use the compatibility mode. Only do this if 
 # your wm does not support the _NET_WM_WINDOW_TYPE_DOCK hint!
 setCompatibilityMode 0
@@ -300,3 +321,18 @@ addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 # -setipcpath - sets the path to the i3 ipc socket 
 # -legacymode - takes a boolean value, use this to support i3 versions before INSERTVERSION HERE
 #addWidgetToBar i3_workspace i3_workspace1 0
+
+# A bash autocompletion widget that provides simple access to all software in $PATH
+#
+# -fg / -foreground - the textcolor
+# -bg / -background - the background color
+# 
+# IPC:
+#	tbar --ipc ::geekosphere::tbar::widget::automenu#ipc_focus
+#
+#		If this IPC command is executed, the entry field
+#		of the automenu widget will receive input focus.
+#		Useful for creating keyboard shortcuts!
+#	
+#addWidgetToBar automenu automenu1 0
+#addText " | " "red"

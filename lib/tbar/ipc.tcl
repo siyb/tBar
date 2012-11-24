@@ -85,4 +85,14 @@ namespace eval geekosphere::tbar::ipc {
 			log "ERROR" "Cannot execute command: $::errorInfo"
 		}
 	}
+
+	proc sendIPCCommand {namespace proc} {
+		variable sys
+		set sock [socket $sys(ipc,host) $sys(ipc,port)]
+		dict set cmd namespace $namespace
+		dict set cmd proc $proc
+		puts $sock $cmd
+		flush $sock
+		close $sock
+	}
 }

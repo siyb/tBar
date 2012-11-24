@@ -67,8 +67,19 @@ foreach {parameter value} $argv {
 		}
 		"--help" {
 			puts "tBar help
---config <path>			specify a config file to load"
+--config <path>			specify a config file to load
+--ipc <namespace>#<command>	send ipc command to tBar, make sure that the ipc call uses the same config as the running tBar instance"
 			exit
+		}
+		"--ipc" {
+			set splitParam [split $value "#"]
+			if {[llength $splitParam] != 2} {
+				puts "Invalid parameter, try <namespace>#<command>, e.g. my::ns#myCommand"
+				exit
+			}
+			set namespace [lindex $splitParam 0]
+			set proc [lindex $splitParam 1]
+			set IPC 1
 		}
 	}
 }
@@ -82,6 +93,12 @@ if {[info exists geekosphere::tbar::sys(config)] && [file exists $geekosphere::t
 	source [file join / etc tbar config.tcl]
 } elseif {[file exists [file join . config.tcl]]} {
 	source [file join . config.tcl]
+}
+
+if {[info exists IPC]} {
+	puts "Running $namespace $proc"
+	geekosphere::tbar::ipc::sendIPCCommand $namespace $proc
+	exit
 }
 
 # creating font

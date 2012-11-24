@@ -48,7 +48,7 @@ namespace eval geekosphere::tbar::ipc {
 		if {![info exists sys(ipc,registered,$namespace)]} {
 			return 0
 		}
-		return != [lsearch $sys(ipc,registered,$ns) $proc] -1
+		return != [lsearch $sys(ipc,registered,$namespace) $proc] -1
 	}
 
 	proc startIPCServer {} {

@@ -1,7 +1,7 @@
 package provide automenu 1.0
 
 package require menulib
-
+package require tipc 
 proc automenu {w args} {
 	geekosphere::tbar::widget::automenu::makeMenu $w $args
 
@@ -29,9 +29,20 @@ namespace eval geekosphere::tbar::widget::automenu {
 		bind ${w}$sys($w,entry) <Button-1> {
 			focus -force %W
 		}
+		
+		# focus callback only work on one entry box! anything else wouldn't make any sense
+		if {![info exists sys(globalEntry)]} {
+			geekosphere::tbar::ipc::registerProc ipc_focus
+			set sys(globalEntry) ${w}$sys($w,entry)
+		}
 
 		uplevel #0 rename $w ${w}_
 		action $w configure $arguments
+	}
+
+	proc ipc_focus {} {
+		variable sys
+		focus -force $sys(globalEntry)
 	}
 
 	proc action {w args} {

@@ -3,6 +3,8 @@ package provide tbar 1.2
 package require util
 package require logger
 package require track
+package require tipc
+
 # TODO 1.x: hdd widget, temperature, free/used
 # TODO 1.x: instead of throwing an error if a package (ie sqlite) can not be required, use the widget wrapper to test if package is available (catch) and remove corresponding parameter or widget
 # TODO 1.x: language files
@@ -45,7 +47,7 @@ namespace eval geekosphere::tbar {
 	set conf(sys,track) 0
 	set conf(sys,killOnError) 0
 	set conf(sys,compatibilityMode) 0
-
+	set conf(sys,useIPC) 1
 	#
 	# Code
 	#
@@ -74,6 +76,7 @@ namespace eval geekosphere::tbar {
 		lappend conf(widget,path) [file join widget]
 		loadWidgets
 		track
+		ipc
 	}
 
 	proc track {} {
@@ -82,6 +85,13 @@ namespace eval geekosphere::tbar {
 			::geekosphere::tbar::util::track::trackWidgets
 		} else {
 			log "INFO" "Tracking disabled"
+		}
+	}
+
+	proc ipc {} {
+		variable conf
+		if {$conf(sys,useIPC)} {
+			geekosphere::tbar::ipc::startIPCServer
 		}
 	}
 
@@ -224,26 +234,40 @@ OSVERSION=$::tcl_platform(osVersion)
 THREADED=$::tcl_platform(threaded)
 MACHINE=$::tcl_platform(machine)"
 
-foreach item [info loaded] {
-	set sitem [split $item]
-	puts $fl "PACKAGE=[lindex $sitem 0];[lindex $sitem 1]"
-}
-foreach {item value} [array get geekosphere::tbar::conf] {
-	puts $fl "CONFIG=${item};${value}"
-}
-foreach sysArray [getSysArrays] {
-	puts $fl "ARRAYNAME=${sysArray}"
-	foreach {item value} [array get $sysArray] {
-		puts $fl "ARRAYITEM=$item;$value"
+		foreach item [info loaded] {
+			set sitem [split $item]
+			puts $fl "PACKAGE=[lindex $sitem 0];[lindex $sitem 1]"
+		}
+		foreach {item value} [array get geekosphere::tbar::conf] {
+			puts $fl "CONFIG=${item};${value}"
+		}
+		foreach sysArray [getSysArrays] {
+			puts $fl "ARRAYNAME=${sysArray}"
+			foreach {item value} [array get $sysArray] {
+				puts $fl "ARRAYITEM=$item;$value"
+			}
+		}
+		puts $fl "ERRORINFO=[split $::errorInfo \n]"
+		puts $fl "ERRORCODE=$::errorCode"
+		close $fl
+		return $file
 	}
-}
-puts $fl "ERRORINFO=[split $::errorInfo \n]"
-puts $fl "ERRORCODE=$::errorCode"
-close $fl
-return $file
-}
 
 	# CONFIG PROCS
+
+	proc useIPC {useIPC} {
+		variable conf
+		set conf(sys,useIPC) $useIPC
+	}
+
+	proc setICPPort {port} {
+		if {[string is integer $port] && $port < 65535 && $port > 0} {
+			set geekosphere::tbar::ipc::sys(ipc,port) $port
+		} else {
+			log "ERROR" "Invalid port $port"
+			exit
+		}
+	}
 
 	proc setWidth {width} {
 		variable conf
@@ -395,7 +419,7 @@ return $file
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
 	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet setTrack \
-	getWidgetAlignment
+	getWidgetAlignment useIPC setICPPort
 }
 namespace eval geekosphere::tbar::gfx {
 	initLogger

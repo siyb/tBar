@@ -5,6 +5,8 @@ catch {
 	namespace import ::geekosphere::tbar::util::logger::*
 }
 
+package provide tipc 1.0
+
 namespace eval geekosphere::tbar::ipc {
 	variable sys
 
@@ -51,7 +53,7 @@ namespace eval geekosphere::tbar::ipc {
 
 	proc startIPCServer {} {
 		variable sys
-		socket -server server -myaddr $sys(ipc,host) $sys(ipc,port)
+		socket -server geekosphere::tbar::ipc::server -myaddr $sys(ipc,host) $sys(ipc,port)
 	}
 
 	proc server {chan ip port} {
@@ -76,6 +78,8 @@ namespace eval geekosphere::tbar::ipc {
 			set p [dict get $command "proc"]
 			if {[isProcRegistered $ns $p]} {
 				${ns}::${p}
+			} else {
+				log "ERROR" "${ns}::${p} not registered"
 			}
 		} err]} {
 			log "ERROR" "Cannot execute command: $::errorInfo"

@@ -260,7 +260,7 @@ MACHINE=$::tcl_platform(machine)"
 		set conf(sys,useIPC) $useIPC
 	}
 
-	proc setICPPort {port} {
+	proc setIPCPort {port} {
 		if {[string is integer $port] && $port < 65535 && $port > 0} {
 			set geekosphere::tbar::ipc::sys(ipc,port) $port
 		} else {
@@ -419,7 +419,7 @@ MACHINE=$::tcl_platform(machine)"
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
 	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet setTrack \
-	getWidgetAlignment useIPC setICPPort
+	getWidgetAlignment useIPC setIPCPort
 }
 namespace eval geekosphere::tbar::gfx {
 	initLogger

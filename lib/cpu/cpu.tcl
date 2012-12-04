@@ -15,7 +15,7 @@ proc cpu {w args} {
 	return $w
 }
 
-# TODO 1.2: add support for multiple thermal sources
+# TODO 1.x: add support for multiple thermal sources
 catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::cpu {
 
@@ -61,6 +61,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		set sys($w,originalCommand) ${w}_
 		set sys($w,cpu,temperature) "N/A"
 		set sys($w,cpu,loadDisplayBar) "N/A"
+		set sys($w,additionalDevices) [list]
 
 		# cache general cpu information (which is static)
 		set sys(general) [geekosphere::tbar::util::parseProcFile $sys(cpuinfo) [list "processor" "cpuMHz" "cachesize"]]
@@ -153,6 +154,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		if {$sys($w,showLoad)} {
 			${w}.load.barChart pushValue $load
 			${w}.load.barChart update
+			freqInfoUpdate $w; # updates widgets in popup (if open!)
 		}
 	}
 
@@ -204,6 +206,12 @@ namespace eval geekosphere::tbar::widget::cpu {
 						changeFont $w $value
 					}
 					"-notext" {
+					}
+					"-additionalDevices" {
+						set sys($w,additionalDevices) $value
+						foreach device $value {
+							set geekosphere::tbar::widget::cpu::sys($w,cpu,loadDisplayBar,$device) "N/A"
+						}
 					}
 					default {
 						error "${opt} not supported"
@@ -340,26 +348,56 @@ namespace eval geekosphere::tbar::widget::cpu {
 
 	proc displayFreqInfo {w} {
 		variable sys
-		set freqWindow ${w}.freq
-		if {[winfo exists $freqWindow]} {
-			destroy $freqWindow
+		set sys($w,freqWindow) ${w}.freq
+		if {[winfo exists $sys($w,freqWindow)]} {
+			destroy $sys($w,freqWindow)
+			unset sys($w,freqWindow)
 			return
 		}
 
-		toplevel $freqWindow
+		toplevel $sys($w,freqWindow)
 		set displayText ""
 		dict for {item value} [cpuSpeedstepInfo $w] {
 			append displayText "${item}: ${value}\n"
 		}
-		pack [label ${freqWindow}.display \
+		append displayText "\n"
+		pack [label $sys($w,freqWindow).display \
 			-text $displayText \
 			-fg $sys($w,foreground) \
 			-bg $sys($w,background) \
 			-font $sys($w,font) \
 			-justify left
 		]
-
-		positionWindowRelativly $freqWindow $w
+		
+		foreach device $sys($w,additionalDevices) {
+			pack [frame $sys($w,freqWindow).${device} -bg $sys($w,background) ] -fill x
+			pack [label $sys($w,freqWindow).${device}.l -text "$device:" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font)] -side left
+			pack [barChart $sys($w,freqWindow).${device}.barchart \
+				-height $sys($w,height) \
+				-fg $sys($w,foreground) \
+				-bg $sys($w,background) \
+				-gc $sys($w,loadcolor) \
+				-font $sys($w,font) \
+				-textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,loadDisplayBar,$device) \
+				-width 100] -side right
+		}
+		
+		positionWindowRelativly $sys($w,freqWindow) $w
+	}
+	
+	proc  freqInfoUpdate {w} {
+		variable sys
+		if {![info exists sys($w,freqWindow)]} {
+			return
+		}
+		foreach device $sys($w,additionalDevices) {
+			if {[winfo exists $sys($w,freqWindow).${device}]} {
+				set load [getCpuLoad $w [lsearch -inline -index 0 $sys(statData) $device]]
+				$sys($w,freqWindow).${device}.barchart pushValue $load
+				$sys($w,freqWindow).${device}.barchart update
+				set geekosphere::tbar::widget::cpu::sys($w,cpu,loadDisplayBar,$device) $load
+			}
+		}
 	}
 
 	proc cpuSpeedstepInfo {w} {
@@ -506,11 +544,13 @@ namespace eval geekosphere::tbar::widget::cpu {
 
 	proc changeWidth {w width} {
 		variable sys
+		set sys($w,width) $width
 		$sys($w,originalCommand) configure -width $width
 	}
 
 	proc changeHeight {w height} {
 		variable sys
+		set sys($w,height) $height
 		$sys($w,originalCommand) configure -height $height
 		if {$sys($w,showLoad)} {
 			${w}.load.barChart configure -height $height
@@ -522,6 +562,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		if {$sys($w,showLoad)} {
 			${w}.load.barChart configure -gc $color
 		}
+		set sys($w,loadcolor) $color
 	}
 
 	proc changeFont {w font} {

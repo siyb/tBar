@@ -276,6 +276,8 @@ addText " | " "red"
 # -device - the device to be monitored by the widget
 # -width - the width of the widget (use with caution)
 # -height - the height of the widget (use with caution)
+# -additionalDevices - takes a list of other cpus, check /proc/stat for available cpu identifiers, e.g. -additionalDevices [list cpu0 cpu1].
+#                      will render cpu load graphs in info window
 #
 # The following options can be left out (meaning that the wigdets will not
 # be drawn (same as setting them to 0) or they can be set to 1 in which case

@@ -60,7 +60,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		variable sys
 		set sys($w,originalCommand) ${w}_
 		set sys($w,cpu,temperature) "N/A"
-		set sys($w,cpu,load) "N/A"
+		set sys($w,cpu,loadDisplayBar) "N/A"
 
 		# cache general cpu information (which is static)
 		set sys(general) [geekosphere::tbar::util::parseProcFile $sys(cpuinfo) [list "processor" "cpuMHz" "cachesize"]]
@@ -74,10 +74,6 @@ namespace eval geekosphere::tbar::widget::cpu {
 		set sys($w,device) $device
 		set sys($w,cpu,mhz) 0
 		set sys($w,cpu,cache) [getCacheSize $sys($w,device)]
-
-		set sys($w,cpu,totalTime) 0
-		set sys($w,cpu,activeTime) 0
-		set sys($w,cpu,load) 0
 
 		frame ${w}
 
@@ -109,7 +105,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 			}
 			pack [frame ${w}.load] -side left -fill both
 			pack [label ${w}.load.label -text "$displayText"] -side left -fill both
-			pack [barChart ${w}.load.barChart -textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,load) -width 100] -side left -fill both
+			pack [barChart ${w}.load.barChart -textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,loadDisplayBar) -width 100] -side left -fill both
 		}
 
 		if {$sys($w,useSpeedStep)} {
@@ -152,8 +148,8 @@ namespace eval geekosphere::tbar::widget::cpu {
 		#
 		set sys($w,cpu,temperature) "[getTemperature] C°"
 		set sys($w,cpu,mhz) [getMHz $w $sys($w,device)]
-		set load [getCpuLoad $w]
-		set sys($w,cpu,load) $load
+		set load [getCpuDeviceBySetting $w]
+		set sys($w,cpu,loadDisplayBar) $load
 		if {$sys($w,showLoad)} {
 			${w}.load.barChart pushValue $load
 			${w}.load.barChart update
@@ -290,7 +286,36 @@ namespace eval geekosphere::tbar::widget::cpu {
 	}
 
 	# returns the cpu load of the specified cpu device
-	proc getCpuLoad {w} {
+	proc getCpuLoad {w deviceData} {
+		variable sys
+
+		if {$deviceData eq ""} {
+			error "unable to determine cpu load, please check if you specified the correct device"
+		}
+		set cpuIdentifier [lindex $deviceData 0]
+		log "DEBUG" "Obtaining cpu load for '$cpuIdentifier'"
+		if {![info exists sys($w,cpu,totalTime,$cpuIdentifier)]} {
+			set sys($w,cpu,totalTime,$cpuIdentifier) 0
+		}
+		if {![info exists sys($w,cpu,activeTime,$cpuIdentifier)]} {
+			set sys($w,cpu,activeTime,$cpuIdentifier) 0
+		}
+		
+		set activeTime [expr {[lindex $deviceData 1] + [lindex $deviceData 2] + [lindex $deviceData 3] + [lindex $deviceData 5] + [lindex $deviceData 6] + [lindex $deviceData 7]}]
+		set idleTime [lindex $deviceData 4]
+		set totalTime [expr {$activeTime + $idleTime}]
+
+		set diffTotal [expr {$totalTime - $sys($w,cpu,totalTime,$cpuIdentifier)}]
+		set diffActive [expr {$activeTime - $sys($w,cpu,activeTime,$cpuIdentifier)}]
+		if {$diffTotal == 0 || $diffActive == 0} { return 0.0 }
+		set usage [::tcl::mathfunc::floor [expr $diffActive. / $diffTotal. * 100.]]
+
+		set sys($w,cpu,totalTime,$cpuIdentifier) $totalTime
+		set sys($w,cpu,activeTime,$cpuIdentifier) $activeTime
+		return $usage
+	}
+	
+	proc getCpuDeviceBySetting {w} {
 		variable sys
 		# load of all cpus
 		if {$sys($w,showTotalLoad)} {
@@ -299,21 +324,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		} else {
 			set deviceData [lsearch -inline -index 0 $sys(statData) "cpu$sys($w,device)"]
 		}
-		if {$deviceData eq ""} {
-			error "unable to determine cpu load, please check if you specified the correct device"
-		}
-		set activeTime [expr {[lindex $deviceData 1] + [lindex $deviceData 2] + [lindex $deviceData 3] + [lindex $deviceData 5] + [lindex $deviceData 6] + [lindex $deviceData 7]}]
-		set idleTime [lindex $deviceData 4]
-		set totalTime [expr {$activeTime + $idleTime}]
-
-		set diffTotal [expr {$totalTime - $sys($w,cpu,totalTime)}]
-		set diffActive [expr {$activeTime - $sys($w,cpu,activeTime)}]
-		if {$diffTotal == 0 || $diffActive == 0} { return 0.0 }
-		set usage [::tcl::mathfunc::floor [expr $diffActive. / $diffTotal. * 100.]]
-
-		set sys($w,cpu,totalTime) $totalTime
-		set sys($w,cpu,activeTime) $activeTime
-		return $usage
+		return [getCpuLoad $w $deviceData]
 	}
 
 	# returns a list of all cpu entries of the statfile

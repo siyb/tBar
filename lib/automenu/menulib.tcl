@@ -103,14 +103,15 @@ namespace eval geekosphere::tbar::widget::automenu {
 
 	proc handleReturn {entry listBox curselection} {
 		set command [$entry get]
-		if {![isCommandInPath $command]} {
+		if {![isCommandInPath $command] && $curselection ne ""} {
 			log "DEBUG" "'$command' from entry was not in path, trying '[$listBox get $curselection $curselection]'"
 			set command [$listBox get $curselection $curselection]
 		}
 
 		if {[catch {
 			log "INFO" "Executing open |$command r"
-			open |$command r
+			set c [open |$command r]
+			fileevent $c readable [list close $c]
 		} err]} {
 			log "WARNING" "Command: $command could not be executed. $::errorInfo"
 		}

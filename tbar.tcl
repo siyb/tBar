@@ -32,6 +32,8 @@ package require packageloader
 package require Tk
 package require tbar
 package require logger
+package require tconsole
+
 namespace import ::geekosphere::tbar::util::logger::*
 initLogger
 
@@ -81,6 +83,9 @@ foreach {parameter value} $argv {
 			set proc [lindex $splitParam 1]
 			set IPC 1
 		}
+		"--console" {
+			set CONSOLE 1
+		}
 	}
 }
 
@@ -94,7 +99,10 @@ if {[info exists geekosphere::tbar::sys(config)] && [file exists $geekosphere::t
 } elseif {[file exists [file join . config.tcl]]} {
 	source [file join . config.tcl]
 }
-
+if {[info exists CONSOLE]} {
+	geekosphere::tbar::ipc::sendIPCCommand ::geekosphere::tbar::console launchConsole
+	exit
+}
 if {[info exists IPC]} {
 	puts "Running $namespace $proc"
 	geekosphere::tbar::ipc::sendIPCCommand $namespace $proc

@@ -301,7 +301,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 			error "unable to determine cpu load, please check if you specified the correct device"
 		}
 		set cpuIdentifier [lindex $deviceData 0]
-		log "DEBUG" "Obtaining cpu load for '$cpuIdentifier'"
+		log "TRACE" "Obtaining cpu load for '$cpuIdentifier'"
 		if {![info exists sys($w,cpu,totalTime,$cpuIdentifier)]} {
 			set sys($w,cpu,totalTime,$cpuIdentifier) 0
 		}

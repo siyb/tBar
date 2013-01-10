@@ -40,14 +40,17 @@ namespace eval geekosphere::tbar::ipc {
 		if {![info exists sys(ipc,registered,$ns)]} {
 			set sys(ipc,registered,$ns) [list]
 		}
+		log "INFO" "Proc registered: $ns $proc" 
 		lappend sys(ipc,registered,$ns) $proc
 	}
 
 	proc isProcRegistered {namespace proc} {
 		variable sys
 		if {![info exists sys(ipc,registered,$namespace)]} {
+			log "DEBUG" "Namespace not known"
 			return 0
 		}
+		log "DEBUG" "Namespace IPC procs: $sys(ipc,registered,$namespace)"
 		return != [lsearch $sys(ipc,registered,$namespace) $proc] -1
 	}
 

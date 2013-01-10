@@ -428,7 +428,7 @@ namespace eval geekosphere::tbar::gfx {
 	if {[catch {
 		package require Img
 	} err]} {
-		log "WARN" "Could not load Img package in geekosphere::tbar::gfx, some images might not be displayed properly!"
+		log "WARNING" "Could not load Img package in geekosphere::tbar::gfx, some images might not be displayed properly!"
 		set sys(gfx,imgAvailable) 0
 	}
 

@@ -90,7 +90,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 			foreach device $d {
 				log "TRACE" "updating device: $device"
 				if {![isValidDeviceDeclaration $device]} {
-					log "WARN" "Device declaration illegal, please specify a single or a multidevice (max 2 devices)"
+					log "WARNING" "Device declaration illegal, please specify a single or a multidevice (max 2 devices)"
 					return
 				}
 				set infoDict [geekosphere::amixer::getInformationOnDevice $device]

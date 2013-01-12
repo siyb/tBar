@@ -56,7 +56,9 @@ namespace eval geekosphere::tbar::ipc {
 
 	proc startIPCServer {} {
 		variable sys
-		socket -server geekosphere::tbar::ipc::server -myaddr $sys(ipc,host) $sys(ipc,port)
+		if {[catch { socket -server geekosphere::tbar::ipc::server -myaddr $sys(ipc,host) $sys(ipc,port) } err]} {
+			log "ERROR" "Could not bind IPC server socket, no IPC requests will work (including the console): $err"
+		}
 	}
 
 	proc server {chan ip port} {

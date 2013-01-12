@@ -199,6 +199,8 @@ setLogLevel "DEBUG"
 # -devices - a list of devices that should be controlled used this widget.
 #            check "amixer controls" for a list of available devices (use numid here!)
 # -label - specify the text to be shown on the mixer label
+# -card - specify a card to be used, defaults to "0" if not explicitly provided, use alsamixer
+# 	  to determine the correct id
 #addWidgetToBar mixer mixer1 1 -devices [list 1 2 3] -label "|M|"
 
 # Displays the time

@@ -27,7 +27,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 		set sys($w,activatedDevices) [list] 
 		# create an array containing all controldevices
 		# listed by amixer
-		geekosphere::amixer::updateControlList
+		#geekosphere::amixer::updateControlList
 
 		frame ${w}
 
@@ -35,6 +35,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 		bind ${w}.mixer <Button-1> [namespace code [list drawAllControls $w]]
 
 		uplevel #0 rename $w ${w}_
+		set sys($w,card) 0;# card defaults to 0, can be controlled using the -card parameter
 		action $w configure $arguments
 		initLogger
 	}
@@ -61,6 +62,9 @@ namespace eval geekosphere::tbar::widget::mixer {
 					}
 					"-font" {
 						changeFont $w $value
+					}
+					"-card" {
+						setCard $w $value
 					}
 					"-devices" {
 						setDevices $w $value
@@ -93,7 +97,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 					log "WARNING" "Device declaration illegal, please specify a single or a multidevice (max 2 devices)"
 					return
 				}
-				set infoDict [geekosphere::amixer::getInformationOnDevice $device]
+				set infoDict [geekosphere::amixer::getInformationOnDevice $sys($w,card) $device]
 				if {$multi} {
 					set path [getPathByDevice $w $d 1]
 				} else {
@@ -141,6 +145,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 	}
 
 	proc renderDeviceAccordingToType {w deviceList {multidevice 0}} {
+		variable sys
 		if {![isValidDeviceDeclaration $deviceList]} {
 			log "WARNING" "Illegal device declaration, you may only define two devices for multidisplay and if you do, they mustn't be the same"
 			return
@@ -148,8 +153,8 @@ namespace eval geekosphere::tbar::widget::mixer {
 		set devicePath [getPathByDevice $w $deviceList $multidevice]
 		
 		foreach device $deviceList {
-			if {[isDeviceAvailable $device]} {
-				set deviceInformation [geekosphere::amixer::getInformationOnDevice $device]
+			if {[isDeviceAvailable $w $device]} {
+				set deviceInformation [geekosphere::amixer::getInformationOnDevice $sys($w,card) $device]
 				log "INFO" "deviceInformation: $deviceInformation" 
 				set meta [dict get $deviceInformation "meta"]
 				set info [dict get $deviceInformation "info"]
@@ -169,8 +174,9 @@ namespace eval geekosphere::tbar::widget::mixer {
 		}
 	}
 
-	proc isDeviceAvailable {numid} {
-		foreach device [geekosphere::amixer::getControlDeviceList] {
+	proc isDeviceAvailable {w numid} {
+		variable sys
+		foreach device [geekosphere::amixer::getControlDeviceList $sys($w,card)] {
 			if  {$device == $numid} {
 				return 1
 			}
@@ -455,6 +461,11 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc setDevices {w devices} {
 		variable sys
 		set sys($w,activatedDevices) $devices
+	}
+
+	proc setCard {w card} {
+		variable sys
+		set sys($w,card) $card
 	}
 
 	proc setLabel {w label} {

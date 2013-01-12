@@ -6,10 +6,10 @@ namespace eval geekosphere::amixer {
 	# sets or updates the sys(amixerControls) dictionary. This dictionary will store
 	# device information of each device found.
 	# The key is the numid, value is another dict with two key, "iface" and "name"
-	proc updateControlList {} {
+	proc updateControlList {card} {
 		variable sys
 		set sys(amixerControls) [dict create];# reset the dict (or create it)
-		set data [read [set fl [open |[list amixer controls]]]]
+		set data [read [set fl [open |[list amixer -c $card controls]]]]
 		close $fl
 		foreach control [split $data "\n"] {
 			set splitControl [split $control ","]
@@ -31,17 +31,18 @@ namespace eval geekosphere::amixer {
 	}
 
 	# returns a sorted list containing the numid of all devices
-	proc getControlDeviceList {} {
+	proc getControlDeviceList {card} {
 		variable sys
-		if {![info exists sys(amixerControls)]} { updateControlList }
+		if {![info exists sys(amixerControls)]} { updateControlList $card }
 		return [lsort -integer [dict keys $sys(amixerControls)]]
 	}
 	
 	# takes the numid of a device as input. will call amixer cget numid=$numid
 	# and parse its output to create a return dict
-	proc getInformationOnDevice {numid} {
+	proc getInformationOnDevice {card numid} {
 		set data [read [set fl [open |[list amixer cget numid=$numid]]]];close $fl
 		set returnDict [dict create]
+		dict set returnDict "card" $card
 		foreach line [split $data "\n"] {
 			set trimmedLine [string trim $line]
 			set splitLine [split $trimmedLine]
@@ -94,20 +95,23 @@ namespace eval geekosphere::amixer {
 	# infoDict is a dict returned by getInformationOnDevice 
 	proc setDevicePercent {infoDict percentage} {
 		set info [dict get $infoDict "info"]
-		set command [list amixer cset numid=[dict get $info "numid"] "${percentage}%"]
+		set card [dict get $infoDict "card"]
+		set command [list amixer -c $card cset numid=[dict get $info "numid"] "${percentage}%"]
 		set data [read [set cmd [open |$command]]]; close $cmd
 	}
 
 	proc setDeviceBoolean {infoDict bool} {
 		if {$bool != 1 && $bool != 0} { error "Must be 1 or 0" }
 		set info [dict get $infoDict "info"]
-		set command [list amixer cset numid=[dict get $info "numid"] $bool]
+		set card [dict get $infoDict "card"]
+		set command [list amixer -c $card cset numid=[dict get $info "numid"] $bool]
 		set data [read [set cmd [open |$command]]]; close $cmd
 	}	
 
 	proc setDeviceEnum {infoDict enum} {
 		set info [dict get $infoDict "info"]
-		set command [list amixer cset numid=[dict get $info "numid"] $enum]
+		set card [dict get $infoDict "card"]
+		set command [list amixer -c $card cset numid=[dict get $info "numid"] $enum]
 		set data [read [set cmd [open |$command]]]; close $cmd
 	}
 }

@@ -25,9 +25,6 @@ namespace eval geekosphere::tbar::widget::mixer {
 		variable sys
 		set sys($w,originalCommand) ${w}_
 		set sys($w,activatedDevices) [list] 
-		# create an array containing all controldevices
-		# listed by amixer
-		#geekosphere::amixer::updateControlList
 
 		frame ${w}
 
@@ -87,7 +84,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 
 	proc updateWidget {w} {
 		variable sys
-		log "TRACE" "updating"
+		log "TRACE" "updating for $w"
 		foreach d $sys($w,activatedDevices) {
 			set multi [isMultiDevice $d]
 			log "TRACE" "updating device(list): $d"
@@ -98,6 +95,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 					return
 				}
 				set infoDict [geekosphere::amixer::getInformationOnDevice $sys($w,card) $device]
+				log "TRACE" "Updating: $infoDict"
 				if {$multi} {
 					set path [getPathByDevice $w $d 1]
 				} else {
@@ -105,6 +103,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 				}
 				set meta [dict get $infoDict "meta"]
 				set type [dict get $meta "type"]
+				log "TRACE" "$path | $infoDict | $multi"
 				if {$type eq "INTEGER"} {
 					setScrollbarValueFromInfoDict $path $infoDict $multi
 				}

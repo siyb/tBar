@@ -40,7 +40,7 @@ namespace eval geekosphere::amixer {
 	# takes the numid of a device as input. will call amixer cget numid=$numid
 	# and parse its output to create a return dict
 	proc getInformationOnDevice {card numid} {
-		set data [read [set fl [open |[list amixer cget numid=$numid]]]];close $fl
+		set data [read [set fl [open |[list amixer -c $card cget numid=$numid]]]];close $fl
 		set returnDict [dict create]
 		dict set returnDict "card" $card
 		foreach line [split $data "\n"] {

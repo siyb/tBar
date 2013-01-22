@@ -33,7 +33,7 @@ namespace eval geekosphere::amixer {
 	# returns a sorted list containing the numid of all devices
 	proc getControlDeviceList {card} {
 		variable sys
-		if {![info exists sys(amixerControls)]} { updateControlList $card }
+		updateControlList $card
 		return [lsort -integer [dict keys $sys(amixerControls)]]
 	}
 	

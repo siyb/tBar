@@ -176,6 +176,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc isDeviceAvailable {w numid} {
 		variable sys
 		foreach device [geekosphere::amixer::getControlDeviceList $sys($w,card)] {
+			log "DEBUG" "Checking if $numid exists on card number $sys($w,card) -> current device being checked: $device"
 			if  {$device == $numid} {
 				return 1
 			}

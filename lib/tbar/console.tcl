@@ -24,15 +24,18 @@ namespace eval geekosphere::tbar::console {
 		$sys(text) configure -state disabled
 		pack [entry $sys(entry)] -fill x -expand 1 -side bottom -anchor s 
 		
+		set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch
+
 		bind $sys(entry) <Return> {
 			geekosphere::tbar::console::evalLine [geekosphere::tbar::console::getTextFromEntryAndClear]
-
 		}
 	}
 
-	proc insertTextIntoConsoleWindow {text} {
+	proc insertTextIntoConsoleWindow {text doLog} {
 		variable sys
-		log "DEBUG" "Inserting text $text"
+		if {$doLog} {
+			log "DEBUG" "Inserting text $text"
+		}
 		$sys(text) configure -state normal
 		$sys(text) insert end "$text\n"
 		$sys(text) configure -state disabled
@@ -54,6 +57,10 @@ namespace eval geekosphere::tbar::console {
 		} else {
 			insertTextIntoConsoleWindow "OK"
 		}
+	}
+
+	proc logDispatch {message} {
+		insertTextIntoConsoleWindow $message 0
 	}
 
 	if {[catch {

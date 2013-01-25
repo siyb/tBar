@@ -2,6 +2,9 @@ package provide logger 1.0
 
 namespace eval geekosphere::tbar::util::logger {
 
+	# set this to the command that should receive log messages
+	set loggerSettings(dispatchCommand) ""
+
 	#
 	# LOGGER
 	#
@@ -43,6 +46,7 @@ namespace eval geekosphere::tbar::util::logger {
 	# a simple logging proc. any namespace that wishes to use this proc
 	# needs to call initLogger.
 	proc log {level message} {
+		variable loggerSettings
 		set namespace [uplevel 1 { namespace current }];# the namespace in which the logger proc was called
 		namespace upvar $namespace logger logger;# get the namespace specific vars (namespace that called the proc)
 
@@ -58,6 +62,13 @@ namespace eval geekosphere::tbar::util::logger {
 			puts $message
 			if {$logger(log2file)} {
 				set fl [open $logger(logfile) a+]; puts $fl $message; close $fl
+			}
+			if {$loggerSettings(dispatchCommand) ne ""} {
+				if {[catch {
+					$loggerSettings(dispatchCommand) $message
+				} err]} {
+					puts "CANNOT DISPATCH: $::errorInfo"
+				}
 			}
 		}
 	}

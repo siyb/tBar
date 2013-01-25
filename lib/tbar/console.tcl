@@ -55,11 +55,12 @@ namespace eval geekosphere::tbar::console {
 			return
 		}
 		toplevel $sys(window)
+		wm resizable $sys(window) 0 0
 		pack [frame $sys(frame)] -fill both -expand 1
 		pack [text $sys(text)] -fill both -expand 1 -side top -anchor s
 		$sys(text) configure -state disabled
 		configureTags
-		pack [entry $sys(entry)] -fill x -expand 1 -side bottom -anchor s 
+		pack [entry $sys(entry)] -fill x -expand 1 -side bottom -anchor s -after $sys(text) 
 		
 		set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch
 
@@ -78,6 +79,9 @@ namespace eval geekosphere::tbar::console {
 
 	proc insertTextIntoConsoleWindow {text doLog tag} {
 		variable sys
+		if {![winfo exists $sys(text)]} {
+			return
+		}
 		if {$doLog} {
 			log "DEBUG" "Inserting text $text"
 		}

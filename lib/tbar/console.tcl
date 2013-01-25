@@ -4,8 +4,21 @@ package require tipc
 package require util
 package require logger
 
+catch {
+	namespace import ::tcl::mathop::*
+}
+
 namespace eval geekosphere::tbar::console {
 	initLogger
+	
+	dict set sys(buildinCommand) "log" { 
+		"set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch"
+		"Console logging enabled"
+	}
+	dict set sys(buildinCommand) "nolog" {
+		"set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) \"\""
+		"Console logging disabled"
+	}
 
 	# window path related variables
 	set sys(window) [geekosphere::tbar::util::generateComponentName]
@@ -49,14 +62,32 @@ namespace eval geekosphere::tbar::console {
 	}
 
 	proc evalLine {line} {
-		insertTextIntoConsoleWindow $line
-		if {[catch {
-			uplevel #0 {*}$line
-		} err]} {
-			insertTextIntoConsoleWindow $::errorInfo
+		insertTextIntoConsoleWindow $line 1
+		if {[isBuildinCommand $line]} {
+			runBuildinCommand $line
 		} else {
-			insertTextIntoConsoleWindow "OK"
+			if {[catch {
+				uplevel #0 {*}$line
+			} err]} {
+				insertTextIntoConsoleWindow $::errorInfo
+			} else {
+				insertTextIntoConsoleWindow "OK"
+			}
 		}
+	}
+
+	proc isBuildinCommand {line} {
+		variable sys
+		return [dict exists $sys(buildinCommand) $line]
+	}
+
+	proc runBuildinCommand {line} {
+		variable sys
+		set commandList [dict get $sys(buildinCommand) $line]
+		set command [lindex $commandList 0]
+		set message [lindex $commandList 1]
+		{*}$command
+		insertTextIntoConsoleWindow $message 1
 	}
 
 	proc logDispatch {message} {

@@ -142,6 +142,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 		thread::send $thread [list execCommand $command]
 
 		$entry delete 0 end
+		focus .
 		fillListBoxWithExecutables $listBox [filterExecutables ""]
 
 	}

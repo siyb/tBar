@@ -29,6 +29,11 @@ namespace eval geekosphere::tbar::console {
 		"Cleared"
 		"Clears the console"
 	}
+	dict set sys(buildinCommand) "help" {
+		"help"
+		""
+		"Displays this help"
+	}
 
 	#
 	# Console Color Settings
@@ -102,6 +107,11 @@ namespace eval geekosphere::tbar::console {
 		insertTextIntoConsoleWindow $text 1 input
 	}
 
+	proc printHelp {command helpText} {
+		insertTextIntoConsoleWindow "-> ${command}:" 0 success
+		insertTextIntoConsoleWindow "\t\t$helpText" 0 success
+	}
+
 	proc getTextFromEntryAndClear {} {
 		variable sys
 		set r [$sys(entry) get]
@@ -142,11 +152,22 @@ namespace eval geekosphere::tbar::console {
 		insertTextIntoConsoleWindow $message 0 #000000
 	}
 
+	#
+	# Built In Command Helper Procs
+	#
+
 	proc cls {} {
 		variable sys
 		$sys(text) configure -state normal
 		$sys(text) delete 0.0 end
 		$sys(text) configure -state normal
+	}
+
+	proc help {} {
+		variable sys
+		dict for {key val} $sys(buildinCommand) {
+			printHelp $key [lindex $val 2]
+		}
 	}
 
 	if {[catch {

@@ -1,5 +1,6 @@
 package provide menulib 1.0
 package require logger
+package require Thread
 catch {
 	namespace import ::geekosphere::tbar::util::logger::*
 	namespace import ::tcl::mathop::*
@@ -108,19 +109,42 @@ namespace eval geekosphere::tbar::widget::automenu {
 			set command [$listBox get $curselection $curselection]
 		}
 
-		if {[catch {
-			log "INFO" "Executing open |$command r"
-			set c [open |$command r]
-			fileevent $c readable [list close $c]
-		} err]} {
-			log "WARNING" "Command: $command could not be executed. $::errorInfo"
-		}
+		log "INFO" "Executing $command -> Mainthread [thread::id]"
+		set thread [thread::create { 
+
+			proc execCommand {command} {
+				if {[catch {
+					package require logger
+					namespace import ::geekosphere::tbar::util::logger::*
+					initLogger
+					set chan [open |$command a+]
+					proc poll {chan} {
+						log "INFO" "Thread id: [thread::id]"
+						set data [read $chan]
+						log "INFO" "$data"
+						if {[chan eof $chan]} {
+							log "INFO" "Channel $chan cannot be read any more, killing"
+							close $chan	
+							log "INFO" "Stopping thread: [thread::id] -> [thread::names]"
+							thread::exit
+						} else {
+							after 500 [list poll $chan]
+						}
+					}
+
+					after 500 [list poll $chan]
+				} err]} {
+					log "WARNING" "Command: $command could not be executed. $::errorInfo"
+				}
+			}
+			thread::wait 
+		}]
+		thread::send $thread [list execCommand $command]
 
 		$entry delete 0 end
 		fillListBoxWithExecutables $listBox [filterExecutables ""]
 
 	}
-
 	proc isCommandInPath {command} {
 		set commands [getExecutablesInPath]
 		return [!= [lsearch $commands $command] -1]

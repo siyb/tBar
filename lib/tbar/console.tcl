@@ -10,15 +10,33 @@ catch {
 
 namespace eval geekosphere::tbar::console {
 	initLogger
-	
+
+	#
+	# Build-In Command Definitions
+	#
 	dict set sys(buildinCommand) "log" { 
 		"set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch"
 		"Console logging enabled"
+		"Enables dispatching of tBar logs to the console"
 	}
 	dict set sys(buildinCommand) "nolog" {
 		"set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) \"\""
 		"Console logging disabled"
+		"Disables dispatching of tBar logs to the console"
 	}
+	dict set sys(buildinCommand) "clear" {
+		"cls"
+		"Cleared"
+		"Clears the console"
+	}
+
+	#
+	# Console Color Settings
+	#
+	set sys(font,message) #7373FF
+	set sys(font,error) #AD0000
+	set sys(font,success) #008A09
+	set sys(font,input) #000000
 
 	# window path related variables
 	set sys(window) [geekosphere::tbar::util::generateComponentName]
@@ -35,6 +53,7 @@ namespace eval geekosphere::tbar::console {
 		pack [frame $sys(frame)] -fill both -expand 1
 		pack [text $sys(text)] -fill both -expand 1 -side top -anchor s
 		$sys(text) configure -state disabled
+		configureTags
 		pack [entry $sys(entry)] -fill x -expand 1 -side bottom -anchor s 
 		
 		set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch
@@ -44,14 +63,43 @@ namespace eval geekosphere::tbar::console {
 		}
 	}
 
-	proc insertTextIntoConsoleWindow {text doLog} {
+	proc configureTags {} {
+		variable sys
+		$sys(text) tag configure message -foreground $sys(font,message)
+		$sys(text) tag configure error -foreground $sys(font,error)
+		$sys(text) tag configure success -foreground $sys(font,success)
+		$sys(text) tag configure input -foreground $sys(font,input)
+	}
+
+	proc insertTextIntoConsoleWindow {text doLog tag} {
 		variable sys
 		if {$doLog} {
 			log "DEBUG" "Inserting text $text"
 		}
+		set text "$text\n"
 		$sys(text) configure -state normal
-		$sys(text) insert end "$text\n"
+		$sys(text) insert end "$text" $tag
 		$sys(text) configure -state disabled
+	}
+
+	proc printMessage {text} {
+		variable sys
+		insertTextIntoConsoleWindow $text 1 message
+	}
+
+	proc printError {text} {
+		variable sys
+		insertTextIntoConsoleWindow $text 1 error
+	}
+
+	proc printSuccess {text} {
+		variable sys
+		insertTextIntoConsoleWindow $text 1 success
+	}
+
+	proc printInput {text} {
+		variable sys
+		insertTextIntoConsoleWindow $text 1 input
 	}
 
 	proc getTextFromEntryAndClear {} {
@@ -62,16 +110,16 @@ namespace eval geekosphere::tbar::console {
 	}
 
 	proc evalLine {line} {
-		insertTextIntoConsoleWindow $line 1
+		printInput $line
 		if {[isBuildinCommand $line]} {
 			runBuildinCommand $line
 		} else {
 			if {[catch {
 				uplevel #0 {*}$line
 			} err]} {
-				insertTextIntoConsoleWindow $::errorInfo
+				printError $::errorInfo
 			} else {
-				insertTextIntoConsoleWindow "OK"
+				printSuccess "OK"
 			}
 		}
 	}
@@ -87,11 +135,18 @@ namespace eval geekosphere::tbar::console {
 		set command [lindex $commandList 0]
 		set message [lindex $commandList 1]
 		{*}$command
-		insertTextIntoConsoleWindow $message 1
+		printMessage $message
 	}
 
 	proc logDispatch {message} {
-		insertTextIntoConsoleWindow $message 0
+		insertTextIntoConsoleWindow $message 0 #000000
+	}
+
+	proc cls {} {
+		variable sys
+		$sys(text) configure -state normal
+		$sys(text) delete 0.0 end
+		$sys(text) configure -state normal
 	}
 
 	if {[catch {

@@ -60,7 +60,7 @@ namespace eval geekosphere::tbar::console {
 		pack [text $sys(text)] -fill both -expand 1 -side top -anchor s
 		$sys(text) configure -state disabled
 		configureTags
-		pack [entry $sys(entry)] -fill x -expand 1 -side bottom -anchor s -after $sys(text) 
+		pack [entry $sys(entry)] -fill x -side bottom -anchor s -after $sys(text) 
 		
 		set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch
 

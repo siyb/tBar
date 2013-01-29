@@ -11,42 +11,38 @@ catch {
 namespace eval geekosphere::tbar::console {
 	initLogger
 
-	#
-	# Build-In Command Definitions
-	#
-	dict set sys(buildinCommand) "log" "hasSubCommands" 1
-	dict set sys(buildinCommand) "log" "subCommands" [list "on" "off" "status"]
+	variable conf
+	variable sys
+	set sys(buildinCommand) [dict create]
 
-	dict set sys(buildinCommand) "log" "on" "hasSubCommands" "0"
-	dict set sys(buildinCommand) "log" "on" "info" [list \
-		"set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch" \
-		"Console logging enabled" \
-		"Enables dispatching of tBar logs to the console"]
+	# pkgIndex error catching \o/
+	catch {	
+		lappend conf(command,path) [file join / usr lib tbar tbar consolecmd]
+		lappend conf(command,path) [file join $geekosphere::tbar::sys(user,home) consolecmd]
+	}
+	log "INFO" "Command paths: $conf(command,path)"
 
-	dict set sys(buildinCommand) "log" "off" "hasSubCommands" 0
-	dict set sys(buildinCommand) "log" "off" "info" [list \
-		"set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) \"\"" \
-		"Console logging disabled" \
-		"Disables dispatching of tBar logs to the console"]
+	foreach dir $conf(command,path) {
+		if {![file exists $dir]} {
+			log "WARNING" "'$dir' does not exist and will not be searched for console commands"
+			continue;
+		}
+		if {![file isdirectory $dir]} {
+			log "WARNING" "'$dir' is no directory and will not be searched for console commands"
+		       	continue;
+		}
+		foreach file [glob [file join $dir *]] {
+			log "INFO" "Attempting to source '$file'"
+			if {[catch {
+				source $file
+			}]} {
+				log "WARNING" "Error while sourcing command file '$file': $::errorInfo"
+			} else {
+				log "INFO" "Command file '$file' has been loaded"
+			}
+		}
+	}
 
-	dict set sys(buildinCommand) "log" "status" "hasSubCommands" 0
-	dict set sys(buildinCommand) "log" "status" "info" [list \
-		"logStatus" \
-		"" \
-		"Displays the dispatching status of tBar logs"]	
-
-	dict set sys(buildinCommand) "clear" "hasSubCommands" 0
-	dict set sys(buildinCommand) "clear" "info" [list \
-		"cls" \
-		"Console Cleared" \
-		"Clears the console"]
-
-	dict set sys(buildinCommand) "help" "hasSubCommands" 0
-	dict set sys(buildinCommand) "help" "info" [list \
-		"help" \
-		"" \
-		"Displays this help"]
-	
 	#
 	# Console Color Settings
 	#
@@ -125,27 +121,6 @@ namespace eval geekosphere::tbar::console {
 		insertTextIntoConsoleWindow ">> $text" 1 input
 	}
 
-	proc printHelp {} {
-		variable sys
-		dict for {key val} $sys(buildinCommand) {
-			set hasSubCommands [dict get $sys(buildinCommand) $key "hasSubCommands"]
-			insertTextIntoConsoleWindow "${key}:" 0 success
-			if {$hasSubCommands} {
-				set subCommandList [dict get $sys(buildinCommand) $key "subCommands"]
-				foreach subCommand $subCommandList {
-					set info [dict get $sys(buildinCommand) $key $subCommand "info"] 
-					insertTextIntoConsoleWindow "\t$subCommand" 0 success
-					insertTextIntoConsoleWindow "\t\t[lindex $info 2]" 0 success
-				}
-
-			} else {
-				set info [dict get $sys(buildinCommand) $key "info"]
-				insertTextIntoConsoleWindow "\t[lindex $info 2]" 0 success
-			}
-		}
-	}
-
-
 	proc getTextFromEntryAndClear {} {
 		variable sys
 		set r [$sys(entry) get]
@@ -202,29 +177,6 @@ namespace eval geekosphere::tbar::console {
 		insertTextIntoConsoleWindow $message 0 #000000
 	}
 
-	#
-	# Built In Command Helper Procs
-	#
-
-	proc cls {} {
-		variable sys
-		$sys(text) configure -state normal
-		$sys(text) delete 0.0 end
-		$sys(text) configure -state disabled
-	}
-
-	proc help {} {
-		variable sys
-		printHelp
-	}
-
-	proc logStatus {} {
-		if {$geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) eq "geekosphere::tbar::console::logDispatch"} {
-			printMessage "Log dispatching enabled"
-		} else {
-			printMessage "Log dispatching disabled"
-		}
-	}
 	if {[catch {
 		geekosphere::tbar::ipc::registerProc launchConsole
 	} err]} {

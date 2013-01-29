@@ -101,6 +101,7 @@ namespace eval geekosphere::tbar::console {
 		$sys(text) configure -state normal
 		$sys(text) insert end "$text" $tag
 		$sys(text) configure -state disabled
+		$sys(text) yview moveto 1
 	}
 
 	proc printMessage {text} {

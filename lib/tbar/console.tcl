@@ -79,6 +79,7 @@ namespace eval geekosphere::tbar::console {
 		bind $sys(entry) <Return> {
 			geekosphere::tbar::console::evalLine [geekosphere::tbar::console::getTextFromEntryAndClear]
 		}
+		focus $sys(entry)
 	}
 
 	proc configureTags {} {

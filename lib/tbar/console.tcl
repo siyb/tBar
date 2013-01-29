@@ -121,7 +121,7 @@ namespace eval geekosphere::tbar::console {
 
 	proc printInput {text} {
 		variable sys
-		insertTextIntoConsoleWindow $text 1 input
+		insertTextIntoConsoleWindow ">> $text" 1 input
 	}
 
 	proc printHelp {} {

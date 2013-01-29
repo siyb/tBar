@@ -14,27 +14,39 @@ namespace eval geekosphere::tbar::console {
 	#
 	# Build-In Command Definitions
 	#
-	dict set sys(buildinCommand) "log" { 
-		"set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch"
-		"Console logging enabled"
-		"Enables dispatching of tBar logs to the console"
-	}
-	dict set sys(buildinCommand) "nolog" {
-		"set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) \"\""
-		"Console logging disabled"
-		"Disables dispatching of tBar logs to the console"
-	}
-	dict set sys(buildinCommand) "clear" {
-		"cls"
-		"Cleared"
-		"Clears the console"
-	}
-	dict set sys(buildinCommand) "help" {
-		"help"
-		""
-		"Displays this help"
-	}
+	dict set sys(buildinCommand) "log" "hasSubCommands" 1
+	dict set sys(buildinCommand) "log" "subCommands" [list "on" "off" "status"]
 
+	dict set sys(buildinCommand) "log" "on" "hasSubCommands" "0"
+	dict set sys(buildinCommand) "log" "on" "info" [list \
+		"set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch" \
+		"Console logging enabled" \
+		"Enables dispatching of tBar logs to the console"]
+
+	dict set sys(buildinCommand) "log" "off" "hasSubCommands" 0
+	dict set sys(buildinCommand) "log" "off" "info" [list \
+		"set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) \"\"" \
+		"Console logging disabled" \
+		"Disables dispatching of tBar logs to the console"]
+
+	dict set sys(buildinCommand) "log" "status" "hasSubCommands" 0
+	dict set sys(buildinCommand) "log" "status" "info" [list \
+		"logStatus" \
+		"" \
+		"Displays the dispatching status of tBar logs"]	
+
+	dict set sys(buildinCommand) "clear" "hasSubCommands" 0
+	dict set sys(buildinCommand) "clear" "info" [list \
+		"cls" \
+		"Console Cleared" \
+		"Clears the console"]
+
+	dict set sys(buildinCommand) "help" "hasSubCommands" 0
+	dict set sys(buildinCommand) "help" "info" [list \
+		"help" \
+		"" \
+		"Displays this help"]
+	
 	#
 	# Console Color Settings
 	#
@@ -111,10 +123,26 @@ namespace eval geekosphere::tbar::console {
 		insertTextIntoConsoleWindow $text 1 input
 	}
 
-	proc printHelp {command helpText} {
-		insertTextIntoConsoleWindow "-> ${command}:" 0 success
-		insertTextIntoConsoleWindow "\t\t$helpText" 0 success
+	proc printHelp {} {
+		variable sys
+		dict for {key val} $sys(buildinCommand) {
+			set hasSubCommands [dict get $sys(buildinCommand) $key "hasSubCommands"]
+			insertTextIntoConsoleWindow "${key}:" 0 success
+			if {$hasSubCommands} {
+				set subCommandList [dict get $sys(buildinCommand) $key "subCommands"]
+				foreach subCommand $subCommandList {
+					set info [dict get $sys(buildinCommand) $key $subCommand "info"] 
+					insertTextIntoConsoleWindow "\t$subCommand" 0 success
+					insertTextIntoConsoleWindow "\t\t[lindex $info 2]" 0 success
+				}
+
+			} else {
+				set info [dict get $sys(buildinCommand) $key "info"]
+				insertTextIntoConsoleWindow "\t[lindex $info 2]" 0 success
+			}
+		}
 	}
+
 
 	proc getTextFromEntryAndClear {} {
 		variable sys
@@ -140,16 +168,32 @@ namespace eval geekosphere::tbar::console {
 
 	proc isBuildinCommand {line} {
 		variable sys
-		return [dict exists $sys(buildinCommand) $line]
+		return [dict exists $sys(buildinCommand) [lindex $line 0]]
 	}
 
 	proc runBuildinCommand {line} {
 		variable sys
-		set commandList [dict get $sys(buildinCommand) $line]
-		set command [lindex $commandList 0]
-		set message [lindex $commandList 1]
+		set splitLine [split $line]
+		set cmd [lindex $splitLine 0]
+		set sub [lindex $splitLine 1]
+		if {$cmd eq ""} {
+			printError "Please specify a command"
+			return
+		}
+		set info [dict get $sys(buildinCommand) $cmd]
+		set hasSubCommands [dict get $sys(buildinCommand) $cmd "hasSubCommands"]
+
+		if {$sub eq "" && $hasSubCommands} {
+			printError "Command '$cmd' requires a sub command"
+			return
+		}
+
+		if {$sub ne ""} {
+			set command [lindex [dict get $sys(buildinCommand) $cmd $sub "info"] 0]
+		} else {
+			set command [lindex [dict get $sys(buildinCommand) $cmd "info"] 0]
+		}
 		{*}$command
-		printMessage $message
 	}
 
 	proc logDispatch {message} {
@@ -164,16 +208,21 @@ namespace eval geekosphere::tbar::console {
 		variable sys
 		$sys(text) configure -state normal
 		$sys(text) delete 0.0 end
-		$sys(text) configure -state normal
+		$sys(text) configure -state disabled
 	}
 
 	proc help {} {
 		variable sys
-		dict for {key val} $sys(buildinCommand) {
-			printHelp $key [lindex $val 2]
-		}
+		printHelp
 	}
 
+	proc logStatus {} {
+		if {$geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) eq "geekosphere::tbar::console::logDispatch"} {
+			printMessage "Log dispatching enabled"
+		} else {
+			printMessage "Log dispatching disabled"
+		}
+	}
 	if {[catch {
 		geekosphere::tbar::ipc::registerProc launchConsole
 	} err]} {

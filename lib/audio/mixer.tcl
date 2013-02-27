@@ -1,5 +1,6 @@
 package provide mixer 1.0
 
+# TODO: add support for multiple boolean values, in the form of: values {off off}
 # TODO: dep management in widget
 package require amixer
 package require logger

@@ -5,6 +5,7 @@ if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require util
 }
 
+# TODO: infowindow (like cpu windows) with memory history
 proc memory {w args} {
 	geekosphere::tbar::widget::memory::makeMemory $w $args
 

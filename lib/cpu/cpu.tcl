@@ -15,6 +15,7 @@ proc cpu {w args} {
 	return $w
 }
 
+# TODO 1.4: cpu detail window -> record cpu history when window is closed so that spikes can be seen
 # TODO 1.x: add support for multiple thermal sources
 catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::cpu {

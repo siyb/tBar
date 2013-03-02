@@ -4,8 +4,10 @@ if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require barChart
 	package require util
 	package require logger
+	package require struct
 }
-
+# TODO: move to package manager
+package require struct
 proc cpu {w args} {
 	geekosphere::tbar::widget::cpu::makeCpu $w $args
 
@@ -15,7 +17,6 @@ proc cpu {w args} {
 	return $w
 }
 
-# TODO 1.4: cpu detail window -> record cpu history when window is closed so that spikes can be seen
 # TODO 1.x: add support for multiple thermal sources
 catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::cpu {
@@ -386,15 +387,22 @@ namespace eval geekosphere::tbar::widget::cpu {
 		positionWindowRelativly $sys($w,freqWindow) $w
 	}
 	
-	proc  freqInfoUpdate {w} {
+	proc freqInfoUpdate {w} {
 		variable sys
-		if {![info exists sys($w,freqWindow)]} {
-			return
-		}
 		foreach device $sys($w,additionalDevices) {
+			if {![info exists sys($w,hist,$device)]} {
+				set sys($w,hist,$device) [::struct::stack]
+			}
+			
+			set load [getCpuLoad $w [lsearch -inline -index 0 $sys(statData) $device]]
+			$sys($w,hist,$device) push $load
+
+			if {![info exists sys($w,freqWindow)]} {
+				continue
+			}
+
 			if {[winfo exists $sys($w,freqWindow).${device}]} {
-				set load [getCpuLoad $w [lsearch -inline -index 0 $sys(statData) $device]]
-				$sys($w,freqWindow).${device}.barchart pushValue $load
+				$sys($w,freqWindow).${device}.barchart setValues [$sys($w,hist,$device) getr]
 				$sys($w,freqWindow).${device}.barchart update
 				set geekosphere::tbar::widget::cpu::sys($w,cpu,loadDisplayBar,$device) $load
 			}

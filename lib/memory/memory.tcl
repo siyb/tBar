@@ -7,7 +7,6 @@ if {![info exist geekosphere::tbar::packageloader::available]} {
 }
 # TODO: use package manager
 package require struct
-# TODO: infowindow (like cpu windows) with memory history
 proc memory {w args} {
 	geekosphere::tbar::widget::memory::makeMemory $w $args
 

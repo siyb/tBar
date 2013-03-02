@@ -3,10 +3,10 @@ if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require statusBar
 	package require util
 
-	# TODO: not declared in widget file yet
 	package require struct
 }
-
+# TODO: use package manager
+package require struct
 # TODO: infowindow (like cpu windows) with memory history
 proc memory {w args} {
 	geekosphere::tbar::widget::memory::makeMemory $w $args
@@ -113,7 +113,6 @@ namespace eval geekosphere::tbar::widget::memory {
 		if {$sys($w,useSwap)} {
 			${w}.swapstatus update $swap
 		}
-		
 		updateHistory $w
 	}
 	
@@ -187,15 +186,31 @@ namespace eval geekosphere::tbar::widget::memory {
 		}
 		positionWindowRelativly $sys($w,memHistory) $w
 	}
-	
 	proc updateHistory {w} {
 		variable sys
+
+		if {![info exists sys($w,hist,mem)]} {
+			set sys($w,hist,mem) [::struct::stack]
+		}
+		if {![info exists sys($w,hist,swp)]} {
+			set sys($w,hist,swp) [::struct::stack]
+		}
+
+
+		$sys($w,hist,mem) push [set percMem [expr {([usedMem] / [totalMem]) * 100.0}]]
+		$sys($w,hist,swp) push [set percSwap [expr {([usedSwap] / [totalSwap]) * 100.0}]]
+
+		$sys($w,hist,mem) trim 100
+		$sys($w,hist,swp) trim 100
+		
 		if {![info exists sys($w,memHistory)]} {
 			return
 		}
-		$sys($w,memHistory).mem.chart pushValue [set percMem [expr {([usedMem] / [totalMem]) * 100.0}]]
+		
+		$sys($w,memHistory).mem.chart setValues [$sys($w,hist,mem) getr]
 		$sys($w,memHistory).mem.chart update 
-		$sys($w,memHistory).swap.chart pushValue [set percSwap [expr {([usedSwap] / [totalSwap]) * 100.0}]]
+
+		$sys($w,memHistory).swap.chart setValues [$sys($w,hist,swp) getr]
 		$sys($w,memHistory).swap.chart update 
 	}
 

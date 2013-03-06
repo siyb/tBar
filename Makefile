@@ -34,6 +34,7 @@ install: clean pkgindex
 	mkdir -p $(DESTDIR)/usr/bin/
 
 	cp -r tbar.tcl $(DESTDIR)/usr/bin/tbar
+	cp -r tbar_wrapper.sh $(DESTDIR)/usr/bin/tbar_wrapper
 	cp -r lib/* $(DESTDIR)/usr/lib/tbar/
 	cp -r widget/* $(DESTDIR)/usr/share/tbar/
 	cp -r examples $(DESTDIR)/usr/share/doc/tbar/
@@ -60,7 +61,7 @@ deploy: clean
 	git archive --format=tar --prefix=$(deploy)/ $(gitv) . | gzip --best > $(deploy).tar.gz
 
 uninstall:
-	rm -rf $(DESTDIR)/etc/tbar/ $(DESTDIR)/usr/bin/tbar $(DESTDIR)/usr/lib/tbar/ $(DESTDIR)/usr/share/tbar/ $(DESTDIR)/usr/share/man/man1/tbar.1.gz $(DESTDIR)/usr/share/doc/tbar/
+	rm -rf $(DESTDIR)/etc/tbar/ $(DESTDIR)/usr/bin/tbar $(DESTDIR)/usr/bin/tbar_wrapper $(DESTDIR)/usr/lib/tbar/ $(DESTDIR)/usr/share/tbar/ $(DESTDIR)/usr/share/man/man1/tbar.1.gz $(DESTDIR)/usr/share/doc/tbar/
 
 clean:
 	rm -rf tbar.1.gz tbar.kit lib/pkgIndex.tcl $(deploy).tar.gz $(deploykit) $(deploykit).tar.gz tbar_$(version)_git_$(gitv) tbar_$(version)_git_$(gitv).tar.gz tbar_$(version)_kit_git_$(gitv) tbar_$(version)_kit_git_$(gitv).tar.gz

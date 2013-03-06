@@ -170,7 +170,7 @@ namespace eval geekosphere::tbar::widget::memory {
 			unset sys($w,memHistory)
 			return
 		}
-		toplevel $sys($w,memHistory)
+		toplevel $sys($w,memHistory) -bg $sys($w,background)
 		foreach t [list mem swap] {
 			pack [frame $sys($w,memHistory).${t} -height 30] -fill x
 			pack [label $sys($w,memHistory).${t}.l -text $t -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font)] -side left -fill x -expand 1 

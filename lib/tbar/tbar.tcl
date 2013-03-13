@@ -139,6 +139,14 @@ namespace eval geekosphere::tbar {
 		dict set sys(widget,dict) $name path [geekosphere::tbar::util::generateComponentName]
 	}
 
+	proc removeWidgetFromBar {name} {
+		variable sys
+		if {![dict exists $sys(widget,dict) $name path]} { log "WARN" "Trying to remove non existant widget '$name'"; return }
+		set wpath [dict get $sys(widget,dict) $name]
+		set sys(widget,dict) [dict remove $sys(widget,dict) $name]
+		destroy $wpath
+	}
+
 	# check if a widget by name has been added to the bar using addWidgetToBar
 	proc widgetExistsInBar {name} {
 		variable sys

@@ -134,11 +134,11 @@ namespace eval geekosphere::tbar::console {
 			runBuildinCommand $line
 		} else {
 			if {[catch {
-				uplevel #0 {*}$line
+				set res [uplevel #0 {*}$line]
 			} err]} {
 				printError $::errorInfo
 			} else {
-				printSuccess "OK"
+				printSuccess "OK: $res"
 			}
 		}
 	}

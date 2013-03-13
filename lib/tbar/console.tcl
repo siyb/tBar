@@ -65,10 +65,10 @@ namespace eval geekosphere::tbar::console {
 		toplevel $sys(window)
 		wm resizable $sys(window) 0 0
 		pack [frame $sys(frame)] -fill both -expand 1
-		pack [text $sys(text)] -fill both -expand 1 -side top -anchor s
+		pack [text $sys(text) -font $geekosphere::tbar::conf(font,sysFont)] -fill both -expand 1 -side top -anchor s
 		$sys(text) configure -state disabled
 		configureTags
-		pack [entry $sys(entry)] -fill x -side bottom -anchor s -after $sys(text) 
+		pack [entry $sys(entry) -font $geekosphere::tbar::conf(font,sysFont)] -fill x -side bottom -anchor s -after $sys(text) 
 		
 		set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch
 

@@ -9,9 +9,6 @@ package require tipc
 # TODO 1.x: instead of throwing an error if a package (ie sqlite) can not be required, use the widget wrapper to test if package is available (catch) and remove corresponding parameter or widget
 # TODO 1.x: language files
 # TODO 1.x: add icon support for widgets
-# TODO 1.x: stop update activities if screensaver is on
-# TODO 1.X: make popup windows more customizable (e.g. let the user decide which and if calendar window appears) -> subwidget or something
-# TODO 1.x: recovery -> if a widget causes an error, delete namespace and remove all traces (e.g. timer, variables, etc) of the widget from the bar
 catch {
 	namespace import ::geekosphere::tbar::util::logger::*
 	namespace import ::geekosphere::tbar::util::*

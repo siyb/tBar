@@ -14,6 +14,8 @@ namespace eval geekosphere::tbar::console {
 	variable conf
 	variable sys
 	set sys(buildinCommand) [dict create]
+	set sys(history,data) [list]
+	set sys(history,pointer) 0
 
 	# pkgIndex error catching \o/
 	catch {	
@@ -75,7 +77,35 @@ namespace eval geekosphere::tbar::console {
 		bind $sys(entry) <Return> {
 			geekosphere::tbar::console::evalLine [geekosphere::tbar::console::getTextFromEntryAndClear]
 		}
+		bind $sys(entry) <Up> {
+			$geekosphere::tbar::console::sys(entry) delete 0 end
+			$geekosphere::tbar::console::sys(entry) insert 0 [geekosphere::tbar::console::getNextHistEntry]
+		}
+		bind $sys(entry) <Down> {
+			$geekosphere::tbar::console::sys(entry) delete 0 end
+			$geekosphere::tbar::console::sys(entry) insert 0 [geekosphere::tbar::console::getPrevHistEntry]
+		}
 		focus $sys(entry)
+	}
+
+	proc getNextHistEntry {} {
+		variable sys
+		log "DEBUG" "Hist: $sys(history,data)"
+		incr sys(history,pointer)
+		if {$sys(history,pointer) > [- [llength $sys(history,data)] 1]} {
+			set sys(history,pointer) 0
+		}
+		return [lindex $sys(history,data) $sys(history,pointer)]
+	}
+
+	proc getPrevHistEntry {} {
+		variable sys
+		log "DEBUG" "Hist: $sys(history,data)"
+		set sys(history,pointer) [- $sys(history,pointer) 1]
+		if {$sys(history,pointer) < 0} {
+			set sys(history,pointer) [llength $sys(history,data)]
+		}
+		return [lindex $sys(history,data) $sys(history,pointer)]
 	}
 
 	proc configureTags {} {
@@ -129,6 +159,9 @@ namespace eval geekosphere::tbar::console {
 	}
 
 	proc evalLine {line} {
+		variable sys
+		lappend sys(history,data) $line
+		set sys(history,pointer) [- [llength $sys(history,data)] 1]
 		printInput $line
 		if {[isBuildinCommand $line]} {
 			runBuildinCommand $line

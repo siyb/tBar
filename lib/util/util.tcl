@@ -101,16 +101,26 @@ namespace eval geekosphere::tbar::util {
 			}
 		}
 	}
-	
+
+	variable retlist
+	set retlist [list]
 	# gets sys array from all widget libraries
-	proc getSysArrays  {} {
-		set returnList [list]
-		foreach ns [namespace children ::geekosphere::tbar::widget] {
+	proc getSysArrays {ins} {
+		variable retlist
+		foreach ns [namespace children $ins] {
 			if {[info exists ${ns}::sys]} {
-				lappend returnList ${ns}::sys
+				lappend retlist ${ns}::sys
+			}
+			if {[llength [namespace children $ins]] != 0} {
+				getSysArrays $ns
 			}
 		}
-		return $returnList
+		return $retlist
+	}
+
+	proc resetSysArrays {} {
+		variable retlist
+		set retlist [list]
 	}
 	
 	# returns all children of a window recursivly (also nested children)

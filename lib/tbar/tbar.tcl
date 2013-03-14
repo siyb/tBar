@@ -250,7 +250,8 @@ MACHINE=$::tcl_platform(machine)"
 		foreach {item value} [array get geekosphere::tbar::conf] {
 			puts $fl "CONFIG=${item};${value}"
 		}
-		foreach sysArray [getSysArrays] {
+		resetSysArrays
+		foreach sysArray [getSysArrays ::geekosphere] {
 			puts $fl "ARRAYNAME=${sysArray}"
 			foreach {item value} [array get $sysArray] {
 				puts $fl "ARRAYITEM=$item;$value"

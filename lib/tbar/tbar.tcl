@@ -206,8 +206,12 @@ namespace eval geekosphere::tbar {
 
 	# a recursive proc that handles widget updates by calling the widget's update procedure
 	proc updateWidget {path widget interval} {
-		geekosphere::tbar::wrapper::${widget}::update $path
-		after [expr { $interval * 1000 }] [namespace code [list updateWidget $path $widget $interval]]
+		if {[winfo exists $path]} {
+			geekosphere::tbar::wrapper::${widget}::update $path
+			after [expr { $interval * 1000 }] [namespace code [list updateWidget $path $widget $interval]]
+		} else {
+			log "INFO" "Path $path does not exist any more, stopping update"
+		}
 	}
 
 	# returns the way how widgets are to be aligned in the bar

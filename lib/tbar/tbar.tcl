@@ -141,8 +141,8 @@ namespace eval geekosphere::tbar {
 
 	proc removeWidgetFromBar {name} {
 		variable sys
-		if {![dict exists $sys(widget,dict) $name path]} { log "WARN" "Trying to remove non existant widget '$name'"; return }
-		set wpath [dict get $sys(widget,dict) $name]
+		if {![dict exists $sys(widget,dict) $name path]} { log "WARNING" "Trying to remove non existant widget '$name'"; return }
+		set wpath [dict get $sys(widget,dict) $name path]
 		set sys(widget,dict) [dict remove $sys(widget,dict) $name]
 		destroy $wpath
 	}

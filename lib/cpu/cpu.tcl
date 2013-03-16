@@ -397,9 +397,9 @@ namespace eval geekosphere::tbar::widget::cpu {
 			set load [getCpuLoad $w [lsearch -inline -index 0 $sys(statData) $device]]
 			$sys($w,hist,$device) push $load
 			if {[$sys($w,hist,$device) size] >= 100} {
-				set tmp [$sys($w,hist,$device) get]
+				set tmp [$sys($w,hist,$device) getr]
 				$sys($w,hist,$device) clear
-				$sys($w,hist,$device) push {*}[lreverse [lreplace $tmp end end]]
+				$sys($w,hist,$device) push {*}[lreplace $tmp 0 0]
 			}
 			
 			if {![info exists sys($w,freqWindow)]} {

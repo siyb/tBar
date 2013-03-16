@@ -124,7 +124,9 @@ namespace eval geekosphere::tbar::widget::automenu {
 						log "INFO" "$data"
 						if {[chan eof $chan]} {
 							log "INFO" "Channel $chan cannot be read any more, killing"
-							close $chan	
+							if {[catch { close $chan } err]} {
+								log "INFO" "Problem closing chan: $err"
+							}
 							log "INFO" "Stopping thread: [thread::id] -> [thread::names]"
 							thread::exit
 						} else {

@@ -1,0 +1,10 @@
+{
+    "name": "tBar-track",
+    "description": "tBar tracking server",
+    "version": "0.0.1",
+    "private": true,
+    "dependencies": {
+        "express": "3.x",
+        "redis": "*"
+    }
+}

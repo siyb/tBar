@@ -30,8 +30,15 @@ namespace eval geekosphere::tbar::console::command::widget {
 	}
 
 	proc unload {args} {
-		if {[llength $args] > 1} {
-			return;
+		if {[llength $args] != 1} {
+			geekosphere::tbar::console::printError "Please specify a widget to unload"
+			return
 		}
+		set name [lindex $args 0]
+		if {![dict exists $geekosphere::tbar::sys(widget,dict) $name path]} {
+			geekosphere::tbar::console::printError "Widget '$name' was not loaded"
+			return
+		}
+		geekosphere::tbar::removeWidgetFromBar $name
 	}
 }

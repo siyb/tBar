@@ -200,10 +200,12 @@ namespace eval geekosphere::tbar::console {
 
 		if {$sub ne ""} {
 			set command [lindex [dict get $sys(buildinCommand) $cmd $sub "info"] 0]
+			set rest [lrange $splitLine 2 end]
 		} else {
 			set command [lindex [dict get $sys(buildinCommand) $cmd "info"] 0]
+			set rest [lrange $splitLine 1 end]
 		}
-		{*}$command
+		{*}$command {*}$rest
 	}
 
 	proc logDispatch {message} {

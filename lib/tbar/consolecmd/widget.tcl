@@ -67,8 +67,8 @@ namespace eval geekosphere::tbar::console::command::widget {
 		set ns [lindex $args 0]
 		set fqns ::geekosphere::tbar::widget::${ns}
 		geekosphere::tbar::console::printMessage "sys array for $fqns"
-		foreach {key val} [array get $fqns] {
-			geekosphere::tbar::console::printMessage "sys($key): ${fqns}::sys($key)"
+		foreach {key val} [array get ${fqns}::sys] {
+			geekosphere::tbar::console::printMessage "sys($key): [set ${fqns}::sys($key)]"
 		} 
 	}
 }

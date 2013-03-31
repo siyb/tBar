@@ -201,7 +201,6 @@ namespace eval geekosphere::tbar::widget::memory {
 
 		if {[$sys($w,hist,mem) size] >= 100} {
 			foreach {k v} [array get sys $w,hist,*] {
-				puts $k
 				set tmp [$sys($k) getr]
 				$sys($k) clear
 				$sys($k) push {*}$tmp	

@@ -23,7 +23,7 @@ ifdef EXPERIMENTAL
 endif
 
 pkgindex:
-	echo "pkg_mkIndex -verbose -direct lib/ */* */*/*" | tclsh8.5
+	echo "pkg_mkIndex -verbose -direct lib/ */* */*/*" | tclsh
 	
 install: clean pkgindex
 	mkdir -p $(DESTDIR)/usr/share/tbar/

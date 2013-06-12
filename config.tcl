@@ -2,6 +2,9 @@
 # General settings
 #
 
+# Native tk command, can be used to manipulate the DPI (http://www.tcl.tk/man/tcl8.6/TkCmd/tk.htm#M10)
+tk scaling 1
+
 # Anonymously tracks widgets use statistics and bugreports. You will be known by a
 # generated unique id, which can be found in $HOME/.tbar/uid. If you wish to use
 # automatically track bugreports, make sure to set writeBugReports to 1 (default).

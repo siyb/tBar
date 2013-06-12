@@ -196,8 +196,8 @@ namespace eval geekosphere::tbar::widget::memory {
 		}
 
 
-		$sys($w,hist,mem) push [set percMem [expr {([usedMem] / [totalMem]) * 100.0}]]
-		$sys($w,hist,swp) push [set percSwap [expr {([usedSwap] / [totalSwap]) * 100.0}]]
+		catch { $sys($w,hist,mem) push [set percMem [expr {([usedMem] / [totalMem]) * 100.0}]] }
+		catch { $sys($w,hist,swp) push [set percSwap [expr {([usedSwap] / [totalSwap]) * 100.0}]] }
 
 		if {[$sys($w,hist,mem) size] >= 100} {
 			foreach {k v} [array get sys $w,hist,*] {

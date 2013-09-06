@@ -327,6 +327,9 @@ addWidgetToBar cpu cpu1 1 -loadcolor blue -device 0 -showLoad 1 -showTotalLoad 1
 # -side - use this parameter to position the bar on a certain side, may be "left" or "right"
 # -setipcpath - sets the path to the i3 ipc socket 
 # -legacymode - takes a boolean value, use this to support i3 versions before INSERTVERSION HERE
+# -generalFontColor - sets a general font color
+# -urgentFontColor - sets the font color for urgent state
+# -focusFontColor - sets the font color for a focused workspace
 #addWidgetToBar i3_workspace i3_workspace1 0
 
 # A bash autocompletion widget that provides simple access to all software in $PATH

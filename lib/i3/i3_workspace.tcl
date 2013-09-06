@@ -31,6 +31,9 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set sys($w,workspace) [list]
 		set sys($w,focusColor) "blue"
 		set sys($w,urgentColor) "red"
+		set sys($w,urgentFontColor) "white"
+		set sys($w,focusFontColor) "white"
+		set sys($w,generalFontColor) "white"
 		set sys($w,rolloverFontColor) [getOption "-fg" $arguments]
 		set sys($w,rolloverBackgroundColor) [getOption "-bg" $arguments]
 		set sys($w,legacyMode) 0
@@ -287,11 +290,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 				bind ${w}.workspace${workspace} <Button-1> [list geekosphere::tbar::widget::i3::workspace::changeWorkspace $w $name]
 			}
 			if {[getActiveStatus $w $workspace] == 1} {
-				${w}.workspace${workspace} configure -bg $sys($w,focusColor)
+				${w}.workspace${workspace} configure -bg $sys($w,focusColor) -fg $sys($w,focusFontColor)
 			} elseif {[getUrgentStatus $w $workspace] == 1} {
-				${w}.workspace${workspace} configure -bg $sys($w,urgentColor)
+				${w}.workspace${workspace} configure -bg $sys($w,urgentColor) -fg $sys($w,urgentFontColor)
 			} else {
-				${w}.workspace${workspace} configure -bg $sys($w,background)
+				${w}.workspace${workspace} configure -bg $sys($w,background) -fg $sys($w,generalFontColor)
 			}
 		}
 	}
@@ -349,6 +352,15 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 					}
 					"-urgentcolor" {
 						changeUrgentcolor $w $value
+					}
+					"-focusFontColor" {
+						changeFocusFontColor $w $value
+					}
+					"-urgentFontColor" {
+						changeUrgentFontColor $w $value
+					}
+					"-generalFontColor" {
+						changeGeneralFontColor $w $value
 					}
 					"-rolloverfontcolor" {
 						changeRolloverFontColor $w $value
@@ -434,6 +446,21 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	proc changeUrgentcolor {w color} {
 		variable sys
 		set sys($w,urgentColor) $color
+	}
+
+	proc changeFocusFontColor {w color} {
+		variable sys
+		set sys($w,focusFontColor) $color
+	}
+
+	proc changeUrgentFontColor {w color} {
+		variable sys
+		set sys($w,urgentFontColor) $color
+	}
+
+	proc changeGeneralFontColor {w color} {
+		variable sys
+		set sys($w,generalFontColor) $color
 	}
 
 	proc changeRolloverBackground {w color} {

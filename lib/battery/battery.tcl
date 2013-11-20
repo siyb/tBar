@@ -336,6 +336,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		pack [label ${batteryWindow}.time -text "Time Remaining: $sys($w,timeRemaining)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
 		pack [label ${batteryWindow}.percent -text "Battery Left: $sys($w,chargeInPercent)%" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
 		pack [label ${batteryWindow}.status -text "Status: $sys($w,status)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
+		# TODO: display battery status here
 		positionWindowRelativly $batteryWindow $w
 	}
 

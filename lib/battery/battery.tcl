@@ -48,7 +48,6 @@ namespace eval geekosphere::tbar::widget::battery {
 	dict set sys(battery) technology "technology"
 	dict set sys(battery) type "type"
 
-
 	proc makeBattery {w arguments} {
 		variable sys
 		set sys($w,originalCommand) ${w}_
@@ -75,6 +74,8 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,width) 0
 		# if this flag is set to 1, the battery widget knows that there is no battery available and acts accordingly	
 		set sys($w,unavailable) 0
+		# battery charge history
+		set sys($w,history) [list]
 
 		if {[setBatteryDirs $w] == -1} {;# determine battery directory
 			set sys($w,unavailable) 1
@@ -165,6 +166,9 @@ namespace eval geekosphere::tbar::widget::battery {
 				log "TRACE" "Error while calculating charge: $::errorInfo"
 				set sys($w,chargeInPercent) 100
 			} else {
+				# record battery history
+				lappend sys($w,history) $chargeDict
+
 				set sys($w,timeRemaining) [dict get $chargeDict time]
 				set sys($w,chargeInPercent) [dict get $chargeDict percent]
 				if {[info exists sys($w,status)]} {

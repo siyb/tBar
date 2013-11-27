@@ -29,6 +29,7 @@ QmCC"
 	}
 }
 
+# TODO: since openweathermap gives multiple readings per day -> scrollable weather widget so that the complete data can be included (alternativly -> use tabs or something to navigate days)
 namespace eval geekosphere::tbar::widget::weather {
 	initLogger
 

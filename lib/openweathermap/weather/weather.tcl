@@ -35,7 +35,6 @@ namespace eval geekosphere::openweathermap {
 		set ret [list]
 		set skipDays [list]
 		foreach forecast [$weatherXmlForLocation getElementsByTagName "time"] {
-			puts [llength $ret]
 			if {[llength $ret] > 2} { break }
 			set timeInMs [clock scan [$forecast getAttribute "from"] -format {%Y-%m-%dT%H:%M:%S}]
 			set dayOfWeek [clock format $timeInMs -format %a]
@@ -53,7 +52,6 @@ namespace eval geekosphere::openweathermap {
 				}
 
 			}
-			puts $tmp
 			lappend ret $tmp
 		}
 		return $ret
@@ -64,7 +62,6 @@ namespace eval geekosphere::openweathermap {
 		# using -query did not work Oo
 		set data [::http::data [set token [::http::geturl $sys(url)?[getWeatherQuery]]]]
 		::http::cleanup $token
-		puts $data
 		return [dom parse $data]
 	}
 

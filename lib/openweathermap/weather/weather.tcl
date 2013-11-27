@@ -18,7 +18,7 @@ namespace eval geekosphere::openweathermap {
 		set condition [lindex [getWeatherForecasts $weatherXmlForLocation] 0]
 		set temperatureF [dict get $condition "high"]
 		set temperatureC [expr (${temperatureF} - 32.0) * (5.0/9.0)]
-		
+
 		dict set ret "temp_c" [round $temperatureC]
 		dict set ret "temp_f" $temperatureF
 		dict set ret "icon" [dict get $condition "icon"]
@@ -33,9 +33,17 @@ namespace eval geekosphere::openweathermap {
 
 	proc getWeatherForecasts {weatherXmlForLocation} {
 		set ret [list]
+		set skipDays [list]
 		foreach forecast [$weatherXmlForLocation getElementsByTagName "time"] {
-			dict set tmp day_of_week [clock scan [$forecast getAttribute "from"] -format {%Y-%m-%dT%H:%M:%S}];#2013-11-27T21:00:00
+			puts [llength $ret]
+			if {[llength $ret] > 2} { break }
+			set timeInMs [clock scan [$forecast getAttribute "from"] -format {%Y-%m-%dT%H:%M:%S}]
+			set dayOfWeek [clock format $timeInMs -format %a]
 
+			if {[lsearch $skipDays $dayOfWeek] != -1} { continue }
+			lappend skipDays $dayOfWeek
+
+			dict set tmp day_of_week $dayOfWeek
 			foreach childNode [$forecast childNodes] {
 				if {[$childNode nodeName] eq "symbol"} {
 					dict set tmp icon [getImageUrlByCode [$childNode getAttribute "var"]]
@@ -45,6 +53,7 @@ namespace eval geekosphere::openweathermap {
 				}
 
 			}
+			puts $tmp
 			lappend ret $tmp
 		}
 		return $ret
@@ -61,7 +70,7 @@ namespace eval geekosphere::openweathermap {
 
 	proc getWeatherQuery {} {
 		variable sys
-		return [::http::formatQuery q $sys(location,country),$sys(location,city) mode xml units imperial cnt 7]
+		return [::http::formatQuery q $sys(location,country),$sys(location,city) mode xml units imperial cnt 3]
 	}
 
 	proc setLocationData {country state city zipcode} {

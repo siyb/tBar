@@ -1,4 +1,4 @@
-#!/usr/bin/env tclsh
+#!/usr/bin/env tclsh8.6
 
 proc checkValidTclVersion {checkPatchLevel minimumRequired} {
 	set min [split $minimumRequired "."]
@@ -21,8 +21,8 @@ proc checkValidTclVersion {checkPatchLevel minimumRequired} {
 	return $valid
 }
 
-if {![checkValidTclVersion 0 8.5]} {
-	puts "tBar requires TCL 8.5 or higher to function correctly, $::tcl_version installed, exiting."
+if {![checkValidTclVersion 0 8.6]} {
+	puts "tBar requires TCL 8.6 or higher to function correctly, $::tcl_version installed, exiting."
 	exit
 } elseif {![checkValidTclVersion 0 8.6] && ![checkValidTclVersion 1 8.5.9]} {
 	puts "You are running a version lower than TCL 8.5.9, you need to enable the compatibility mode in your config in order to run tBar"

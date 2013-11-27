@@ -9,7 +9,7 @@ proc weather {w args} {
 	return $w
 }
 
-catch { namespace import ::geekosphere::googleweather::* }
+catch { namespace import ::geekosphere::openweathermap::* }
 catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::gfx::weather {
 	# base64 encoded png

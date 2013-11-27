@@ -2,11 +2,11 @@ catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::weather {
 	package require weather
 
-	generallyRequires weather http imageresize tdom logger yahooweather
+	generallyRequires weather http imageresize tdom logger openweathermap
 	setNamespace weather ::geekosphere::tbar::widget::weather
 	registerNamespaceImportsFor weather \
 		::geekosphere::tbar::util::* \
-		::geekosphere::yahooweather::*
+		::geekosphere::openweathermap::*
 
 	proc init {path settingsList} {
 		pack [weather $path \

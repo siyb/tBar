@@ -76,7 +76,11 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,unavailable) 0
 		# battery charge history
 		set sys($w,history) [list]
-
+		# battery info window
+		set sys($w,batteryWindow) ${w}.batteryWindow
+		# battery history resoluton (number of readings to be used)
+		set sys($w,batteryHistoryResolution) 100
+		
 		if {[setBatteryDirs $w] == -1} {;# determine battery directory
 			set sys($w,unavailable) 1
 			log "ERROR" "No batteries or mulptiple batteries found, use the -battery option to specify the battery you wish to monitor."
@@ -166,6 +170,7 @@ namespace eval geekosphere::tbar::widget::battery {
 				log "TRACE" "Error while calculating charge: $::errorInfo"
 				set sys($w,chargeInPercent) 100
 			} else {
+			
 				# record battery history
 				lappend sys($w,history) $chargeDict
 
@@ -186,12 +191,36 @@ namespace eval geekosphere::tbar::widget::battery {
 				set sys($w,unavailable) 0
 				drawWarnWindow $w
 				drawFullyChargedWindow $w
+
+				renderBatteryHistory $w
 			}
 		}
 		drawBatteryDisplay $w $sys($w,chargeInPercent)
 	}
 	
-	
+	proc renderBatteryHistory {w} {
+		variable sys
+		if {[winfo exists $sys($w,batteryWindow)]} {
+			set historyLength [llength $sys($w,history)]
+			set readingsToSkip [expr {($historyLength * 1.0) / ($sys($w,batteryHistoryResolution) * 1.0)}]
+			set ceilReadingsToSkip [expr {ceil($readingsToSkip)}]
+			set roundedReadingsToSkip [expr {round($ceilReadingsToSkip)}]
+			if {$readingsToSkip == 0} { set readingsToSkip 1 }
+			log "TRACE" "$historyLength readings, skipping every $readingsToSkip - $ceilReadingsToSkip - $roundedReadingsToSkip readings"
+
+			set readingsToSkip $roundedReadingsToSkip
+			set readings [list]
+			for {set i 0} {$i < $historyLength} {incr i} {
+				if {[expr {$i % $readingsToSkip}] == 0} {
+					set loadPercent [dict get [lindex $sys($w,history) $i] percent]
+					log "TRACE" "Adding idx $i -> $loadPercent"
+					lappend readings $loadPercent
+				}
+			}
+			$sys($w,batteryWindow).barChart setValues $readings
+			$sys($w,batteryWindow).barChart update
+		}
+	}
 
 	#
 	# GUI related stuff
@@ -326,18 +355,25 @@ namespace eval geekosphere::tbar::widget::battery {
 		variable sys
 		if {([info exists sys($w,unavailable)] && $sys($w,unavailable))} { return }
 		if {![info exists sys($w,timeRemaining)] || ![info exists sys($w,chargeInPercent)] || ![info exists sys($w,status)]} { return }
-		set batteryWindow ${w}.batteryWindow
-		if {![winfo exists $batteryWindow]} {
-			toplevel $batteryWindow
+		if {![winfo exists $sys($w,batteryWindow)]} {
+			toplevel $sys($w,batteryWindow)
+			$sys($w,batteryWindow) configure -bg $sys($w,background)
 		} else {
-			destroy $batteryWindow
+			destroy $sys($w,batteryWindow)
 			return
 		}
-		pack [label ${batteryWindow}.time -text "Time Remaining: $sys($w,timeRemaining)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
-		pack [label ${batteryWindow}.percent -text "Battery Left: $sys($w,chargeInPercent)%" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
-		pack [label ${batteryWindow}.status -text "Status: $sys($w,status)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
-		# TODO: display battery status here
-		positionWindowRelativly $batteryWindow $w
+		# TODO: batteryWindow is not the only item that needs to be updated ....
+		pack [label $sys($w,batteryWindow).time -text "Time Remaining: $sys($w,timeRemaining)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
+		pack [label $sys($w,batteryWindow).percent -text "Battery Left: $sys($w,chargeInPercent)%" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
+		pack [label $sys($w,batteryWindow).status -text "Status: $sys($w,status)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
+		pack [label $sys($w,batteryWindow).history -text "History: " -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -side left
+		pack [barChart $sys($w,batteryWindow).barChart \
+				-height $sys($w,height) \
+				-fg $sys($w,foreground) \
+				-bg $sys($w,background) \
+				-font $sys($w,font) \
+				-width $sys($w,batteryHistoryResolution)] -side right
+		positionWindowRelativly $sys($w,batteryWindow) $w
 	}
 
 	# draws the warning window if appropriate

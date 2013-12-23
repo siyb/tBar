@@ -172,7 +172,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			} else {
 			
 				# record battery history
-				lappend sys($w,history) $chargeDict
+				lappend sys($w,history) [dict get $chargeDict percent]
 
 				set sys($w,timeRemaining) [dict get $chargeDict time]
 				set sys($w,chargeInPercent) [dict get $chargeDict percent]
@@ -212,7 +212,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			set readings [list]
 			for {set i 0} {$i < $historyLength} {incr i} {
 				if {[expr {$i % $readingsToSkip}] == 0} {
-					set loadPercent [dict get [lindex $sys($w,history) $i] percent]
+					set loadPercent [lindex $sys($w,history) $i]
 					log "TRACE" "Adding idx $i -> $loadPercent"
 					lappend readings $loadPercent
 				}

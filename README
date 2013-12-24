@@ -137,8 +137,6 @@ TOC
 	- Thanks to Colin McCormack (http://wiki.tcl.tk/3650) for his contribution to the program (ical library: http://wiki.tcl.tk/_repo/tcal/)
 	- Thanks to Cybex (http://cybex.b0rk.de/files/tcl/) for the hexdump script
 	- Thanks to Evgeni Golov (sargentd@die-welt.net) for buildy (https://github.com/evgeni/buildy), a neat tool, easing the debian packaging process
-	- Thanks to Jean-Claude Wippler (http://wiki.tcl.tk/10) for DavKit (http://wiki.tcl.tk/13480).
-	- Thanks to Graham Cobb (http://www.cobb.uk.net/) for his OWA package (http://www.cobb.uk.net/OWA/).
 6. Contact
 
 	Website: http://siyb.mount.at/tbar

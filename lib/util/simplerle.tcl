@@ -28,5 +28,10 @@ namespace eval geekosphere::tbar::simplerle {
 			}
 			return $ret
 		}
+
+		method get {} {
+			my variable container
+			return $container
+		}
 	}
 }

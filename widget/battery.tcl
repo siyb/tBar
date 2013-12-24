@@ -1,7 +1,7 @@
 catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::battery {
 
-	generallyRequires battery logger
+	generallyRequires battery logger simplerle
 	setNamespace memory ::geekosphere::tbar::widget::battery
 	registerNamespaceImportsFor battery \
 		::geekosphere::tbar::util::logger::*

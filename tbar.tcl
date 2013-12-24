@@ -70,7 +70,8 @@ foreach {parameter value} $argv {
 		"--help" {
 			puts "tBar help
 --config <path>			specify a config file to load
---ipc <namespace>#<command>	send ipc command to tBar, make sure that the ipc call uses the same config as the running tBar instance"
+--ipc <namespace>#<command>	send ipc command to tBar, make sure that the ipc call uses the same config as the running tBar instance
+--console			opens the tBar console"
 			exit
 		}
 		"--ipc" {

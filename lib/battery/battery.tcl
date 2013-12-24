@@ -75,7 +75,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		# if this flag is set to 1, the battery widget knows that there is no battery available and acts accordingly	
 		set sys($w,unavailable) 0
 		# battery charge history
-		set sys($w,history) [list]
+		set sys($w,history) [::geekosphere::tbar::simplerle::simplerle new]
 		# battery info window
 		set sys($w,batteryWindow) ${w}.batteryWindow
 		# battery history resoluton (number of readings to be used)
@@ -172,7 +172,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			} else {
 			
 				# record battery history
-				lappend sys($w,history) [dict get $chargeDict percent]
+				$sys($w,history) add [dict get $chargeDict percent]
 
 				set sys($w,timeRemaining) [dict get $chargeDict time]
 				set sys($w,chargeInPercent) [dict get $chargeDict percent]
@@ -201,7 +201,8 @@ namespace eval geekosphere::tbar::widget::battery {
 	proc renderBatteryHistory {w} {
 		variable sys
 		if {[winfo exists $sys($w,batteryWindow)]} {
-			set historyLength [llength $sys($w,history)]
+			set history [$sys($w,history) decompress]
+			set historyLength [llength $history]
 			set readingsToSkip [expr {($historyLength * 1.0) / ($sys($w,batteryHistoryResolution) * 1.0)}]
 			set ceilReadingsToSkip [expr {ceil($readingsToSkip)}]
 			set roundedReadingsToSkip [expr {round($ceilReadingsToSkip)}]
@@ -212,7 +213,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			set readings [list]
 			for {set i 0} {$i < $historyLength} {incr i} {
 				if {[expr {$i % $readingsToSkip}] == 0} {
-					set loadPercent [lindex $sys($w,history) $i]
+					set loadPercent [lindex $history $i]
 					log "TRACE" "Adding idx $i -> $loadPercent"
 					lappend readings $loadPercent
 				}

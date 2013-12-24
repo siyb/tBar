@@ -172,6 +172,8 @@ setLogLevel "DEBUG"
 # -batteryChargeSymbolColor - the color of the charge symbol, will only take effect if -showChargeStatus is 1
 # -height - height of the widget
 # -width - width of the widget
+# -historyResolution - the amount of readings to be displayed 
+# -historyColor - the color of the history barChart
 #addWidgetToBar battery battery1 1 -warnAt 5 -lc "red" -hc "green" -mc "yellow" -notifyFullyCharged 1
 #addText " | " "red"
 

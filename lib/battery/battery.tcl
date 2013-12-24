@@ -80,7 +80,8 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,batteryWindow) ${w}.batteryWindow
 		# battery history resoluton (number of readings to be used)
 		set sys($w,batteryHistoryResolution) 100
-		
+		# battery history color
+		set sys($w,batteryHistoryColor) blue 
 		if {[setBatteryDirs $w] == -1} {;# determine battery directory
 			set sys($w,unavailable) 1
 			log "ERROR" "No batteries or mulptiple batteries found, use the -battery option to specify the battery you wish to monitor."
@@ -141,6 +142,12 @@ namespace eval geekosphere::tbar::widget::battery {
 					}
 					"-batteryChargeSymbolColor" {
 						setBatteryChargeSymbolColor $w $value
+					}
+					"-historyResolution" {
+						setBatteryHistoryResolution $w $value
+					}
+					"-historyColor" {
+						setBatteryHistoryColor $w $value
 					}
 					default {
 						error "${opt} not supported"
@@ -373,6 +380,7 @@ namespace eval geekosphere::tbar::widget::battery {
 				-fg $sys($w,foreground) \
 				-bg $sys($w,background) \
 				-font $sys($w,font) \
+				-gc $sys($w,batteryHistoryColor) \
 				-width $sys($w,batteryHistoryResolution)] -side right
 		positionWindowRelativly $sys($w,batteryWindow) $w
 		renderBatteryHistory $w
@@ -609,5 +617,15 @@ namespace eval geekosphere::tbar::widget::battery {
 	proc setBatteryChargeSymbolColor {w color} {
 		variable sys
 		set sys($w,batteryChargeSymbolColor) $color
+	}
+
+	proc setBatteryHistoryResolution {w res} {
+		variable sys
+		set sys($w,batteryHistoryResolution) $res
+	}
+
+	proc setBatteryHistoryColor {w color} {
+		variable sys
+		set sys($w,batteryHistoryColor) $color
 	}
 }

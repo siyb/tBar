@@ -60,7 +60,7 @@ namespace eval geekosphere::openweathermap {
 	proc getWeatherXmlForLocation {} {
 		variable sys
 		# using -query did not work Oo
-		set data [::http::data [set token [::http::geturl $sys(url)?[getWeatherQuery]]]]
+		set data [::http::data [set token [::http::geturl $sys(url)?[getWeatherQuery] -timeout 500]]]
 		::http::cleanup $token
 		return [dom parse $data]
 	}

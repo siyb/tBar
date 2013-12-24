@@ -375,6 +375,7 @@ namespace eval geekosphere::tbar::widget::battery {
 				-font $sys($w,font) \
 				-width $sys($w,batteryHistoryResolution)] -side right
 		positionWindowRelativly $sys($w,batteryWindow) $w
+		renderBatteryHistory $w
 	}
 
 	# draws the warning window if appropriate

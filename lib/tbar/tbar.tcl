@@ -203,6 +203,7 @@ namespace eval geekosphere::tbar {
 
 	# a recursive proc that handles widget updates by calling the widget's update procedure
 	proc updateWidget {path widget interval} {
+		variable sys
 		if {[winfo exists $path]} {
 			geekosphere::tbar::wrapper::${widget}::update $path
 			after [expr { $interval * 1000 }] [namespace code [list updateWidget $path $widget $interval]]
@@ -250,8 +251,9 @@ MACHINE=$::tcl_platform(machine)"
 		foreach {item value} [array get geekosphere::tbar::conf] {
 			puts $fl "CONFIG=${item};${value}"
 		}
-		resetSysArrays
-		foreach sysArray [getSysArrays ::geekosphere] {
+		set sysArrays [list]
+		getSysArrays ::geekosphere sysArrays
+		foreach sysArray $sysArrays {
 			puts $fl "ARRAYNAME=${sysArray}"
 			foreach {item value} [array get $sysArray] {
 				puts $fl "ARRAYITEM=$item;$value"

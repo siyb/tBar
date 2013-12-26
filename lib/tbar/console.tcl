@@ -51,7 +51,8 @@ namespace eval geekosphere::tbar::console {
 	set sys(font,message) #7373FF
 	set sys(font,error) #AD0000
 	set sys(font,success) #008A09
-	set sys(font,input) #000000
+	set sys(font,input) #FFFFFF
+	set sys(windowColor) #3F3F3F
 
 	# window path related variables
 	set sys(window) [geekosphere::tbar::util::generateComponentName]
@@ -67,10 +68,10 @@ namespace eval geekosphere::tbar::console {
 		toplevel $sys(window)
 		wm resizable $sys(window) 0 0
 		pack [frame $sys(frame)] -fill both -expand 1
-		pack [text $sys(text) -font $geekosphere::tbar::conf(font,sysFont)] -fill both -expand 1 -side top -anchor s
+		pack [text $sys(text) -font $geekosphere::tbar::conf(font,sysFont) -fg $sys(font,input) -bg $sys(windowColor)] -fill both -expand 1 -side top -anchor s
 		$sys(text) configure -state disabled
 		configureTags
-		pack [entry $sys(entry) -font $geekosphere::tbar::conf(font,sysFont)] -fill x -side bottom -anchor s -after $sys(text) 
+		pack [entry $sys(entry) -font $geekosphere::tbar::conf(font,sysFont) -fg $sys(font,input) -bg $sys(windowColor)] -fill x -side bottom -anchor s -after $sys(text) 
 		
 		set geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) geekosphere::tbar::console::logDispatch
 

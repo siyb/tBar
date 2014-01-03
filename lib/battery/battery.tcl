@@ -96,7 +96,9 @@ namespace eval geekosphere::tbar::widget::battery {
 
 		frame ${w}
 		uplevel #0 rename $w ${w}_
+		
 		readHistoryDataFromTempFile $w
+
 		action $w configure $arguments
 	}
 
@@ -156,6 +158,7 @@ namespace eval geekosphere::tbar::widget::battery {
 					"-setTempDir" {
 						set sys(tempDir) $value
 						set sys(tempFile) [file join $sys(tempDir) battery_history]
+						readHistoryDataFromTempFile $w
 					}
 					default {
 						error "${opt} not supported"

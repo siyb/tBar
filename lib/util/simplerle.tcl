@@ -7,6 +7,11 @@ namespace eval geekosphere::tbar::simplerle {
 			set container [list]
 		}
 
+		method setContainer {_container} {
+			my variable container
+			set container $_container
+		}
+
 		method add {value} {
 			my variable container
 			set item [lindex $container end]

@@ -21,6 +21,10 @@ catch {namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::widget::battery {
 	initLogger
 
+	# tmp dir
+	set sys(tempDir) [file join / tmp battery-widget]
+	set sys(tempFile) [file join $sys(tempDir) battery_history]
+
 	# Information files for battery status
 	dict set sys(battery) dir [file join / sys class power_supply]
 	
@@ -92,7 +96,7 @@ namespace eval geekosphere::tbar::widget::battery {
 
 		frame ${w}
 		uplevel #0 rename $w ${w}_
-
+		readHistoryDataFromTempFile $w
 		action $w configure $arguments
 	}
 
@@ -149,6 +153,10 @@ namespace eval geekosphere::tbar::widget::battery {
 					"-historyColor" {
 						setBatteryHistoryColor $w $value
 					}
+					"-setTempDir" {
+						set sys(tempDir) $value
+						set sys(tempFile) [file join $sys(tempDir) battery_history]
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -180,7 +188,8 @@ namespace eval geekosphere::tbar::widget::battery {
 			
 				# record battery history
 				$sys($w,history) add [dict get $chargeDict percent]
-
+				writeHistoryToTempFile $w
+				
 				set sys($w,timeRemaining) [dict get $chargeDict time]
 				set sys($w,chargeInPercent) [dict get $chargeDict percent]
 				if {[info exists sys($w,status)]} {
@@ -205,6 +214,33 @@ namespace eval geekosphere::tbar::widget::battery {
 		drawBatteryDisplay $w $sys($w,chargeInPercent)
 	}
 	
+	proc writeHistoryToTempFile {w} {
+		variable sys
+		if {[file exists  $sys(tempDir)] && ![file isdirectory  $sys(tempDir)]} {
+		       log "ERROR" "Could not write battery history, temp folder is a file"
+		       return
+		}	       
+		if {![file exists $sys(tempDir)]} {
+			file mkdir $sys(tempDir)
+		}
+		set fl [open $sys(tempFile) w+]
+		puts $fl [$sys($w,history) get]
+		close $fl
+	}
+
+	proc readHistoryDataFromTempFile {w} {
+		variable sys
+		if {![file exists $sys(tempFile)]} {
+			set sys($w,history) [::geekosphere::tbar::simplerle::simplerle new]		
+		} else {
+			set data [read [set fl [open $sys(tempFile) r]]]
+			close $fl
+			set sys($w,history) [::geekosphere::tbar::simplerle::simplerle new]
+			$sys($w,history) setContainer $data
+			log "INFO" "Container data restored: $data -> [$sys($w,history) get]"
+		}
+	}
+
 	proc renderBatteryHistory {w} {
 		variable sys
 		if {[winfo exists $sys($w,batteryWindow)]} {

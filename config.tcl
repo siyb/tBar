@@ -174,6 +174,7 @@ setLogLevel "DEBUG"
 # -width - width of the widget
 # -historyResolution - the amount of readings to be displayed 
 # -historyColor - the color of the history barChart
+# -setTempDir - define a temp directory that is used to store battery temp data. Usually you will not need to change this setting.
 #addWidgetToBar battery battery1 1 -warnAt 5 -lc "red" -hc "green" -mc "yellow" -notifyFullyCharged 1
 #addText " | " "red"
 

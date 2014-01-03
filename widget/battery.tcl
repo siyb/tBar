@@ -13,6 +13,7 @@ namespace eval geekosphere::tbar::wrapper::battery {
 			-font $geekosphere::tbar::conf(font,sysFont) \
 			-height $geekosphere::tbar::conf(geom,height) \
 			-width [expr {$geekosphere::tbar::conf(geom,height) * 2}] \
+			-setTempDir [file join / tmp tbar battery] \
 			{*}$settingsList] -side $geekosphere::tbar::conf(widgets,position)
 		return $path
 	}

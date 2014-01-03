@@ -108,7 +108,7 @@ namespace eval geekosphere::tbar::packageloader {
 		if {[catch {
 			package require $proc
 		} err]} {
-			log "WARNING" "Could not load default package for '$proc', the default package must have the same name as the item to load"
+			log "WARNING" "Could not load default package for '$proc', the default package must have the same name as the item to load: $::errorInfo"
 			return
 		}
 		registerProcForArgsFiltering $proc

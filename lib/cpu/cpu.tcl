@@ -385,6 +385,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		}
 		
 		positionWindowRelativly $sys($w,freqWindow) $w
+		freqInfoUpdate $w
 	}
 	
 	proc freqInfoUpdate {w} {

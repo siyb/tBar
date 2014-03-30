@@ -130,6 +130,7 @@ namespace eval geekosphere::tbar::wicd::dbus {
 	proc collectDataForAllWirelessNetworks {} {
 		set ret [list]
 		for {set i 0} {$i < [getNumberOfNetworks]} {incr i} {
+			dict set a id $i
 			dict set a ssid [getSSIDFor $i]
 			dict set a bssid [getBSSIDFor $i]
 			dict set a channel [getChannelFor $i]

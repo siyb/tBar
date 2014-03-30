@@ -78,7 +78,18 @@ namespace eval geekosphere::tbar::widget::wicd {
 		} else {
 			toplevel $sys($w,networkWindow)
 		}
-		puts [collectDataForAllWirelessNetworks]
+		set wirelessInfo [collectDataForAllWirelessNetworks]
+		foreach network $wirelessInfo {
+			set networkPath $sys($w,networkWindow).[dict get $network id]
+
+			set networkFrame [frame ${networkPath}]
+			grid [label ${networkPath}.name -justify left -text "essid: [dict get $network ssid]"] -column 0
+			grid [label ${networkPath}.quality -justify left -text "quality: [dict get $network quality]"] -row 0 -column 1
+
+			grid $networkFrame
+		}
+
+		positionWindowRelativly $sys($w,networkWindow) $w
 	}
 
 	proc updateWidget {w} {

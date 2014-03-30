@@ -1,3 +1,5 @@
+package provide wicd_dbus 1.0
+
 package require dbus
 
 namespace eval geekosphere::tbar::wicd::dbus {
@@ -105,6 +107,26 @@ namespace eval geekosphere::tbar::wicd::dbus {
 		return [callOnWireless GetWirelessProperty "vv" $networkId mode]
 	}
 
+	proc connectToWireless {networkId} {
+		callOnWireless ConnectWireless $networkId
+	}
+
+	proc disconnectWireless {} {
+		callOnWireless DisconnectWireless
+	}
+
+	proc isWirelessConnecting {} {
+		return [callOnWireless CheckIfWirelessConnecting]
+	}
+
+	proc getwirelessConnectingMessage {} {
+		return [callOnWireless CheckWirelessConnectingMessage]
+	}
+
+	proc getConnectingStatus {} {
+		return [callOnWireless CheckWirelessConnectingStatus	]
+	}
+
 	proc collectDataForAllWirelessNetworks {} {
 		set ret [list]
 		for {set i 0} {$i < [getNumberOfNetworks]} {incr i} {
@@ -119,9 +141,6 @@ namespace eval geekosphere::tbar::wicd::dbus {
 		return $ret
 	}
 
-	connect
-	puts [getWireLessInterfaces]
-	puts [isWirelessUp]
-	puts [collectDataForAllWirelessNetworks]
+	namespace export connect disconnect collectDataForAllWirelessNetworks
 
 }

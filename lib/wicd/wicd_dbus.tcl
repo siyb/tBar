@@ -38,7 +38,7 @@ namespace eval geekosphere::tbar::wicd::dbus {
 		if {[llength $a] == 0} {
 			return [dbus call $sys(dbus) -autostart 1 -dest $conf(interface,daemon) $path $interface $method]
 		} else {
-			return [dbus call $sys(dbus) -autostart 1 -dest $conf(interface,daemon) $path $interface $method $a]
+			return [dbus call $sys(dbus) -signature vv -autostart 1 -dest $conf(interface,daemon) $path $interface $method {*}$a]
 		}
 	}
 
@@ -73,16 +73,19 @@ namespace eval geekosphere::tbar::wicd::dbus {
 		return [callOnWireless IsWirelessUp]
 	}
 
-	proc scanWireless {} {
-		return [callOnWireless Scan]
+	proc getNumberOfNetworks {} {
+		return [callOnWireless GetNumberOfNetworks]
 	}
 
-	proc getWirelessProperty {id property} {
-		return [callOnWireless GetWirelessProperty $id $property]
+	proc getSSIDFor {networkId} {
+		return [callOnWireless GetWirelessProperty $networkId essid]
 	}
 
 	connect
 	puts [getWireLessInterfaces]
-	puts [scanWireless]
 	puts [isWirelessUp]
+	puts [getNumberOfNetworks]
+	for {set i 0} {$i < [getNumberOfNetworks]} {incr i} {
+		puts [getSSIDFor $i]
+	}
 }

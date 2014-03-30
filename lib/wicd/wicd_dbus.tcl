@@ -108,23 +108,27 @@ namespace eval geekosphere::tbar::wicd::dbus {
 	}
 
 	proc connectToWireless {networkId} {
-		callOnWireless ConnectWireless $networkId
+		callOnWireless ConnectWireless "" $networkId
 	}
 
 	proc disconnectWireless {} {
-		callOnWireless DisconnectWireless
+		callOnWireless DisconnectWireless ""
 	}
 
 	proc isWirelessConnecting {} {
-		return [callOnWireless CheckIfWirelessConnecting]
+		return [callOnWireless CheckIfWirelessConnecting ""]
 	}
 
-	proc getwirelessConnectingMessage {} {
-		return [callOnWireless CheckWirelessConnectingMessage]
+	proc getWirelessConnectingMessage {} {
+		return [callOnWireless CheckWirelessConnectingMessage ""]
 	}
 
-	proc getConnectingStatus {} {
-		return [callOnWireless CheckWirelessConnectingStatus	]
+	proc getWirelessConnectingStatus {} {
+		return [callOnWireless CheckWirelessConnectingStatus ""]
+	}
+
+	proc getWirelessCurrentNetworkId {} {
+		return [callOnWireless GetCurrentNetworkID ""]
 	}
 
 	proc collectDataForAllWirelessNetworks {} {
@@ -142,6 +146,7 @@ namespace eval geekosphere::tbar::wicd::dbus {
 		return $ret
 	}
 
-	namespace export connect disconnect collectDataForAllWirelessNetworks
+	namespace export connect disconnect collectDataForAllWirelessNetworks getWirelessCurrentNetworkId \
+	getQualityFor
 
 }

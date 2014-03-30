@@ -2,6 +2,8 @@ package provide wicd 1.0
 
 if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require logger
+	package require wicd_dbus
+	package require barChart
 }
 
 proc wicd {w args} {
@@ -26,12 +28,16 @@ namespace eval geekosphere::tbar::widget::wicd {
 
 		set sys($w,originalCommand) ${w}_
 		set sys($w,networkWindow) ${w}.networkWindow
+		set sys($w,signalStrengthBarChart) ${w}.signalStrength
+		set sys($w,signalStrength) 0
 
 		frame ${w}
 		uplevel #0 rename $w ${w}_
-		pack [label ${w}.mixer -text "|N|"]
-		bind ${w}.mixer <Button-1> [namespace code [list showNetworkWindow $w]]
 
+		pack [barChart $sys($w,signalStrengthBarChart) -width 100 -textvariable ::geekosphere::tbar::widget::wicd::sys($w,signalStrength)]
+		foreach window [returnNestedChildren $w] {
+			bind $window <Button-1> [namespace code [list showNetworkWindow $w]]
+		}
 		action $w configure $arguments
 	}
 
@@ -83,8 +89,8 @@ namespace eval geekosphere::tbar::widget::wicd {
 			set networkPath $sys($w,networkWindow).[dict get $network id]
 
 			set networkFrame [frame ${networkPath}]
-			grid [label ${networkPath}.name -justify left -text "essid: [dict get $network ssid]"] -column 0
-			grid [label ${networkPath}.quality -justify left -text "quality: [dict get $network quality]"] -row 0 -column 1
+			grid [label ${networkPath}.name -anchor w -text "essid: [dict get $network ssid]"] -column 0
+			grid [label ${networkPath}.quality -anchor w -text "quality: [dict get $network quality]"] -row 0 -column 1
 
 			grid $networkFrame
 		}
@@ -94,6 +100,13 @@ namespace eval geekosphere::tbar::widget::wicd {
 
 	proc updateWidget {w} {
 		variable sys
+
+		set currentNetworkId [getWirelessCurrentNetworkId]
+		set quality [getQualityFor $currentNetworkId]
+		log "INFO" "Connected to network $currentNetworkId, updating signal strength accordingly ($quality)."
+		set sys($w,signalStrength) $quality
+		$sys($w,signalStrengthBarChart) setValues [lrepeat $quality 100]
+		$sys($w,signalStrengthBarChart) update
 	}
 
 	proc changeBackgroundColor {w color} {

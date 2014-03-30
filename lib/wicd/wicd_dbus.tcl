@@ -29,7 +29,7 @@ namespace eval geekosphere::tbar::wicd::dbus {
 		}
 	}
 
-	proc call {path interface method a} {
+	proc call {path interface method signature a} {
 		variable sys
 		variable conf
 		if {$sys(dbus) == -1} {
@@ -38,27 +38,31 @@ namespace eval geekosphere::tbar::wicd::dbus {
 		if {[llength $a] == 0} {
 			return [dbus call $sys(dbus) -autostart 1 -dest $conf(interface,daemon) $path $interface $method]
 		} else {
-			return [dbus call $sys(dbus) -signature vv -autostart 1 -dest $conf(interface,daemon) $path $interface $method {*}$a]
+			if {$signature eq ""} {
+				return [dbus call $sys(dbus) -autostart 1 -dest $conf(interface,daemon) $path $interface $method {*}$a]
+			} else {
+				return [dbus call $sys(dbus) -signature $signature -autostart 1 -dest $conf(interface,daemon) $path $interface $method {*}$a]
+			}
 		}
 	}
 
 	#
 	# Dispatcher procs
-	#	
-	
-	proc callOnDaemon {method args} {
+	#
+
+	proc callOnDaemon {method signature args} {
 		variable conf
-		return [call $conf(path,daemon) $conf(interface,daemon) $method $args]
+		return [call $conf(path,daemon) $conf(interface,daemon) $method $signature $args]
 	}
 
-	proc callOnWireless {method args} {
+	proc callOnWireless {method signature args} {
 		variable conf
-		return [call $conf(path,wireless) $conf(interface,wireless) $method $args]
+		return [call $conf(path,wireless) $conf(interface,wireless) $method $signature $args]
 	}
 
-	proc callOnWired {method args} {
+	proc callOnWired {method signature args} {
 		variable conf
-		return [call $conf(path,wired) $conf(interface,wired) $method $args]
+		return [call $conf(path,wired) $conf(interface,wired) $method $signature $args]
 	}
 
 	#
@@ -66,26 +70,53 @@ namespace eval geekosphere::tbar::wicd::dbus {
 	#
 
 	proc getWireLessInterfaces {} {
-		return [callOnWireless GetWirelessInterfaces]
+		return [callOnWireless GetWirelessInterfaces ""]
 	}
 
 	proc isWirelessUp {} {
-		return [callOnWireless IsWirelessUp]
+		return [callOnWireless IsWirelessUp ""]
 	}
 
 	proc getNumberOfNetworks {} {
-		return [callOnWireless GetNumberOfNetworks]
+		return [callOnWireless GetNumberOfNetworks ""]
 	}
 
 	proc getSSIDFor {networkId} {
-		return [callOnWireless GetWirelessProperty $networkId essid]
+		return [callOnWireless GetWirelessProperty "vv" $networkId essid]
+	}
+
+	proc getChannelFor {networkId} {
+		return [callOnWireless GetWirelessProperty "vv" $networkId channel]
+	}
+
+	proc getBSSIDFor {networkId} {
+		return [callOnWireless GetWirelessProperty "vv" $networkId bssid]
+	}
+
+	proc getEncryptionModeFor {networkId} {
+		return [callOnWireless GetWirelessProperty "vv" $networkId encryption_method]
+	}
+
+	proc getQualityFor {networkId} {
+		return [callOnWireless GetWirelessProperty "vv" $networkId quality]
+	}
+
+	proc collectDataForAllWirelessNetworks {} {
+		set ret [list]
+		for {set i 0} {$i < [getNumberOfNetworks]} {incr i} {
+			dict set a ssid [getSSIDFor $i]
+			dict set a bssid [getBSSIDFor $i]
+			dict set a channel [getChannelFor $i]
+			dict set a encryptionMode [getEncryptionModeFor $i]
+			dict set a quality [getQualityFor $i]
+			lappend ret $a
+		}
+		return $ret
 	}
 
 	connect
 	puts [getWireLessInterfaces]
 	puts [isWirelessUp]
-	puts [getNumberOfNetworks]
-	for {set i 0} {$i < [getNumberOfNetworks]} {incr i} {
-		puts [getSSIDFor $i]
-	}
+	puts [collectDataForAllWirelessNetworks]
+
 }

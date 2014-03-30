@@ -2,10 +2,10 @@ catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::battery {
 
 	generallyRequires battery logger simplerle
-	setNamespace memory ::geekosphere::tbar::widget::battery
+	setNamespace battery ::geekosphere::tbar::widget::battery
 	registerNamespaceImportsFor battery \
 		::geekosphere::tbar::util::logger::*
-		
+
 	proc init {path settingsList} {
 		pack [battery $path \
 			-fg $geekosphere::tbar::conf(color,text) \

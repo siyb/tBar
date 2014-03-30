@@ -101,6 +101,10 @@ namespace eval geekosphere::tbar::wicd::dbus {
 		return [callOnWireless GetWirelessProperty "vv" $networkId quality]
 	}
 
+	proc getModeFor {networkId} {
+		return [callOnWireless GetWirelessProperty "vv" $networkId mode]
+	}
+
 	proc collectDataForAllWirelessNetworks {} {
 		set ret [list]
 		for {set i 0} {$i < [getNumberOfNetworks]} {incr i} {
@@ -109,6 +113,7 @@ namespace eval geekosphere::tbar::wicd::dbus {
 			dict set a channel [getChannelFor $i]
 			dict set a encryptionMode [getEncryptionModeFor $i]
 			dict set a quality [getQualityFor $i]
+			dict set a mode [getModeFor $i]
 			lappend ret $a
 		}
 		return $ret

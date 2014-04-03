@@ -13,7 +13,7 @@ namespace eval geekosphere::tbar::wrapper::wicd {
 			-bg $geekosphere::tbar::conf(color,background) \
 			-font $geekosphere::tbar::conf(font,sysFont) \
 			-height $geekosphere::tbar::conf(geom,height) \
-			-width [expr {$geekosphere::tbar::conf(geom,height) * 2}] \
+			-width [expr {$geekosphere::tbar::conf(geom,height) * 1.2}] \
 			{*}$settingsList] -side $geekosphere::tbar::conf(widgets,position)
 		return $path
 	}

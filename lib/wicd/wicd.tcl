@@ -99,13 +99,24 @@ namespace eval geekosphere::tbar::widget::wicd {
 		} else {
 			toplevel $sys($w,networkWindow)
 		}
+		$sys($w,networkWindow) configure -bg $sys($w,background)
 		set wirelessInfo [collectDataForAllWirelessNetworks]
 		foreach network $wirelessInfo {
 			set networkPath $sys($w,networkWindow).[dict get $network id]
 
 			set networkFrame [frame ${networkPath}]
-			grid [label ${networkPath}.name -anchor w -text "essid: [dict get $network ssid]"] -column 0
-			grid [label ${networkPath}.quality -anchor w -text "quality: [dict get $network quality]"] -row 0 -column 1
+			grid [label ${networkPath}.name \
+				-anchor w \
+				-text "essid: [dict get $network ssid]" \
+				-font $sys($w,font) \
+				-fg $sys($w,foreground) \
+				-bg $sys($w,background)] -column 0
+			grid [label ${networkPath}.quality \
+				-anchor w \
+				-text "quality: [dict get $network quality]" \
+				-font $sys($w,font) \
+				-fg $sys($w,foreground) \
+				-bg $sys($w,background)] -row 0 -column 1
 
 			grid $networkFrame
 		}

@@ -101,24 +101,60 @@ namespace eval geekosphere::tbar::widget::wicd {
 		}
 		$sys($w,networkWindow) configure -bg $sys($w,background)
 		set wirelessInfo [collectDataForAllWirelessNetworks]
+		set currentNetworkId [getWirelessCurrentNetworkId]
 		foreach network $wirelessInfo {
+
 			set networkPath $sys($w,networkWindow).[dict get $network id]
 
-			set networkFrame [frame ${networkPath}]
-			grid [label ${networkPath}.name \
-				-anchor w \
+			set networkInfoPath ${networkPath}.info
+			set networkControlPath ${networkPath}.control
+
+			set quality [dict get $network quality]
+
+			set networkFrame [frame ${networkPath} -bg $sys($w,background)]
+			set infoFrame [frame ${networkInfoPath}]
+			set controlFrame [frame ${networkControlPath}]
+
+			grid $infoFrame -row 0
+			grid $controlFrame -row 1
+
+			grid [label ${networkInfoPath}.name \
 				-text "essid: [dict get $network ssid]" \
 				-font $sys($w,font) \
 				-fg $sys($w,foreground) \
-				-bg $sys($w,background)] -column 0
-			grid [label ${networkPath}.quality \
-				-anchor w \
-				-text "quality: [dict get $network quality]" \
+				-bg $sys($w,background)] -row 0 -column 0 -columnspan 1 -sticky w
+			grid columnconfigure $infoFrame 1 -weight 1
+
+			grid [label ${networkInfoPath}.quality \
+				-text "quality: $quality" \
+				-font $sys($w,font) \
+				-fg [getColorBySignalStrength $w $quality] \
+				-bg $sys($w,background)] -row 0 -column 1 -columnspan 1 -sticky w
+			grid columnconfigure $infoFrame 2 -weight 2
+
+			if {[dict get $network id] == $currentNetworkId} {
+				set buttonText "Disconnect"
+			} else {
+				set buttonText "Connect"
+			}
+
+			grid [button ${networkControlPath}.connect \
+				-text $buttonText \
 				-font $sys($w,font) \
 				-fg $sys($w,foreground) \
-				-bg $sys($w,background)] -row 0 -column 1
+				-bg $sys($w,background) \
+				-command [list puts $network]] -row 1 -column 0 -columnspan 1 -sticky w
 
-			grid $networkFrame
+			grid [button ${networkControlPath}.configure \
+				-text "Configure" \
+				-font $sys($w,font) \
+				-fg $sys($w,foreground) \
+				-bg $sys($w,background) \
+				-command [list puts $network]] -row 1 -column 1 -columnspan 1 -sticky e
+
+			grid $infoFrame -sticky w
+			grid $controlFrame -sticky w
+			grid $networkFrame -sticky w
 		}
 
 		positionWindowRelativly $sys($w,networkWindow) $w
@@ -132,6 +168,7 @@ namespace eval geekosphere::tbar::widget::wicd {
 		log "INFO" "Connected to network $currentNetworkId, updating signal strength accordingly ($quality)."
 		set sys($w,signalStrength) $quality
 		drawSignalStrength $w
+		log "TRACE" "IWCONFIG: [getIwConfig]"
 	}
 
 	proc drawSignalStrength {w} {
@@ -154,7 +191,7 @@ namespace eval geekosphere::tbar::widget::wicd {
 		set sys($w,signalStrengthId) [$sys($w,canvas) create rectangle \
 				0 $canvasHeight \
 				$canvasWidth [expr {$canvasHeight - $heightOfSignalStrength}] \
-			-fill [getColorBySignalStrength $w]]
+			-fill [getCurrentColorBySignalStrength $w]]
 
 		set sys($w,signalStrengthTextId) [$sys($w,canvas) create text \
 			[expr {$canvasWidth / 2}] [expr {$canvasHeight / 2}] \
@@ -163,11 +200,16 @@ namespace eval geekosphere::tbar::widget::wicd {
 			-fill $sys($w,foreground)]
 	}
 
-	proc getColorBySignalStrength {w} {
+	proc getCurrentColorBySignalStrength {w} {
 		variable sys
-		if {$sys($w,signalStrength) > 70} {
+		return [getColorBySignalStrength $w $sys($w,signalStrength)]
+	}
+
+	proc getColorBySignalStrength {w ss} {
+		variable sys
+		if {$ss > 70} {
 			return $sys($w,gc,goodSignal)
-		} elseif {$sys($w,signalStrength > 40} {
+		} elseif {$ss > 40} {
 			return $sys($w,gc,mediumSignal)
 		} else {
 			return $sys($w,gc,badSignal)

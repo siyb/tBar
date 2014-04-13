@@ -135,6 +135,10 @@ namespace eval geekosphere::tbar::wicd::dbus {
 		return [callOnWireless GetIwconfig ""]
 	}
 
+	proc getWirelessIp {} {
+		return [callOnWireless GetWirelessIP "v" [getIwConfig]]
+	}
+
 	proc collectDataForAllWirelessNetworks {} {
 		set ret [list]
 		for {set i 0} {$i < [getNumberOfNetworks]} {incr i} {
@@ -151,6 +155,6 @@ namespace eval geekosphere::tbar::wicd::dbus {
 	}
 
 	namespace export connect disconnect collectDataForAllWirelessNetworks getWirelessCurrentNetworkId \
-	getQualityFor getIwConfig
+	getQualityFor getIwConfig getWirelessIp
 
 }

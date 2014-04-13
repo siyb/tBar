@@ -112,8 +112,8 @@ namespace eval geekosphere::tbar::widget::wicd {
 			set quality [dict get $network quality]
 
 			set networkFrame [frame ${networkPath} -bg $sys($w,background)]
-			set infoFrame [frame ${networkInfoPath}]
-			set controlFrame [frame ${networkControlPath}]
+			set infoFrame [frame ${networkInfoPath} -bg $sys($w,background)]
+			set controlFrame [frame ${networkControlPath} -bg $sys($w,background)]
 
 			grid $infoFrame -row 0
 			grid $controlFrame -row 1
@@ -123,14 +123,12 @@ namespace eval geekosphere::tbar::widget::wicd {
 				-font $sys($w,font) \
 				-fg $sys($w,foreground) \
 				-bg $sys($w,background)] -row 0 -column 0 -columnspan 1 -sticky w
-			grid columnconfigure $infoFrame 1 -weight 1
 
 			grid [label ${networkInfoPath}.quality \
 				-text "quality: $quality" \
 				-font $sys($w,font) \
 				-fg [getColorBySignalStrength $w $quality] \
-				-bg $sys($w,background)] -row 0 -column 1 -columnspan 1 -sticky w
-			grid columnconfigure $infoFrame 2 -weight 2
+				-bg $sys($w,background)] -row 1 -column 0 -columnspan 1 -sticky w
 
 			if {[dict get $network id] == $currentNetworkId} {
 				set buttonText "Disconnect"

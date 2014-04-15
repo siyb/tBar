@@ -197,12 +197,50 @@ namespace eval geekosphere::tbar::widget::wicd {
 			-fg $sys($w,foreground) \
 			-bg $sys($w,background)] -columnspan 1 -sticky w
 		grid [label ${f}.mode \
-			-text "mode: [dict get $network mode] : $ip" \
+			-text "mode: [dict get $network mode]" \
 			-font $sys($w,font) \
 			-fg $sys($w,foreground) \
 			-bg $sys($w,background)] -columnspan 1 -sticky w
+		label ${f}.key \
+			-text "key:" \
+			-font $sys($w,font) \
+			-fg $sys($w,foreground) \
+			-bg $sys($w,background)
+		set sys($w,key,[dict get $network id]) ""
+		entry ${f}.keyEntry \
+			-fg $sys($w,foreground) \
+			-bg $sys($w,background) \
+			-font $sys($w,font) \
+			-textvariable ::geekosphere::tbar::widget::wicd::sys($w,key,[dict get $network id])
+		grid ${f}.key ${f}.keyEntry -sticky w
+		button ${f}.save \
+			-text "save" \
+			-fg $sys($w,foreground) \
+			-bg $sys($w,background) \
+			-font $sys($w,font) \
+			-command [list ::geekosphere::tbar::widget::wicd::saveNetwork $w $network]
+		button ${f}.cancel \
+			-text "cancel" \
+			-fg $sys($w,foreground) \
+			-bg $sys($w,background) \
+			-font $sys($w,font) \
+			-command [list ::geekosphere::tbar::widget::wicd::destroyDetailWindow $w]
+		grid ${f}.save ${f}.cancel -sticky ew
+		
+	}
 
-		}
+	proc saveNetwork {w network} {
+		variable sys
+		set key $sys($w,key,[dict get $network id])
+		set sys($w,key,[dict get $network id]) ""
+		puts $key 
+		destroy $sys($w,networkDetailWindow)
+	}
+
+	proc destroyDetailWindow {w} {
+		variable sys
+		destroy $sys($w,networkDetailWindow)
+	}
 
 	proc updateWidget {w} {
 		variable sys

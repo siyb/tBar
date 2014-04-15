@@ -107,30 +107,30 @@ namespace eval geekosphere::tbar::widget::wicd {
 		foreach network $wirelessInfo {
 
 			set networkPath $sys($w,networkWindow).[dict get $network id]
-
-			set networkInfoPath ${networkPath}.info
-			set networkControlPath ${networkPath}.control
-
+			grid [frame $networkPath -bg $sys($w,background)]
 			set quality [dict get $network quality]
 
-			set networkFrame [frame ${networkPath} -bg $sys($w,background)]
-			set infoFrame [frame ${networkInfoPath} -bg $sys($w,background)]
-			set controlFrame [frame ${networkControlPath} -bg $sys($w,background)]
-
-			grid $infoFrame -row 0
-			grid $controlFrame -row 1
-
-			grid [label ${networkInfoPath}.name \
+			grid [label ${networkPath}.name \
 				-text "essid: [dict get $network ssid]" \
 				-font $sys($w,font) \
 				-fg $sys($w,foreground) \
-				-bg $sys($w,background)] -row 0 -column 0 -columnspan 1 -sticky w
+				-bg $sys($w,background)] -sticky w -columnspan 2
 
-			grid [label ${networkInfoPath}.quality \
+			grid [label ${networkPath}.quality \
 				-text "quality: $quality" \
 				-font $sys($w,font) \
 				-fg [getColorBySignalStrength $w $quality] \
-				-bg $sys($w,background)] -row 1 -column 0 -columnspan 1 -sticky w
+				-bg $sys($w,background)] -sticky w -columnspan 2
+
+			barChart ${networkPath}.barChart \
+				-height $sys($w,height) \
+				-fg $sys($w,foreground) \
+				-bg $sys($w,background) \
+				-font $sys($w,font) \
+				-gc  "green" \
+				-width 300
+			
+			grid ${networkPath}.barChart -sticky ew -columnspan 2
 
 			if {[dict get $network id] == $currentNetworkId} {
 				set buttonText "Disconnect"
@@ -138,23 +138,21 @@ namespace eval geekosphere::tbar::widget::wicd {
 				set buttonText "Connect"
 			}
 
-			grid [button ${networkControlPath}.connect \
+			button ${networkPath}.connect \
 				-text $buttonText \
 				-font $sys($w,font) \
 				-fg $sys($w,foreground) \
 				-bg $sys($w,background) \
-				-command [list puts $network]] -row 1 -column 0 -columnspan 1 -sticky w
+				-command [list puts $network]
 
-			grid [button ${networkControlPath}.configure \
+			button ${networkPath}.configure \
 				-text "Configure" \
 				-font $sys($w,font) \
 				-fg $sys($w,foreground) \
 				-bg $sys($w,background) \
-				-command [list geekosphere::tbar::widget::wicd::showNetworkDetail $w $network]] -row 1 -column 1 -columnspan 1 -sticky e
-
-			grid $infoFrame -sticky w
-			grid $controlFrame -sticky w
-			grid $networkFrame -sticky w
+				-command [list geekosphere::tbar::widget::wicd::showNetworkDetail $w $network]
+			
+			grid ${networkPath}.connect ${networkPath}.configure -sticky ew 
 		}
 
 		positionWindowRelativly $sys($w,networkWindow) $w
@@ -251,7 +249,40 @@ namespace eval geekosphere::tbar::widget::wicd {
 		set sys($w,signalStrength) $quality
 		drawSignalStrength $w
 		log "TRACE" "IWCONFIG: [getIwConfig]"
+		recordWirelessStrengthHistory $w
+		# TODO: if the detail window is open, rerender all networks!
+		renderSignalHistoryIfNetworkWindowIsOpen $w
 	}
+
+	proc recordWirelessStrengthHistory {w} {
+		variable sys
+		foreach wireless [collectDataForAllWirelessNetworks] {
+			set quality [dict get $wireless quality]
+			set id [dict get $wireless id]
+			if {![info exists sys($w,history,strength,$id)]} {
+				set sys($w,history,strength,$id) [::geekosphere::tbar::simplerle::simplerle new]
+			}
+			$sys($w,history,strength,$id) add [dict get $wireless quality].0
+			log "TRACE" "Added $quality to $id" 
+		}
+	}
+
+	proc renderSignalHistoryIfNetworkWindowIsOpen {w} {
+		variable sys
+		if {[winfo exists $sys($w,networkWindow)]} {
+			foreach network [collectDataForAllWirelessNetworks] {
+				set id [dict get $network id]
+				log "TRACE" "Trying to render history for $id"
+				set barchart $sys($w,networkWindow).${id}.barChart
+				if {[info exists sys($w,history,strength,$id)] && [winfo exists $barchart]} {
+					set decompressed [$sys($w,history,strength,$id) decompress]
+					log "TRACE" "Rendering history for $id in $barchart -> $decompressed"
+					$barchart setValues $decompressed
+					$barchart update
+				}
+			}
+		}
+	}	
 
 	proc drawSignalStrength {w} {
 		variable sys

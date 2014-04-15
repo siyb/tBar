@@ -28,6 +28,7 @@ namespace eval geekosphere::tbar::widget::wicd {
 		set sys($w,originalCommand) ${w}_
 		set sys($w,networkWindow) ${w}.networkWindow
 		set sys($w,networkDetailWindow) ${w}.networkDetailWindow
+		dict set sys($w,networkDetailCurrentNetwork) id -1
 		set sys($w,signalStrength) 0
 		set sys($w,signalStrengthId) -1
 		set sys($w,signalStrengthTextId) -1
@@ -163,41 +164,45 @@ namespace eval geekosphere::tbar::widget::wicd {
 		variable sys
 		if {[winfo exists $sys($w,networkDetailWindow)]} {
 			destroy $sys($w,networkDetailWindow)
-		} else {
-			set f $sys($w,networkDetailWindow).frame
-			toplevel $sys($w,networkDetailWindow)
-			wm title $sys($w,networkDetailWindow) "Network Detail"
-			wm attributes $sys($w,networkDetailWindow) -type dialog
-			pack [frame $f -bg $sys($w,background)] -fill both -expand 1
-			set ip [getWirelessIp]
-			grid [label ${f}.name \
-				-text "essid: [dict get $network ssid]" \
-				-font $sys($w,font) \
-				-fg $sys($w,foreground) \
-				-bg $sys($w,background)] -columnspan 1 -sticky w
-			grid [label ${f}.bssid \
-				-text "mac: [dict get $network bssid]" \
-				-font $sys($w,font) \
-				-fg $sys($w,foreground) \
-				-bg $sys($w,background)] -columnspan 1 -sticky w
-			grid [label ${f}.channel \
-				-text "channel: [dict get $network channel]" \
-				-font $sys($w,font) \
-				-fg $sys($w,foreground) \
-				-bg $sys($w,background)] -columnspan 1 -sticky w
-			grid [label ${f}.encryption \
-				-text "encryption: [dict get $network encryptionMode]" \
-				-font $sys($w,font) \
-				-fg $sys($w,foreground) \
-				-bg $sys($w,background)] -columnspan 1 -sticky w
-			grid [label ${f}.mode \
-				-text "mode: [dict get $network mode] : $ip" \
-				-font $sys($w,font) \
-				-fg $sys($w,foreground) \
-				-bg $sys($w,background)] -columnspan 1 -sticky w
+			if {[dict get $sys($w,networkDetailCurrentNetwork) id] == [dict get $network id]} {
+				set sys($w,networkDetailCurrentNetwork) $network
+				return	
+			}
+		}
+		set sys($w,networkDetailCurrentNetwork) $network 
+		set f $sys($w,networkDetailWindow).frame
+		toplevel $sys($w,networkDetailWindow)
+		wm title $sys($w,networkDetailWindow) "Network Detail"
+		wm attributes $sys($w,networkDetailWindow) -type dialog
+		pack [frame $f -bg $sys($w,background)] -fill both -expand 1
+		set ip [getWirelessIp]
+		grid [label ${f}.name \
+			-text "essid: [dict get $network ssid]" \
+			-font $sys($w,font) \
+			-fg $sys($w,foreground) \
+			-bg $sys($w,background)] -columnspan 1 -sticky w
+		grid [label ${f}.bssid \
+			-text "mac: [dict get $network bssid]" \
+			-font $sys($w,font) \
+			-fg $sys($w,foreground) \
+			-bg $sys($w,background)] -columnspan 1 -sticky w
+		grid [label ${f}.channel \
+			-text "channel: [dict get $network channel]" \
+			-font $sys($w,font) \
+			-fg $sys($w,foreground) \
+			-bg $sys($w,background)] -columnspan 1 -sticky w
+		grid [label ${f}.encryption \
+			-text "encryption: [dict get $network encryptionMode]" \
+			-font $sys($w,font) \
+			-fg $sys($w,foreground) \
+			-bg $sys($w,background)] -columnspan 1 -sticky w
+		grid [label ${f}.mode \
+			-text "mode: [dict get $network mode] : $ip" \
+			-font $sys($w,font) \
+			-fg $sys($w,foreground) \
+			-bg $sys($w,background)] -columnspan 1 -sticky w
 
 		}
-	}
 
 	proc updateWidget {w} {
 		variable sys

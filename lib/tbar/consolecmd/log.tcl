@@ -1,6 +1,8 @@
 namespace eval geekosphere::tbar::console::command::log {
+	set validLevels [list "FATAL" "ERROR" "WARNING" "INFO" "DEBUG" "TRACE"]
+
 	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "hasSubCommands" 1
-	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "subCommands" [list "on" "off" "status" "ns" "info" "level"]
+	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "subCommands" [list "on" "off" "status" "ns" "info" "bulk" "level"]
 
 	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "on" "hasSubCommands" "0"
 	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "on" "info" [list \
@@ -38,6 +40,12 @@ namespace eval geekosphere::tbar::console::command::log {
 		"Level set!" \
 		"Sets the level for the given namespace"]
 
+	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "bulk" "hasSubCommands" 0
+	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "bulk" "info" [list \
+		"geekosphere::tbar::console::command::log::bulkSetLogLevel" \
+		"Levels set!" \
+		"Set the log level of all namespaces"]
+
 	proc logStatus {} {
 		if {$geekosphere::tbar::util::logger::loggerSettings(dispatchCommand) eq "geekosphere::tbar::console::logDispatch"} {
 			geekosphere::tbar::console::printMessage "Log dispatching enabled"
@@ -47,9 +55,9 @@ namespace eval geekosphere::tbar::console::command::log {
 	}
 
 	proc setLogLevelFor {args} {
-		set validLevels [list "FATAL" "ERROR" "WARNING" "INFO" "DEBUG" "TRACE"]
+		variable validLevels
 		if {[llength $args] != 2} {
-			geekosphere::tbar::console::printError "Please specify a namespace an a log level"
+			geekosphere::tbar::console::printError "Please specify a namespace and a log level"
 			return
 		}
 		set ns [lindex $args 0]
@@ -64,6 +72,22 @@ namespace eval geekosphere::tbar::console::command::log {
 			return
 		}
 		set ${ns}::logger(level) $level
+	}
+
+	proc bulkSetLogLevel {args} {
+		variable validLevels
+		if {[llength $args] != 1} {
+			geekosphere::tbar::console::printError "Please specify a log level"
+			return
+		}
+		set level [lindex $args 0]
+		if  {[lsearch $validLevels $level] == -1} {
+			geekosphere::tbar::console::printError "Invalid log level ($level): $validLevels"
+			return
+		}
+		foreach ns [getLoggedNamespaces ::geekosphere::tbar] {
+			set ${ns}::logger(level) $level
+		}
 	}
 
 	proc listLoggedNamespacesAndLogLevels {} {

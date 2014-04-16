@@ -3,6 +3,7 @@ package provide wicd 1.0
 if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require logger
 	package require wicd_dbus
+	package require BWidget
 }
 
 proc wicd {w args} {
@@ -104,10 +105,23 @@ namespace eval geekosphere::tbar::widget::wicd {
 		$sys($w,networkWindow) configure -bg $sys($w,background)
 		set wirelessInfo [collectDataForAllWirelessNetworks]
 		set currentNetworkId [getWirelessCurrentNetworkId]
+
+		set sw [ScrolledWindow $sys($w,networkWindow).sw \
+			-bg $sys($w,background)]
+		grid $sw -sticky nswe
+
+		set sf [ScrollableFrame ${sw}.sf \
+			-height [expr {[winfo screenheight .] / 2}] \
+			-bg $sys($w,background)]
+		grid $sf -sticky nswe
+
+		$sw setwidget $sf
+		set root [$sf getframe]
+
 		foreach network $wirelessInfo {
 
-			set networkPath $sys($w,networkWindow).[dict get $network id]
-			grid [frame $networkPath -bg $sys($w,background)]
+			set networkPath $root.[dict get $network id]
+			grid [frame $networkPath -bg $sys($w,background)] -sticky nswe
 			set quality [dict get $network quality]
 
 			grid [label ${networkPath}.name \
@@ -129,7 +143,7 @@ namespace eval geekosphere::tbar::widget::wicd {
 				-font $sys($w,font) \
 				-gc  "green" \
 				-width 300
-			
+
 			grid ${networkPath}.barChart -sticky ew -columnspan 2
 
 			if {[dict get $network id] == $currentNetworkId} {
@@ -151,8 +165,8 @@ namespace eval geekosphere::tbar::widget::wicd {
 				-fg $sys($w,foreground) \
 				-bg $sys($w,background) \
 				-command [list geekosphere::tbar::widget::wicd::showNetworkDetail $w $network]
-			
-			grid ${networkPath}.connect ${networkPath}.configure -sticky ew 
+
+			grid ${networkPath}.connect ${networkPath}.configure -sticky ew
 		}
 
 		positionWindowRelativly $sys($w,networkWindow) $w
@@ -164,10 +178,10 @@ namespace eval geekosphere::tbar::widget::wicd {
 			destroy $sys($w,networkDetailWindow)
 			if {[dict get $sys($w,networkDetailCurrentNetwork) id] == [dict get $network id]} {
 				set sys($w,networkDetailCurrentNetwork) $network
-				return	
+				return
 			}
 		}
-		set sys($w,networkDetailCurrentNetwork) $network 
+		set sys($w,networkDetailCurrentNetwork) $network
 		set f $sys($w,networkDetailWindow).frame
 		toplevel $sys($w,networkDetailWindow)
 		wm title $sys($w,networkDetailWindow) "Network Detail"
@@ -224,14 +238,14 @@ namespace eval geekosphere::tbar::widget::wicd {
 			-font $sys($w,font) \
 			-command [list ::geekosphere::tbar::widget::wicd::destroyDetailWindow $w]
 		grid ${f}.save ${f}.cancel -sticky ew
-		
+
 	}
 
 	proc saveNetwork {w network} {
 		variable sys
 		set key $sys($w,key,[dict get $network id])
 		set sys($w,key,[dict get $network id]) ""
-		puts $key 
+		puts $key
 		destroy $sys($w,networkDetailWindow)
 	}
 
@@ -263,7 +277,7 @@ namespace eval geekosphere::tbar::widget::wicd {
 				set sys($w,history,strength,$id) [::geekosphere::tbar::simplerle::simplerle new]
 			}
 			$sys($w,history,strength,$id) add [dict get $wireless quality].0
-			log "TRACE" "Added $quality to $id" 
+			log "TRACE" "Added $quality to $id"
 		}
 	}
 
@@ -282,7 +296,7 @@ namespace eval geekosphere::tbar::widget::wicd {
 				}
 			}
 		}
-	}	
+	}
 
 	proc drawSignalStrength {w} {
 		variable sys

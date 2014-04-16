@@ -1,7 +1,7 @@
 catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::wicd {
 
-	generallyRequires wicd logger dbus wicd_dbus
+	generallyRequires wicd logger dbus wicd_dbus BWidget
 	setNamespace wicd ::geekosphere::tbar::widget::wicd
 	registerNamespaceImportsFor wicd \
 		::geekosphere::tbar::util::logger::* \

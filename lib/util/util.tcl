@@ -52,7 +52,7 @@ namespace eval geekosphere::tbar::util {
 		if {[catch {
 			wm geometry $windowToPosition [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $windowToPosition] [winfo reqheight $windowToPosition] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
 		}]} {
-			log "WARNING" "Unable to render window properly"
+			log "WARNING" "Unable to render window properly $::errorInfo"
 			return -1
 		}
 	}

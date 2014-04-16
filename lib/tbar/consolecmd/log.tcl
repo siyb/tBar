@@ -1,6 +1,6 @@
 namespace eval geekosphere::tbar::console::command::log {
 	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "hasSubCommands" 1
-	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "subCommands" [list "on" "off" "status" "ns" "level"]
+	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "subCommands" [list "on" "off" "status" "ns" "info" "level"]
 
 	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "on" "hasSubCommands" "0"
 	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "on" "info" [list \
@@ -26,10 +26,16 @@ namespace eval geekosphere::tbar::console::command::log {
 		"" \
 		"Lists all logged  namespaces"]
 
+	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "info" "hasSubCommands" 0
+	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "info" "info" [list \
+		"geekosphere::tbar::console::command::log::listLoggedNamespacesAndLogLevels" \
+		"" \
+		"Show all logged namespaces and their log levels"]
+
 	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "level" "hasSubCommands" 0
 	dict set geekosphere::tbar::console::sys(buildinCommand) "log" "level" "info" [list \
 		"geekosphere::tbar::console::command::log::setLogLevelFor" \
-		"" \
+		"Level set!" \
 		"Sets the level for the given namespace"]
 
 	proc logStatus {} {
@@ -58,7 +64,12 @@ namespace eval geekosphere::tbar::console::command::log {
 			return
 		}
 		set ${ns}::logger(level) $level
-		geekosphere::tbar::console::printMessage "Level '$level' set for ${ns}::logger(level)"
+	}
+
+	proc listLoggedNamespacesAndLogLevels {} {
+		foreach ns [getLoggedNamespaces ::geekosphere::tbar] {
+			geekosphere::tbar::console::printMessage "${ns}: [set ${ns}::logger(level)]"
+		}
 	}
 
 	proc listLoggedNamespaces {} {

@@ -1,7 +1,9 @@
 package provide automenu 1.0
 
 package require menulib
+package require closure
 package require tipc 
+
 proc automenu {w args} {
 	geekosphere::tbar::widget::automenu::makeMenu $w $args
 
@@ -20,7 +22,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 		set sys($w,entry) .e
 		set sys($w,toplevel) .tl
 		set sys($w,listBox) $sys($w,toplevel).lb
-		
+
 		frame $w
 		pack [entry ${w}$sys($w,entry)] -side right
 		setEntryKeyCallback callBack $w
@@ -29,20 +31,21 @@ namespace eval geekosphere::tbar::widget::automenu {
 		bind ${w}$sys($w,entry) <Button-1> {
 			focus -force %W
 		}
-		
-		# focus callback only work on one entry box! anything else wouldn't make any sense
-		if {![info exists sys(globalEntry)]} {
-			geekosphere::tbar::ipc::registerProc ipc_focus
-			set sys(globalEntry) ${w}$sys($w,entry)
-		}
+
+		proc ipc_focus {} [closure::closure {
+			variable sys
+			if {![winfo exists $sys($w,toplevel)]} {
+				focus -force ${w}$sys($w,entry)
+			} else {
+				${w}$sys($w,entry) delete 0 end
+				destroy $sys($w,toplevel)
+				focus -force .
+			}			
+		}]
+		geekosphere::tbar::ipc::registerProc ipc_focus
 
 		uplevel #0 rename $w ${w}_
 		action $w configure $arguments
-	}
-
-	proc ipc_focus {} {
-		variable sys
-		focus -force $sys(globalEntry)
 	}
 
 	proc action {w args} {

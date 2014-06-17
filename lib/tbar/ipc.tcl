@@ -81,10 +81,17 @@ namespace eval geekosphere::tbar::ipc {
 		if {[catch {
 			set ns [dict get $command "namespace"]
 			set p [dict get $command "proc"]
-			if {[isProcRegistered $ns $p]} {
-				${ns}::${p}
+
+			if {$ns eq "::geekosphere::tbar::ipc" && $p eq "listIPC"} {
+				listIPC
+				# returning here causes an error in tclsh8.6, therefore -> nested ifs
 			} else {
-				log "ERROR" "${ns}::${p} not registered"
+
+				if {[isProcRegistered $ns $p]} {
+					${ns}::${p}
+				} else {
+					log "ERROR" "${ns}::${p} not registered"
+				}
 			}
 		} err]} {
 			log "ERROR" "Cannot execute command: $::errorInfo"
@@ -99,5 +106,15 @@ namespace eval geekosphere::tbar::ipc {
 		puts $sock $cmd
 		flush $sock
 		close $sock
+	}
+
+	proc listIPC {} {
+		variable sys
+		foreach {key value} [array get sys ipc,registered,*] {
+			set ns [lindex [split $key ","] end]
+			foreach prc $sys($key) {
+				puts ${ns}#${prc}
+			}
+		}
 	}
 }

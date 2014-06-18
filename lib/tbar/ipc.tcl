@@ -108,13 +108,20 @@ namespace eval geekosphere::tbar::ipc {
 		close $sock
 	}
 
-	proc listIPC {} {
+	proc obtainIPCList {} {
 		variable sys
 		foreach {key value} [array get sys ipc,registered,*] {
 			set ns [lindex [split $key ","] end]
 			foreach prc $sys($key) {
-				puts ${ns}#${prc}
+				lappend ret ${ns}#${prc}
 			}
+		}
+		return $ret
+	}
+
+	proc listIPC {} {
+		foreach item [obtainIPCList] {
+			puts $item
 		}
 	}
 }

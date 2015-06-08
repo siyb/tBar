@@ -51,6 +51,9 @@ namespace eval geekosphere::tbar::widget::network {
 		# the data of all devices
 		set sys($w,allDeviceData) [list]
 
+		# a list of devices that should not be parsed any more because they seem to not exist
+		set sys($w,stopParsing) [list]
+
 		bind ${w}.network <Button-1> [namespace code [list actionHandler $w %W]]
 	}
 
@@ -174,7 +177,7 @@ namespace eval geekosphere::tbar::widget::network {
 		if {![info exists sys($w,lastRx,$device)]} {
 			set sys($w,lastRx,$device) 0
 		}
-		set netDict [parseNetworkSpeed $device]
+		set netDict [parseNetworkSpeed $w $device]
 		if {$netDict == -1} {
 			return -1
 		}
@@ -197,7 +200,7 @@ namespace eval geekosphere::tbar::widget::network {
 	}
 
 	# parses the network speed for the specified device
-	proc parseNetworkSpeed {device} {
+	proc parseNetworkSpeed {w device} {
 		variable sys
 		set returnDict [dict create]
 		set data [read [set fl [open $sys(netInfo) r]]]
@@ -210,9 +213,14 @@ namespace eval geekosphere::tbar::widget::network {
 			dict set returnDict "tx" [lindex $splitLine 8]
 			dict set returnDict "rx" [lindex $splitLine 0]
 		}
+		set deviceIdx [lsearch $sys($w,stopParsing) $device]
 		if {![dict exists $returnDict "tx"] || ![dict exists $returnDict "tx"]} { 
-			log "WARNING" "no tx / rx data, make sure that the device you specified exists, skipping device"
+			if {$deviceIdx != -1} { return -1 }
+			log "WARNING" "no tx / rx data, make sure that the device you specified exists, skipping device - $deviceIdx / $device"
+			lappend sys($w,stopParsing) $device
 			return -1
+		} else {
+			set sys($w,stopParsing) [lreplace $sys($w,stopParsing) $deviceIdx $deviceIdx]	
 		}
 		return $returnDict
 	}

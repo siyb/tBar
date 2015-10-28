@@ -192,8 +192,8 @@ namespace eval geekosphere::tbar::i3::ipc {
 				log "ERROR" "Unable to parse message"
 				return -1
 			}
-			log "DEBUG" "Message length was ${dataLength}"
-			if {$magic ne $sys(magic)} { error "Magic string was '${magic}', should have been '${sys(magic)}'" }
+			log "DEBUG" "Message length was ${dataLength}, DATA: $data"
+			if {$magic ne $sys(magic)} { return -1 }
 
 			# seems that -2147483648 is a valid type .. wtf i3
 			if {($type < 0 || $type > 3) && $type != -2147483648} { log "WARNING" "Invalid type, was ${type}" }

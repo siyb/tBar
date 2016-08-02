@@ -25,7 +25,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 	proc makeMixer {w arguments} {
 		variable sys
 		set sys($w,originalCommand) ${w}_
-		set sys($w,activatedDevices) [list] 
+		set sys($w,activatedDevices) [list]
 
 		frame ${w}
 
@@ -128,14 +128,14 @@ namespace eval geekosphere::tbar::widget::mixer {
 			destroy ${w}.mixerWindow
 			return
 		} else {
-			toplevel ${w}.mixerWindow -bg $sys($w,background) -height 400 
+			toplevel ${w}.mixerWindow -bg $sys($w,background) -height 400
 		}
 		foreach device $sys($w,activatedDevices) {
 			set deviceCountInItem [llength $device]
 			if {$deviceCountInItem == 1} {
 				renderDeviceAccordingToType $w $device
 			} elseif {$deviceCountInItem == 2} {
-				renderDeviceAccordingToType $w $device 1 
+				renderDeviceAccordingToType $w $device 1
 			} else {
 				log "WARNING" "Can't bundle more than two devices: $device"
 			}
@@ -151,11 +151,11 @@ namespace eval geekosphere::tbar::widget::mixer {
 			return
 		}
 		set devicePath [getPathByDevice $w $deviceList $multidevice]
-		
+
 		foreach device $deviceList {
 			if {[isDeviceAvailable $w $device]} {
 				set deviceInformation [geekosphere::amixer::getInformationOnDevice $sys($w,card) $device]
-				log "INFO" "deviceInformation: $deviceInformation" 
+				log "INFO" "deviceInformation: $deviceInformation"
 				set meta [dict get $deviceInformation "meta"]
 				set info [dict get $deviceInformation "info"]
 
@@ -226,14 +226,14 @@ namespace eval geekosphere::tbar::widget::mixer {
 			insertWidgetIntoNextGridRow $path $sb 1
 		} else {
 			drawItemHeader $w $path $infoDict
-			pack $sb -expand 1 -fill y 
+			pack $sb -expand 1 -fill y
 		}
 		setScrollbarValueFromInfoDict $path $infoDict $multi
 	}
 
 	proc setScrollbarValueFromInfoDict {path infoDict multi} {
 		if {$multi} {
-			set barPath [getMultiDeviceScrollbarPath $path $infoDict] 
+			set barPath [getMultiDeviceScrollbarPath $path $infoDict]
 		} else {
 			set barPath ${path}.bar
 		}
@@ -317,6 +317,10 @@ namespace eval geekosphere::tbar::widget::mixer {
 	}
 
 	proc amixerOnOffToBool {input} {
+		if {[llength $splitInput] != 1} {
+			log "INFO" "Input has multiple channels, using the first!"
+			set input [lindex $splitInput 0]
+		}
 		if {$input eq "on"} {
 			return 1
 		} else {
@@ -418,7 +422,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 		log "TRACE" "Bar moved to $level"
 		geekosphere::amixer::setDevicePercent $infoDict $level
 	}
-	
+
 	proc shouldDeviceBeShown {w numid} {
 		variable sys
 		if {![info exists sys($w,activatedDevices)] || [lsearch $sys($w,activatedDevices) $numid] != -1} { return 1 } else { return 0 }

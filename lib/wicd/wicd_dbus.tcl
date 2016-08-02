@@ -131,6 +131,10 @@ namespace eval geekosphere::tbar::wicd::dbus {
 		return [callOnWireless GetCurrentNetworkID ""]
 	}
 
+	proc getWirelessCurrentNetwork {} {
+		return [callOnWireless GetCurrentNetwork ""]
+	}
+
 	proc getIwConfig {} {
 		return [callOnWireless GetIwconfig ""]
 	}

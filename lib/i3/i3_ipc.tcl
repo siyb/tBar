@@ -85,6 +85,7 @@ namespace eval geekosphere::tbar::i3::ipc {
 		variable sys
 		if {[catch {
 			set data [read -nonewline $sys(event_socket)]
+			flush $sys(event_socket)
 			::geekosphere::tbar::util::hex::puthex $data
 			set messages [parseData $data]
 			if {$messages == -1} { # TODO: do error handling here}
@@ -181,19 +182,20 @@ namespace eval geekosphere::tbar::i3::ipc {
 	}
 
 	proc parseData {data} {
+		log "DEBUG" "RAW DATA: $data"
 		set executionTime [time {
 		variable sys
 		set retList [list]
 		set mark 0
 		set dataLength [string length $data]
 		while {$mark <= $dataLength} {
-			binary scan $data @${mark}a${sys(magicLen)}nn magic length type
+			binary scan $data @${mark}a${sys(magicLen)}n1n1 magic length type
 			if {![info exists type]} {
-				log "ERROR" "Unable to parse message"
+				log "ERROR" "Unable to parse message, $magic -> $length"
 				return -1
 			}
 			log "DEBUG" "Message length was ${dataLength}, DATA: $data"
-			if {$magic ne $sys(magic)} { return -1 }
+			if {$magic ne $sys(magic)} { log "ERROR" "Magic was $magic and not $sys(magic)"; return -1 }
 
 			# seems that -2147483648 is a valid type .. wtf i3
 			if {($type < 0 || $type > 3) && $type != -2147483648} { log "WARNING" "Invalid type, was ${type}" }

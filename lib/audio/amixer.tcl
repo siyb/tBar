@@ -9,8 +9,8 @@ namespace eval geekosphere::amixer {
 	proc updateControlList {card} {
 		variable sys
 		set sys(amixerControls) [dict create];# reset the dict (or create it)
-		set data [read [set fl [open |[list amixer -c $card controls]]]]
-		close $fl
+		set data [exec amixer -c $card controls]
+
 		foreach control [split $data "\n"] {
 			set splitControl [split $control ","]
 			set controlDeviceDict [dict create]
@@ -40,7 +40,7 @@ namespace eval geekosphere::amixer {
 	# takes the numid of a device as input. will call amixer cget numid=$numid
 	# and parse its output to create a return dict
 	proc getInformationOnDevice {card numid} {
-		set data [read [set fl [open |[list amixer -c $card cget numid=$numid]]]];close $fl
+		set data [exec amixer -c $card cget numid=$numid]
 		set returnDict [dict create]
 		dict set returnDict "card" $card
 		foreach line [split $data "\n"] {
@@ -96,22 +96,19 @@ namespace eval geekosphere::amixer {
 	proc setDevicePercent {infoDict percentage} {
 		set info [dict get $infoDict "info"]
 		set card [dict get $infoDict "card"]
-		set command [list amixer -c $card cset numid=[dict get $info "numid"] "${percentage}%"]
-		set data [read [set cmd [open |$command]]]; close $cmd
+		set data [exec amixer -c $card cset numid=[dict get $info numid] ${percentage}%]
 	}
 
 	proc setDeviceBoolean {infoDict bool} {
 		if {$bool != 1 && $bool != 0} { error "Must be 1 or 0" }
 		set info [dict get $infoDict "info"]
 		set card [dict get $infoDict "card"]
-		set command [list amixer -c $card cset numid=[dict get $info "numid"] $bool]
-		set data [read [set cmd [open |$command]]]; close $cmd
+		set data [exec amixer -c $card cset numid=[dict get $info numid] $bool]
 	}	
 
 	proc setDeviceEnum {infoDict enum} {
 		set info [dict get $infoDict "info"]
 		set card [dict get $infoDict "card"]
-		set command [list amixer -c $card cset numid=[dict get $info "numid"] $enum]
-		set data [read [set cmd [open |$command]]]; close $cmd
+		set data [exec amixer -c $card cset numid=[dict get $info numid] $enum]
 	}
 }

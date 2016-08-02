@@ -282,7 +282,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 		set cb [checkbutton $sbpath \
 			-bg $sys($w,background) \
 			-font $sys($w,font) \
-			-fg $sys($w,foreground) \
+			-fg $sys($w,background) \
 			-highlightbackground $sys($w,background) \
 			-activebackground $sys($w,background) \
 			-variable geekosphere::tbar::widget::mixer::sys(checkboxes,$device) \

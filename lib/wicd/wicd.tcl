@@ -287,7 +287,7 @@ namespace eval geekosphere::tbar::widget::wicd {
 			foreach network [collectDataForAllWirelessNetworks] {
 				set id [dict get $network id]
 				log "TRACE" "Trying to render history for $id"
-				set barchart $sys($w,networkWindow).${id}.barChart
+				set barchart $sys($w,networkWindow).sw.sf.frame.${id}.barChart
 				if {[info exists sys($w,history,strength,$id)] && [winfo exists $barchart]} {
 					set decompressed [$sys($w,history,strength,$id) decompress]
 					log "TRACE" "Rendering history for $id in $barchart -> $decompressed"

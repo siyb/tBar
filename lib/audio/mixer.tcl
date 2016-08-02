@@ -317,6 +317,7 @@ namespace eval geekosphere::tbar::widget::mixer {
 	}
 
 	proc amixerOnOffToBool {input} {
+		set splitInput [split $input]
 		if {[llength $splitInput] != 1} {
 			log "INFO" "Input has multiple channels, using the first!"
 			set input [lindex $splitInput 0]

@@ -1,6 +1,6 @@
 namespace eval geekosphere::tbar::console::command::widget {
 	dict set geekosphere::tbar::console::sys(buildinCommand) "widget" "hasSubCommands" 1
-	dict set geekosphere::tbar::console::sys(buildinCommand) "widget" "subCommands" [list "list" "unload" "ns" "sys"]
+	dict set geekosphere::tbar::console::sys(buildinCommand) "widget" "subCommands" [list "list" "unload" "ns" "sys" "rehash"]
 
 	dict set geekosphere::tbar::console::sys(buildinCommand) "widget" "list" "hasSubCommands" 0
 	dict set geekosphere::tbar::console::sys(buildinCommand) "widget" "list" "info" [list \

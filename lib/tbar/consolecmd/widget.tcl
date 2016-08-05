@@ -56,7 +56,7 @@ namespace eval geekosphere::tbar::console::command::widget {
 			geekosphere::tbar::console::printError "Widget '$name' was not loaded"
 			return
 		}
-		geekosphere::tbar::removeWidgetFromBar $name
+		geekosphere::tbar::unloadWidget $name
 	}
 
 	proc rehash {} {

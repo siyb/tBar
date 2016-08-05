@@ -150,23 +150,29 @@ namespace eval geekosphere::tbar {
 		return [dict exists $sys(widget,dict) $name]
 	}
 
-	# unload all widgets
+	# unload all widgets, while keeping widget config data
 	proc unloadWidgets {} {
 		variable sys
 		dict for {key value} $sys(widget,dict) {
-			set path [dict get $sys(widget,dict) $key path]
-			set widget [dict get $sys(widget,dict) $key widgetName]
-			if {[dict exists $sys(widget,dict) $key updateTimer]} {
-				set updateTimer [dict get $sys(widget,dict) $key updateTimer]
-				after cancel $updateTimer
-			}
-			# this is a bit dirty, but it allows us to not care to much about the namespace of a given widget
-			# basically, we are bruteforcing our way through the widget namespace
-			foreach ns [namespace children ::geekosphere::tbar::widget] {
-				array unset ${ns}::sys $path,*
-			}
-			destroy $path
+			unloadWidget $key
 		}
+	}
+
+	# unload a single widget while keeping its config data
+	proc unloadWidget {name} {
+		variable sys
+		set path [dict get $sys(widget,dict) $name path]
+		set widget [dict get $sys(widget,dict) $name widgetName]
+		if {[dict exists $sys(widget,dict) $name updateTimer]} {
+			set updateTimer [dict get $sys(widget,dict) $name updateTimer]
+			after cancel $updateTimer     
+		}         
+		# this is a bit dirty, but it allows us to not care to much about the namespace of a given widget
+		# basically, we are bruteforcing our way through the widget namespace
+		foreach ns [namespace children ::geekosphere::tbar::widget] {
+			array unset ${ns}::sys $path,*
+		}         
+		destroy $path
 	}
 
 	# load all widgets

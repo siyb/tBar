@@ -314,7 +314,6 @@ namespace eval geekosphere::tbar::widget::wicd {
 		set heightOfSignalStrength [expr {($canvasHeight * $sys($w,signalStrength) / 100)}]
 		log "INFO" "canvasHeight: $canvasHeight canvasWidth: $canvasWidth heightOfSignalStrength: $heightOfSignalStrength ($sys($w,signalStrength))"
 
-
 		set sys($w,signalStrengthId) [$sys($w,canvas) create rectangle \
 				0 $canvasHeight \
 				$canvasWidth [expr {$canvasHeight - $heightOfSignalStrength}] \

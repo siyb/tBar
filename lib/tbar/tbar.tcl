@@ -150,6 +150,25 @@ namespace eval geekosphere::tbar {
 		return [dict exists $sys(widget,dict) $name]
 	}
 
+	# unload all widgets
+	proc unloadWidgets {} {
+		variable sys
+		dict for {key value} $sys(widget,dict) {
+			set path [dict get $sys(widget,dict) $key path]
+			set widget [dict get $sys(widget,dict) $key widgetName]
+			if {[dict exists $sys(widget,dict) $key updateTimer]} {
+				set updateTimer [dict get $sys(widget,dict) $key updateTimer]
+				after cancel $updateTimer
+			}
+			# this is a bit dirty, but it allows us to not care to much about the namespace of a given widget
+			# basically, we are bruteforcing our way through the widget namespace
+			foreach ns [namespace children ::geekosphere::tbar::widget] {
+				array unset ${ns}::sys $path,*
+			}
+			destroy $path
+		}
+	}
+
 	# load all widgets
 	proc loadWidgets {} {
 		variable sys
@@ -171,7 +190,7 @@ namespace eval geekosphere::tbar {
 							break
 						}
 						makeBindings $key
-						if {$updateInterval > 0} { updateWidget $path $widget $updateInterval }
+						if {$updateInterval > 0} { updateWidget $key $path $widget $updateInterval }
 						log "INFO" "Widget $widget loaded from $widgetFile"
 						set loadSuccess 1
 						break
@@ -202,11 +221,11 @@ namespace eval geekosphere::tbar {
 	}
 
 	# a recursive proc that handles widget updates by calling the widget's update procedure
-	proc updateWidget {path widget interval} {
+	proc updateWidget {widgetName path widget interval} {
 		variable sys
 		if {[winfo exists $path]} {
 			geekosphere::tbar::wrapper::${widget}::update $path
-			after [expr { $interval * 1000 }] [namespace code [list updateWidget $path $widget $interval]]
+			dict set sys(widget,dict) $widgetName updateTimer [after [expr { $interval * 1000 }] [namespace code [list updateWidget $widgetName $path $widget $interval]]]
 		} else {
 			log "INFO" "Path $path does not exist any more, stopping update"
 		}

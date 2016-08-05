@@ -25,6 +25,12 @@ namespace eval geekosphere::tbar::console::command::widget {
 		"" \
 		"Lists the content of the sys array of the given namespace"]
 
+	dict set geekosphere::tbar::console::sys(buildinCommand) "widget" "rehash" "hasSubCommand" 0
+	dict set geekosphere::tbar::console::sys(buildinCommand) "widget" "rehash" "info" [list \
+		"geekosphere::tbar::console::command::widget::rehash" \
+		"Widgets Rehashed!" \
+		"Rehashes (unloads and reloads) widgets from the config, clearing all in memory data"]
+
 	proc list {} {
 		dict for {name info} $geekosphere::tbar::sys(widget,dict) {
 			dict with info {
@@ -51,6 +57,11 @@ namespace eval geekosphere::tbar::console::command::widget {
 			return
 		}
 		geekosphere::tbar::removeWidgetFromBar $name
+	}
+
+	proc rehash {} {
+		geekosphere::tbar::unloadWidgets
+		geekosphere::tbar::loadWidgets
 	}
 
 	proc widgetNsList {} {

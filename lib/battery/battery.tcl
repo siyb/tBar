@@ -27,14 +27,14 @@ namespace eval geekosphere::tbar::widget::battery {
 
 	# Information files for battery status
 	dict set sys(battery) dir [file join / sys class power_supply]
-	
+
 	dict set sys(battery) energy_full_design "energy_full_design"
 	dict set sys(battery) energy_now "energy_now"
 	dict set sys(battery) energy_full "energy_full"
 
 	dict set sys(battery) charge_now "charge_now"
 	dict set sys(battery) charge_full "charge_full"
-	
+
 	dict set sys(battery) power_now "power_now"
 	dict set sys(battery) current_now "current_now"
 
@@ -76,7 +76,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,height) 0
 		# width of the widget
 		set sys($w,width) 0
-		# if this flag is set to 1, the battery widget knows that there is no battery available and acts accordingly	
+		# if this flag is set to 1, the battery widget knows that there is no battery available and acts accordingly
 		set sys($w,unavailable) 0
 		# battery charge history
 		set sys($w,history) [::geekosphere::tbar::simplerle::simplerle new]
@@ -85,7 +85,7 @@ namespace eval geekosphere::tbar::widget::battery {
 		# battery history resoluton (number of readings to be used)
 		set sys($w,batteryHistoryResolution) 100
 		# battery history color
-		set sys($w,batteryHistoryColor) blue 
+		set sys($w,batteryHistoryColor) blue
 		if {[setBatteryDirs $w] == -1} {;# determine battery directory
 			set sys($w,unavailable) 1
 			log "ERROR" "No batteries or mulptiple batteries found, use the -battery option to specify the battery you wish to monitor."
@@ -96,7 +96,7 @@ namespace eval geekosphere::tbar::widget::battery {
 
 		frame ${w}
 		uplevel #0 rename $w ${w}_
-		
+
 		readHistoryDataFromTempFile $w
 
 		action $w configure $arguments
@@ -188,11 +188,11 @@ namespace eval geekosphere::tbar::widget::battery {
 				log "TRACE" "Error while calculating charge: $::errorInfo"
 				set sys($w,chargeInPercent) 100
 			} else {
-			
+
 				# record battery history
 				$sys($w,history) add [dict get $chargeDict percent]
 				writeHistoryToTempFile $w
-				
+
 				set sys($w,timeRemaining) [dict get $chargeDict time]
 				set sys($w,chargeInPercent) [dict get $chargeDict percent]
 				if {[info exists sys($w,status)]} {
@@ -216,13 +216,13 @@ namespace eval geekosphere::tbar::widget::battery {
 		}
 		drawBatteryDisplay $w $sys($w,chargeInPercent)
 	}
-	
+
 	proc writeHistoryToTempFile {w} {
 		variable sys
-		if {[file exists  $sys(tempDir)] && ![file isdirectory  $sys(tempDir)]} {
+		if {[file exists $sys(tempDir)] && ![file isdirectory $sys(tempDir)]} {
 		       log "ERROR" "Could not write battery history, temp folder is a file"
 		       return
-		}	       
+		}
 		if {![file exists $sys(tempDir)]} {
 			file mkdir $sys(tempDir)
 		}
@@ -234,7 +234,7 @@ namespace eval geekosphere::tbar::widget::battery {
 	proc readHistoryDataFromTempFile {w} {
 		variable sys
 		if {![file exists $sys(tempFile)]} {
-			set sys($w,history) [::geekosphere::tbar::simplerle::simplerle new]		
+			set sys($w,history) [::geekosphere::tbar::simplerle::simplerle new]
 		} else {
 			set data [read [set fl [open $sys(tempFile) r]]]
 			close $fl
@@ -334,7 +334,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			set status [getStatus $sys($w,batteryDir)]
 			set symbol "?"
 			set sizeModifier 3.2
-			if {$status eq "Discharging" || $status == "-"} { 
+			if {$status eq "Discharging" || $status == "-"} {
 				set symbol "-"
 				set sizeModifier 2.5
 			} elseif {$status eq "Charging" || $status eq "+"} {
@@ -348,7 +348,7 @@ namespace eval geekosphere::tbar::widget::battery {
 					-anchor c -text $symbol -fill $sys($w,batteryChargeSymbolColor) -font $tmpFont]
 		}
 
-		# creating overlay between pole and battery, covering the ugly line 
+		# creating overlay between pole and battery, covering the ugly line
 		if {![info exists sys($w,lastColorOverLine)]} {
 			set startLineX [expr {$startPoleX+1}]
 			set startLineY $endPoleY
@@ -626,7 +626,7 @@ namespace eval geekosphere::tbar::widget::battery {
 
 	proc setWarnAt {w warnat} {
 		variable sys
-		if {![string is integer $warnat]} { 
+		if {![string is integer $warnat]} {
 			log "ERROR" "-warnAt value is not an integer, falling back to 5%"
 			set sys($w,warnat) 5
 		} else {

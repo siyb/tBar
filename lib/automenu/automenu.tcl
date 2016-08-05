@@ -2,7 +2,7 @@ package provide automenu 1.0
 
 package require menulib
 package require closure
-package require tipc 
+package require tipc
 
 proc automenu {w args} {
 	geekosphere::tbar::widget::automenu::makeMenu $w $args
@@ -40,9 +40,12 @@ namespace eval geekosphere::tbar::widget::automenu {
 				${w}$sys($w,entry) delete 0 end
 				destroy $sys($w,toplevel)
 				focus -force .
-			}			
+			}
 		}]
-		geekosphere::tbar::ipc::registerProc ipc_focus
+
+		if {![geekosphere::tbar::ipc::isProcRegistered ::geekosphere::tbar::widget::automenu ipc_focus]} {
+			geekosphere::tbar::ipc::registerProc ipc_focus
+		}
 
 		uplevel #0 rename $w ${w}_
 		action $w configure $arguments

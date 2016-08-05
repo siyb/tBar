@@ -10,6 +10,7 @@ namespace eval geekosphere::openweathermap {
 	variable sys
 	set sys(url) "http://api.openweathermap.org/data/2.5/forecast/"
 	set sys(imageBaseUrl) "http://openweathermap.org/img/w/"
+	set sys(appid) "df15c5dab9e6bc249a5d909c8772ac38"; # the API key
 
 	set sys(location,country) ""
 	set sys(location,city) ""
@@ -22,10 +23,10 @@ namespace eval geekosphere::openweathermap {
 		dict set ret "temp_c" [round $temperatureC]
 		dict set ret "temp_f" $temperatureF
 		dict set ret "icon" [dict get $condition "icon"]
-		
+
 		return $ret
 	}
-	
+
 	proc getImageUrlByCode {code} {
 		variable sys
 		return $sys(imageBaseUrl)${code}.png
@@ -67,7 +68,7 @@ namespace eval geekosphere::openweathermap {
 
 	proc getWeatherQuery {} {
 		variable sys
-		return [::http::formatQuery q $sys(location,country),$sys(location,city) mode xml units imperial cnt 3]
+		return [::http::formatQuery q $sys(location,country),$sys(location,city) mode xml units imperial cnt 3 APPID $sys(appid)]
 	}
 
 	proc setLocationData {country state city zipcode} {
@@ -75,6 +76,6 @@ namespace eval geekosphere::openweathermap {
 		set sys(location,country) $country
 		set sys(location,city) $city
 	}
-	
+
 	namespace export setLocationData getWeatherXmlForLocation getCurrentCondition getWeatherForecasts
 }

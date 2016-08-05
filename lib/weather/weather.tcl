@@ -67,7 +67,7 @@ namespace eval geekosphere::tbar::widget::weather {
 
 		bind ${w}.displayLabel <Button-1> [namespace code [list showWeatherDialog $w %W]]
 		bind ${w}.displayText <Button-1> [namespace code [list showWeatherDialog $w %W]]
-		
+
 		if {[geekosphere::tbar::gfx::isAvailable]} {
 			${w}.manualupdate configure -image $geekosphere::tbar::gfx::weather::sys(image,refresh) -highlightthickness 0 -relief flat
 		} else {
@@ -149,7 +149,9 @@ namespace eval geekosphere::tbar::widget::weather {
 			} err]} {
 				log "WARNING" "Could not fetch weather data right now: $::errorInfo "
 			}
-			$xml delete
+			if {[info exists xml]} {
+				$xml delete
+			}
 		}
 	}
 
@@ -187,17 +189,17 @@ namespace eval geekosphere::tbar::widget::weather {
 	}
 
 	proc showWeatherDialog {w window} {
-		variable sys 
+		variable sys
 		set windowName ${w}.weatherInfo
 		if {[winfo exists $windowName]} {
 			destroy $windowName
 		} else {
 			toplevel $windowName -bg $sys($w,background)
 			positionWindowRelativly $windowName $w
-			
+
 			pack [label ${windowName}.location -text "[string toupper $sys($w,location,city) 0 0], [string toupper $sys($w,location,country) 0 0]" -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)]
 			set xml [getWeatherXmlForLocation]
-			set forecasts [getWeatherForecasts $xml] 
+			set forecasts [getWeatherForecasts $xml]
 			log "INFO" "Forecasts -> $forecasts"
 			foreach weatherForecast $forecasts {
 				renderForecastInformationRow $w [dict get $weatherForecast day_of_week] [dict get $weatherForecast icon] [dict get $weatherForecast high] [dict get $weatherForecast low]
@@ -222,7 +224,7 @@ namespace eval geekosphere::tbar::widget::weather {
 		}
 		pack [frame ${w}.weatherInfo.${dayOfWeekF} -bg $sys($w,background)]
 		pack [label ${w}.weatherInfo.${dayOfWeekF}.image -image [getImageDataFromUrl $w $imageUrl -1] -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)] -side left
-		pack [label ${w}.weatherInfo.${dayOfWeekF}.dayOfWeek -text $dayOfWeek -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)] -side left 
+		pack [label ${w}.weatherInfo.${dayOfWeekF}.dayOfWeek -text $dayOfWeek -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)] -side left
 		pack [label ${w}.weatherInfo.${dayOfWeekF}.temperature -text "$minTempFahrenheit - $maxTempFahrenheit" -bg $sys($w,background) -fg $sys($w,foreground) -font $sys($w,font)] -side right
 	}
 

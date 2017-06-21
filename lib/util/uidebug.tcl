@@ -1,6 +1,6 @@
 package provide uidebug 1.0
 if {![info exist geekosphere::tbar::packageloader::available]} {
-		package require logger
+		package require tbar_logger
 		package require util
 		catch { namespace import ::geekosphere::tbar::util::logger::* }
 }

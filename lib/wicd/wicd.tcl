@@ -1,7 +1,7 @@
 package provide wicd 1.0
 
 if {![info exist geekosphere::tbar::packageloader::available]} {
-	package require logger
+	package require tbar_logger
 	package require wicd_dbus
 	package require BWidget
 }

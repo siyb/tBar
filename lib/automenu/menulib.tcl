@@ -1,5 +1,5 @@
 package provide menulib 1.0
-package require logger
+package require tbar_logger
 package require Thread
 catch {
 	namespace import ::geekosphere::tbar::util::logger::*
@@ -114,7 +114,7 @@ namespace eval geekosphere::tbar::widget::automenu {
 
 			proc execCommand {command} {
 				if {[catch {
-					package require logger
+					package require tbar_logger
 					namespace import ::geekosphere::tbar::util::logger::*
 					initLogger
 					set chan [open |$command a+]

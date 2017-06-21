@@ -31,7 +31,7 @@ if {![checkValidTclVersion 0 8.6]} {
 package require packageloader
 package require Tk
 package require tbar
-package require logger
+package require tbar_logger
 package require tconsole
 
 namespace import ::geekosphere::tbar::util::logger::*

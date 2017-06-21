@@ -3,7 +3,7 @@ package provide calClock 1.3
 if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require callib
 	package require util
-	package require logger
+	package require tbar_logger
 }
 
 # TODO add option to remove appointment

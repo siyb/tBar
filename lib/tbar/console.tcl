@@ -2,7 +2,7 @@ package provide tconsole 1.0
 
 package require tipc
 package require util
-package require logger
+package require tbar_logger
 
 catch {
 	namespace import ::tcl::mathop::*

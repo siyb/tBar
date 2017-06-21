@@ -1,4 +1,4 @@
-package provide logger 1.0
+package provide tbar_logger 1.0
 
 namespace eval geekosphere::tbar::util::logger {
 

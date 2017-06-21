@@ -3,7 +3,7 @@ package provide ical 0.1
 if {![info exists geekosphere::tbar::packageloader::available]} {
 	package require ical-semantics
 	package require util
-	package require logger
+	package require tbar_logger
 	package require struct::tree
 }
 

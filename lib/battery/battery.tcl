@@ -1,7 +1,7 @@
 package provide battery 1.0
 
 if {![info exist geekosphere::tbar::packageloader::available]} {
-	package require logger
+	package require tbar_logger
 }
 
 proc battery {w args} {

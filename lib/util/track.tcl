@@ -2,7 +2,7 @@
 package provide track 1.0
 
 package require http
-package require logger
+package require tbar_logger
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::util::track {
 	variable sys

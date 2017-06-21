@@ -1,7 +1,7 @@
 package provide hex 1.0
 
 if {![info exist geekosphere::tbar::packageloader::available]} {
-	package require logger
+	package require tbar_logger
 }
 
 catch {namespace import ::geekosphere::tbar::util::logger::* }

@@ -1,7 +1,7 @@
 package provide tbar 1.2
 
 package require util
-package require logger
+package require tbar_logger
 package require track
 package require tipc
 

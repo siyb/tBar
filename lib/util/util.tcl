@@ -1,7 +1,7 @@
 package provide util 1.2
 
 if {![info exist geekosphere::tbar::packageloader::available]} {
-	package require logger
+	package require tbar_logger
 }
 
 catch { namespace import ::geekosphere::tbar::util::logger::* }

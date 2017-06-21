@@ -1,6 +1,6 @@
 package provide api 1.0
 
-package require logger
+package require tbar_logger
 
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::api {

@@ -3,7 +3,7 @@ package provide network 1.2
 if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require statusBar
 	package require util
-	package require logger
+	package require tbar_logger
 }
 
 proc network {w args} {

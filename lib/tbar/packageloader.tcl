@@ -1,6 +1,6 @@
 package provide packageloader 1.0
 package require struct::record
-package require logger
+package require tbar_logger
 
 rename unknown _original_unknown
 

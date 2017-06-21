@@ -1,4 +1,4 @@
-package require logger
+package require tbar_logger
 
 catch {
 	namespace import ::tcl::mathop::*

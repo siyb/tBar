@@ -3,7 +3,7 @@ package provide cpu 1.2
 if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require barChart
 	package require util
-	package require logger
+	package require tbar_logger
 	package require struct
 }
 # TODO: move to package manager
@@ -149,7 +149,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		#
 		# Updating gui
 		#
-		set sys($w,cpu,temperature) "[getTemperature] C°"
+		set sys($w,cpu,temperature) "[getTemperature] Cï¿½"
 		set sys($w,cpu,mhz) [getMHz $w $sys($w,device)]
 		set load [getCpuDeviceBySetting $w]
 		set sys($w,cpu,loadDisplayBar) $load

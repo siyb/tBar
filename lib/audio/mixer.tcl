@@ -3,9 +3,9 @@ package provide mixer 1.0
 # TODO: add support for multiple boolean values, in the form of: values {off off}
 # TODO: dep management in widget
 package require amixer
-package require logger
+package require tbar_logger
 if {![info exist geekosphere::tbar::packageloader::available]} {
-	package require logger
+	package require tbar_logger
 	package require amixer
 }
 

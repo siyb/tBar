@@ -2,7 +2,6 @@ package provide tbar 1.2
 
 package require util
 package require tbar_logger
-package require track
 package require tipc
 
 # TODO 1.x: hdd widget, temperature, free/used
@@ -41,7 +40,6 @@ namespace eval geekosphere::tbar {
 	set conf(widgets,position) "left"
 
 	set conf(sys,writeBugreport) 1
-	set conf(sys,track) 0
 	set conf(sys,killOnError) 0
 	set conf(sys,compatibilityMode) 0
 	set conf(sys,useIPC) 1
@@ -72,17 +70,7 @@ namespace eval geekosphere::tbar {
 		lappend conf(widget,path) [file join / usr share tbar]
 		lappend conf(widget,path) [file join widget]
 		loadWidgets
-		track
 		ipc
-	}
-
-	proc track {} {
-		variable conf
-		if {$conf(sys,track)} {
-			::geekosphere::tbar::util::track::trackWidgets
-		} else {
-			log "INFO" "Tracking disabled"
-		}
 	}
 
 	proc ipc {} {
@@ -423,11 +411,6 @@ MACHINE=$::tcl_platform(machine)"
 		set conf(sys,compatibilityMode) $mode
 	}
 
-	proc setTrack {doTrack} {
-		variable conf
-		set conf(sys,track) $doTrack
-	}
-
 	proc runSnippet {snippet} {
 		variable sys
 		set ::snippetFile [file join $sys(user,home) snips ${snippet}.tcl]
@@ -455,7 +438,7 @@ MACHINE=$::tcl_platform(machine)"
 
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
-	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet setTrack \
+	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet \
 	getWidgetAlignment useIPC setIPCPort
 }
 namespace eval geekosphere::tbar::gfx {
@@ -478,11 +461,6 @@ namespace eval geekosphere::tbar::gfx {
 # GLOBAL NAMESPACE!
 initLogger
 proc bgerror {message} {
-	set bugreportFile [geekosphere::tbar::saveBugreport $message]
-	if {$bugreportFile != -1 && $bugreportFile != 0 && $::geekosphere::tbar::conf(sys,track)} {
-		set data [read [set fl [open $bugreportFile]]]; close $fl
-		::geekosphere::tbar::util::track::trackBug $data
-	}
 	log "ERROR" "Background error encountered ${::errorInfo}"
 	if {$geekosphere::tbar::conf(sys,killOnError)} {
 		log "FATAL" "Background error encountered, system is configured to shutdown!"

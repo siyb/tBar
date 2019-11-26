@@ -69,8 +69,9 @@ namespace eval geekosphere::tbar::widget::automenu {
 		set ret [list]
 		foreach path [split $::env(PATH) ":"] {
 			foreach file [glob -nocomplain $path/*] {
-				if {![file isdirectory $file] && [file executable $file]} {
-					lappend ret [file tail $file]
+				set fileName [file tail $file]
+				if {![file isdirectory $file] && [file executable $file] && [lsearch $ret $fileName] == -1} {
+					lappend ret $fileName
 				}
 			}
 

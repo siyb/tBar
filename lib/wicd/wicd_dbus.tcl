@@ -26,7 +26,7 @@ namespace eval geekosphere::tbar::wicd::dbus {
 	proc disconnect {} {
 		variable sys
 		if {$sys(dbus) != -1} {
-			dbus disconnect $sys(dbus)
+			dbus close $sys(dbus)
 			set sys(dbus) -1
 		}
 	}

@@ -48,7 +48,7 @@ namespace eval geekosphere::tbar {
 	#
 
 	# Variables holding system relevant information
-	set sys(bar,version) 1.4e
+	set sys(bar,version) 1.4.1
 	set sys(bar,toplevel) .
 	set sys(widget,dict) [dict create]
 	set sys(screen,width) 0

@@ -53,7 +53,7 @@ EXPERIMENTAL - Effects the deploy option only. Will create a version containing 
 Starting from 1.4.0, tBar uses semver.
 
 # License
-tBar is licensed under the terms of the GPL 3. Please refer to the LICENSE file for more information on the GPL 3.
+tBar is licensed under the terms of the Apache 2.0 License. Please refer to the LICENSE file for more information.
 
 ## Acknowledgement
 - Thanks to Jaafar Mejri aka Jaf (http://wiki.tcl.tk/13498) for his contribution to the program (calendar widget: http://wiki.tcl.tk/13497)

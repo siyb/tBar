@@ -159,6 +159,6 @@ namespace eval geekosphere::tbar::wicd::dbus {
 	}
 
 	namespace export connect disconnect collectDataForAllWirelessNetworks getWirelessCurrentNetworkId \
-	getQualityFor getIwConfig getWirelessIp
+	getQualityFor getIwConfig getWirelessIp disconnectWireless
 
 }

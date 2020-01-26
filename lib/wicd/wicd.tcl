@@ -17,6 +17,34 @@ proc wicd {w args} {
 	return $w
 }
 catch {namespace import ::geekosphere::tbar::util::logger::* }
+if {0} {
+	Tue Nov 26 22:22:07 CET 2019 | ERROR | ::::bgerror: Background error encountered can't use empty string as operand of "*"
+    while executing
+"expr {($canvasHeight * $sys($w,signalStrength) / 100)}"
+    (procedure "drawSignalStrength" line 14)
+    invoked from within
+"drawSignalStrength $w"
+    (procedure "updateWidget" line 8)
+    invoked from within
+"updateWidget $w"
+    (procedure "geekosphere::tbar::widget::wicd::action" line 39)
+    invoked from within
+"geekosphere::tbar::widget::wicd::action [string trim [dict get [info frame 0] proc] ::] $args"
+    (procedure ".component3" line 2)
+    invoked from within
+"$path update"
+    (procedure "geekosphere::tbar::wrapper::wicd::update" line 2)
+    invoked from within
+"geekosphere::tbar::wrapper::${widget}::update $path"
+    (procedure "updateWidget" line 4)
+    invoked from within
+"updateWidget wicd1 .component3 wicd 1"
+    (in namespace inscope "::geekosphere::tbar" script line 1)
+    invoked from within
+"::namespace inscope ::geekosphere::tbar {updateWidget wicd1 .component3 wicd 1}"
+    ("after" script)
+
+}
 namespace eval geekosphere::tbar::widget::wicd {
 	initLogger
 
@@ -146,7 +174,8 @@ namespace eval geekosphere::tbar::widget::wicd {
 
 			grid ${networkPath}.barChart -sticky ew -columnspan 2
 
-			if {[dict get $network id] == $currentNetworkId} {
+			set connected [expr [dict get $network id] == $currentNetworkId]
+			if {$connected} {
 				set buttonText "Disconnect"
 			} else {
 				set buttonText "Connect"
@@ -157,7 +186,7 @@ namespace eval geekosphere::tbar::widget::wicd {
 				-font $sys($w,font) \
 				-fg $sys($w,foreground) \
 				-bg $sys($w,background) \
-				-command [list puts $network]
+				-command [list geekosphere::tbar::widget::wicd::handleConnection $w $network $connected]
 
 			button ${networkPath}.configure \
 				-text "Configure" \
@@ -170,6 +199,14 @@ namespace eval geekosphere::tbar::widget::wicd {
 		}
 
 		positionWindowRelativly $sys($w,networkWindow) $w
+	}
+
+	proc handleConnection {w network connected} {
+		if {$connected} {			
+			disconnectWireless
+		} else {
+
+		}
 	}
 
 	proc showNetworkDetail {w network} {

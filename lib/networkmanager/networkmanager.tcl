@@ -2,7 +2,6 @@ package provide networkmanager 1.0
 
 if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require tbar_logger
-	package require wicd_dbus
 	package require BWidget
 }
 
@@ -17,41 +16,30 @@ proc networkmanager {w args} {
 	return $w
 }
 catch {namespace import ::geekosphere::tbar::util::logger::* }
-if {0} {
-	Tue Nov 26 22:22:07 CET 2019 | ERROR | ::::bgerror: Background error encountered can't use empty string as operand of "*"
-    while executing
-"expr {($canvasHeight * $sys($w,signalStrength) / 100)}"
-    (procedure "drawSignalStrength" line 14)
-    invoked from within
-"drawSignalStrength $w"
-    (procedure "updateWidget" line 8)
-    invoked from within
-"updateWidget $w"
-    (procedure "geekosphere::tbar::widget::wicd::action" line 39)
-    invoked from within
-"geekosphere::tbar::widget::wicd::action [string trim [dict get [info frame 0] proc] ::] $args"
-    (procedure ".component3" line 2)
-    invoked from within
-"$path update"
-    (procedure "geekosphere::tbar::wrapper::wicd::update" line 2)
-    invoked from within
-"geekosphere::tbar::wrapper::${widget}::update $path"
-    (procedure "updateWidget" line 4)
-    invoked from within
-"updateWidget wicd1 .component3 wicd 1"
-    (in namespace inscope "::geekosphere::tbar" script line 1)
-    invoked from within
-"::namespace inscope ::geekosphere::tbar {updateWidget wicd1 .component3 wicd 1}"
-    ("after" script)
 
-}
 namespace eval geekosphere::tbar::widget::networkmanager {
 	initLogger
 
 	proc makeNetworkManager {w arguments} {
 		variable sys
 
-		# wicd dbus connection
+		set driverPackage [getOption "-driverPackage" $arguments]
+		if {$driverPackage == ""} {
+			error "No -driverPackage set"
+		}
+		set driverNameSpace [getOption "-driverNameSpace" $arguments]
+		if {$driverNameSpace == ""} {
+			error "No -driverNameSpace set"
+		}
+
+		package require $driverPackage
+
+		if {![namespace exists $driverNameSpace]} {
+			error "-driveNamespace not found ${driverNameSpace}"
+		}
+
+		namespace import "${driverNameSpace}::*"
+
 		connect
 
 		set sys($w,originalCommand) ${w}_
@@ -75,7 +63,17 @@ namespace eval geekosphere::tbar::widget::networkmanager {
 		foreach window [returnNestedChildren $w] {
 			bind $window <Button-1> [namespace code [list showNetworkWindow $w]]
 		}
+		
 		action $w configure $arguments
+	
+		set sys($w,initialized) 1
+
+		initLogger
+	}
+
+	proc isInitialized {w} {
+		variable sys
+		return [info exists sys($w,initialized)]
 	}
 
 	proc action {w args} {
@@ -109,6 +107,12 @@ namespace eval geekosphere::tbar::widget::networkmanager {
 					}
 					"-bss" {
 						changeGraphicsColorBadSignal $w $value
+					}
+					"-driverPackage" {
+						if {[isInitialized $w]} { error "cannot set -driverPackage after widget was initialized" }
+					}
+					"-driverNameSpace" {
+						if {[isInitialized $w]} { error  "cannot set -driverNameSpace after widget was initialized" }
 					}
 					default {
 						error "${opt} not supported"

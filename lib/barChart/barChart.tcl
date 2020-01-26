@@ -88,11 +88,20 @@ namespace eval geekosphere::barChart {
 		variable sys
 		# max length is reached, drop last value
 		set length [${w}.canvas cget -width]
-		if {[llength $sys($w,data)]  == $length} {
+		if {[llength $sys($w,data)] == $length} {
 			set sys($w,data) [lreplace $sys($w,data) 0 0]
 		}
 		addValue $w $value
 	}
+	
+	proc setValues {w values} {
+		variable sys
+		if {[${w}.canvas cget -width] < [llength $values]} {
+			error "Input value list exceeds maximum length"
+		}
+		set sys($w,data) {*}$values
+	}
+
 	
 	proc action {w args} {
 		variable sys
@@ -138,6 +147,8 @@ namespace eval geekosphere::barChart {
 			addValue $w $rest
 		} elseif {$command eq "pushValue"} {
 			pushValue $w $rest
+		} elseif {$command eq "setValues"} {
+			setValues $w $rest
 		} else {
 			error "Command ${command} not supported"
 		}

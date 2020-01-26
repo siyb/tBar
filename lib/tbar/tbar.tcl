@@ -1,20 +1,18 @@
 package provide tbar 1.2
 
 package require util
-package require logger
+package require tbar_logger
+package require tipc
 
 # TODO 1.x: hdd widget, temperature, free/used
-# TODO 1.x: implement a light mode, that knows which widgets / widget parameters need which tcl package and prevents them from being use.
 # TODO 1.x: instead of throwing an error if a package (ie sqlite) can not be required, use the widget wrapper to test if package is available (catch) and remove corresponding parameter or widget
 # TODO 1.x: language files
 # TODO 1.x: add icon support for widgets
-# TODO 1.x: stop update activities if screensaver is on
-# TODO 1.X: make popup windows more customizable (e.g. let the user decide which and if calendar window appears) -> subwidget or something
-# TODO 1.x: recovery -> if a widget causes an error, delete namespace and remove all traces (e.g. timer, variables, etc) of the widget from the bar
 catch {
 	namespace import ::geekosphere::tbar::util::logger::*
 	namespace import ::geekosphere::tbar::util::*
 }
+
 namespace eval geekosphere::tbar {
 	initLogger;# init logger for this namespace
 
@@ -43,18 +41,20 @@ namespace eval geekosphere::tbar {
 
 	set conf(sys,writeBugreport) 1
 	set conf(sys,killOnError) 0
-
+	set conf(sys,compatibilityMode) 0
+	set conf(sys,useIPC) 1
 	#
 	# Code
 	#
 
 	# Variables holding system relevant information
-	set sys(bar,version) 1.3
+	set sys(bar,version) 1.4e
 	set sys(bar,toplevel) .
 	set sys(widget,dict) [dict create]
 	set sys(screen,width) 0
 	set sys(screen,height) 0
-
+	set sys(user,home) [file join $::env(HOME) .tbar]
+	set sys(snippets,sourcedSnippets) [list]
 
 	# Initializes the bar
 	proc init {} {
@@ -66,10 +66,30 @@ namespace eval geekosphere::tbar {
 		wm minsize $sys(bar,toplevel) $conf(geom,width) $conf(geom,height)
 		wm maxsize $sys(bar,toplevel) $conf(geom,width) $conf(geom,height)
 		$sys(bar,toplevel) configure -bg $conf(color,background)
-		wm overrideredirect $sys(bar,toplevel) 1
+		createBar
 		lappend conf(widget,path) [file join / usr share tbar]
 		lappend conf(widget,path) [file join widget]
 		loadWidgets
+		ipc
+	}
+
+	proc ipc {} {
+		variable conf
+		if {$conf(sys,useIPC)} {
+			geekosphere::tbar::ipc::startIPCServer
+		}
+	}
+
+	proc createBar {} {
+		variable conf
+		variable sys
+		if {$conf(sys,compatibilityMode)} {
+			wm overrideredirect $sys(bar,toplevel) 1
+		} else {
+			wm withdraw $sys(bar,toplevel)
+			wm attributes $sys(bar,toplevel) -type dock
+			wm iconify .
+		}
 	}
 
 	# adds text to widget
@@ -104,6 +124,45 @@ namespace eval geekosphere::tbar {
 		dict set sys(widget,dict) $name path [geekosphere::tbar::util::generateComponentName]
 	}
 
+	proc removeWidgetFromBar {name} {
+		variable sys
+		if {![dict exists $sys(widget,dict) $name path]} { log "WARNING" "Trying to remove non existant widget '$name'"; return }
+		set wpath [dict get $sys(widget,dict) $name path]
+		set sys(widget,dict) [dict remove $sys(widget,dict) $name]
+		destroy $wpath
+	}
+
+	# check if a widget by name has been added to the bar using addWidgetToBar
+	proc widgetExistsInBar {name} {
+		variable sys
+		return [dict exists $sys(widget,dict) $name]
+	}
+
+	# unload all widgets, while keeping widget config data
+	proc unloadWidgets {} {
+		variable sys
+		dict for {key value} $sys(widget,dict) {
+			unloadWidget $key
+		}
+	}
+
+	# unload a single widget while keeping its config data
+	proc unloadWidget {name} {
+		variable sys
+		set path [dict get $sys(widget,dict) $name path]
+		set widget [dict get $sys(widget,dict) $name widgetName]
+		if {[dict exists $sys(widget,dict) $name updateTimer]} {
+			set updateTimer [dict get $sys(widget,dict) $name updateTimer]
+			after cancel $updateTimer     
+		}         
+		# this is a bit dirty, but it allows us to not care to much about the namespace of a given widget
+		# basically, we are bruteforcing our way through the widget namespace
+		foreach ns [namespace children ::geekosphere::tbar::widget] {
+			array unset ${ns}::sys $path,*
+		}         
+		destroy $path
+	}
+
 	# load all widgets
 	proc loadWidgets {} {
 		variable sys
@@ -125,7 +184,7 @@ namespace eval geekosphere::tbar {
 							break
 						}
 						makeBindings $key
-						if {$updateInterval > 0} { updateWidget $path $widget $updateInterval }
+						if {$updateInterval > 0} { updateWidget $key $path $widget $updateInterval }
 						log "INFO" "Widget $widget loaded from $widgetFile"
 						set loadSuccess 1
 						break
@@ -138,7 +197,7 @@ namespace eval geekosphere::tbar {
 					log "WARNING" "Widget $widget can not be found in: $conf(widget,path)"
 				}
 			} err]} {
-				log "ERROR" "Failed loading widget $widget: $::errorInfo"
+				log "ERROR" "Failed loading widget $widget:\n $::errorInfo"
 			}
 		}
 	}
@@ -156,9 +215,14 @@ namespace eval geekosphere::tbar {
 	}
 
 	# a recursive proc that handles widget updates by calling the widget's update procedure
-	proc updateWidget {path widget interval} {
-		geekosphere::tbar::wrapper::${widget}::update $path
-		after [expr { $interval * 1000 }] [namespace code [list updateWidget $path $widget $interval]]
+	proc updateWidget {widgetName path widget interval} {
+		variable sys
+		if {[winfo exists $path]} {
+			geekosphere::tbar::wrapper::${widget}::update $path
+			dict set sys(widget,dict) $widgetName updateTimer [after [expr { $interval * 1000 }] [namespace code [list updateWidget $widgetName $path $widget $interval]]]
+		} else {
+			log "INFO" "Path $path does not exist any more, stopping update"
+		}
 	}
 
 	# returns the way how widgets are to be aligned in the bar
@@ -171,66 +235,64 @@ namespace eval geekosphere::tbar {
 	proc saveBugreport {message} {
 		variable sys
 		variable conf
-		if {!$conf(sys,writeBugreport)} { return }
-		set timeStamp [clock format [clock seconds] -format "%+"]
-		set bugreportPath [file join $::env(HOME) .tbar]
-		if {![file exists $bugreportPath]} { return }
-		set file [string map {" " _} [file join $bugreportPath BUGREPORT_${timeStamp}]]
+		if {!$conf(sys,writeBugreport)} { return 0}
+		set timeStamp [clock seconds]
+		set bugreportPath $sys(user,home)
+		if {![file exists $bugreportPath]} { return -1 }
+		set bugreportPath [file join $bugreportPath bugreport]
+		if {![file exists $bugreportPath]} {
+			file mkdir $bugreportPath
+		}
+		set file [string map {" " _} [file join $bugreportPath ${timeStamp}]]
 		set fl [open $file a+]
 		puts $fl "
-Bugreport
+DATETIME=[clock format [clock seconds] -format "%+"]]
+TBARVERSION=$sys(bar,version)
+HOSTNAME=[info hostname]
+EXECUTABLE=[info nameofexecutable]
+SCRIPT=[info script]
+TCL=[info patchlevel]
+OS=$::tcl_platform(os)
+OSVERSION=$::tcl_platform(osVersion)
+THREADED=$::tcl_platform(threaded)
+MACHINE=$::tcl_platform(machine)"
 
-DATE/TIME: [clock format [clock seconds] -format "%+"]]
-VERSION: $sys(bar,version)
-HOSTNAME: [info hostname]
-EXECUTABLE: [info nameofexecutable]
-SCRIPT: [info script]
-
-SYSTEM:
--------
-TCL:          [info patchlevel]
-OS:           $::tcl_platform(os)
-OSVersion:    $::tcl_platform(osVersion)
-Threaded:     $::tcl_platform(threaded)
-Machine:      $::tcl_platform(machine)
-
-PACKAGES:
----------"
 		foreach item [info loaded] {
-			puts $fl "$item"
+			set sitem [split $item]
+			puts $fl "PACKAGE=[lindex $sitem 0];[lindex $sitem 1]"
 		}
-			puts $fl "
-SETTINGS:
----------"
-
 		foreach {item value} [array get geekosphere::tbar::conf] {
-			puts $fl "$item ---> $value"
+			puts $fl "CONFIG=${item};${value}"
 		}
-
-		puts $fl "
-WIDGETS:
--------"
-
-		foreach sysArray [getSysArrays] {
-			puts $fl "\n${sysArray}\n"
+		set sysArrays [list]
+		getSysArrays ::geekosphere sysArrays
+		foreach sysArray $sysArrays {
+			puts $fl "ARRAYNAME=${sysArray}"
 			foreach {item value} [array get $sysArray] {
-				puts $fl "$item --> $value"
+				puts $fl "ARRAYITEM=$item;$value"
 			}
 		}
-
-		puts $fl "
-ERRORINFO:
-----------
-$::errorInfo
-
-ERRORCODE:
-----------
-$::errorCode"
+		puts $fl "ERRORINFO=[split $::errorInfo \n]"
+		puts $fl "ERRORCODE=$::errorCode"
 		close $fl
-		log "INFO" "Bugreport written to $file"
+		return $file
 	}
 
 	# CONFIG PROCS
+
+	proc useIPC {useIPC} {
+		variable conf
+		set conf(sys,useIPC) $useIPC
+	}
+
+	proc setIPCPort {port} {
+		if {[string is integer $port] && $port < 65535 && $port > 0} {
+			set geekosphere::tbar::ipc::sys(ipc,port) $port
+		} else {
+			log "ERROR" "Invalid port $port"
+			exit
+		}
+	}
 
 	proc setWidth {width} {
 		variable conf
@@ -344,15 +406,61 @@ $::errorCode"
 		set conf(sys,writeBugreport) $writeBugreport
 	}
 
+	proc setCompatibilityMode {mode} {
+		variable conf
+		set conf(sys,compatibilityMode) $mode
+	}
+
+	proc runSnippet {snippet} {
+		variable sys
+		set ::snippetFile [file join $sys(user,home) snips ${snippet}.tcl]
+		if {[file exists $::snippetFile]} {
+			if {[catch {
+				if {[hasSnippetBeenSources $::snippetFile] == -1} {
+					uplevel #0 {
+						namespace eval geekosphere::tbar::snippets { source $::snippetFile }
+					}
+					lappend sys(snippets,sourcedSnippets) $::snippetFile
+					unset ::snippetFile
+				}
+			} err]} {
+				log "WARNING" "Unable to load snippet '$snippet' $::errorInfo"
+			} else {
+				geekosphere::tbar::snippets::${snippet}::run
+			}
+		}
+	}
+
+	proc hasSnippetBeenSources {snippetFile} {
+		variable sys
+		return [lsearch $sys(snippets,sourcedSnippets) $snippetFile]
+	}
+
 	namespace export addWidget addText setWidth setHeight setXposition setYposition setBarColor setTextColor \
 	positionBar alignWidgets setHoverColor setClickedColor setFontName setFontSize setFontBold setWidgetPath \
-	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError
+	setLogLevel addWidgetToBar addEventTo writeBugreport setKillOnError setCompatibilityMode runSnippet \
+	getWidgetAlignment useIPC setIPCPort
+}
+namespace eval geekosphere::tbar::gfx {
+	initLogger
+	variable sys
+	set sys(gfx,imgAvailable) 1
+	if {[catch {
+		package require Img
+	} err]} {
+		log "WARNING" "Could not load Img package in geekosphere::tbar::gfx, some images might not be displayed properly!"
+		set sys(gfx,imgAvailable) 0
+	}
+
+	proc isAvailable {} {
+		variable sys
+		return $sys(gfx,imgAvailable)
+	}
 }
 
 # GLOBAL NAMESPACE!
 initLogger
 proc bgerror {message} {
-	geekosphere::tbar::saveBugreport $message
 	log "ERROR" "Background error encountered ${::errorInfo}"
 	if {$geekosphere::tbar::conf(sys,killOnError)} {
 		log "FATAL" "Background error encountered, system is configured to shutdown!"

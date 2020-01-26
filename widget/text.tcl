@@ -1,6 +1,7 @@
-package require txt
-
+catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::text {
+	
+	generallyRequires txt [list]
 	
 	proc init {path settingsList} {
 		pack [txt $path \

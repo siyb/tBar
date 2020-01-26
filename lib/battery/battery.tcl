@@ -1,6 +1,8 @@
 package provide battery 1.0
 
-package require logger
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require tbar_logger
+}
 
 proc battery {w args} {
 	if {[geekosphere::tbar::widget::battery::makeBattery $w $args] == -1} {
@@ -14,13 +16,18 @@ proc battery {w args} {
 }
 # TODO: charge status display is not really cen
 # TODO: if battery is removed the X appears but if it is reinstalled, it does not change back to display mode but remains X
+# TODO: if the charing status can not be determined and "?" is displayed, opening info window will cause a tcl error
 catch {namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::widget::battery {
 	initLogger
 
+	# tmp dir
+	set sys(tempDir) [file join / tmp battery-widget]
+	set sys(tempFile) [file join $sys(tempDir) battery_history]
+
 	# Information files for battery status
 	dict set sys(battery) dir [file join / sys class power_supply]
-	
+
 	dict set sys(battery) energy_full_design "energy_full_design"
 	dict set sys(battery) energy_now "energy_now"
 	dict set sys(battery) energy_full "energy_full"
@@ -28,6 +35,7 @@ namespace eval geekosphere::tbar::widget::battery {
 	dict set sys(battery) charge_now "charge_now"
 	dict set sys(battery) charge_full "charge_full"
 
+	dict set sys(battery) power_now "power_now"
 	dict set sys(battery) current_now "current_now"
 
 	dict set sys(battery) present "present";# is the battery present
@@ -43,7 +51,6 @@ namespace eval geekosphere::tbar::widget::battery {
 	dict set sys(battery) serial_number "serial_number"
 	dict set sys(battery) technology "technology"
 	dict set sys(battery) type "type"
-
 
 	proc makeBattery {w arguments} {
 		variable sys
@@ -69,9 +76,16 @@ namespace eval geekosphere::tbar::widget::battery {
 		set sys($w,height) 0
 		# width of the widget
 		set sys($w,width) 0
-		# if this flag is set to 1, the battery widget knows that there is no battery available and act accordingly	
+		# if this flag is set to 1, the battery widget knows that there is no battery available and acts accordingly
 		set sys($w,unavailable) 0
-
+		# battery charge history
+		set sys($w,history) [::geekosphere::tbar::simplerle::simplerle new]
+		# battery info window
+		set sys($w,batteryWindow) ${w}.batteryWindow
+		# battery history resoluton (number of readings to be used)
+		set sys($w,batteryHistoryResolution) 100
+		# battery history color
+		set sys($w,batteryHistoryColor) blue
 		if {[setBatteryDirs $w] == -1} {;# determine battery directory
 			set sys($w,unavailable) 1
 			log "ERROR" "No batteries or mulptiple batteries found, use the -battery option to specify the battery you wish to monitor."
@@ -83,9 +97,10 @@ namespace eval geekosphere::tbar::widget::battery {
 		frame ${w}
 		uplevel #0 rename $w ${w}_
 
+		readHistoryDataFromTempFile $w
+
 		action $w configure $arguments
 	}
-
 
 	proc action {w args} {
 		variable sys
@@ -134,6 +149,17 @@ namespace eval geekosphere::tbar::widget::battery {
 					"-batteryChargeSymbolColor" {
 						setBatteryChargeSymbolColor $w $value
 					}
+					"-historyResolution" {
+						setBatteryHistoryResolution $w $value
+					}
+					"-historyColor" {
+						setBatteryHistoryColor $w $value
+					}
+					"-setTempDir" {
+						set sys(tempDir) $value
+						set sys(tempFile) [file join $sys(tempDir) battery_history]
+						readHistoryDataFromTempFile $w
+					}
 					default {
 						error "${opt} not supported"
 					}
@@ -150,33 +176,97 @@ namespace eval geekosphere::tbar::widget::battery {
 	proc updateWidget {w} {
 		variable sys
 		if {![isBatteryPresent $w]} {;# the battery we are attempting to poll has been removed
+			log "TRACE" "battery unavailable, setting to 100%"
 			set sys($w,unavailable) 1
 			set sys($w,chargeInPercent) 100;# if we can't poll the battery, the fillstatus will be 100 (cable attached)
 			setBatteryDirs $w;# attempt to find battery, if non has been detected yet (battery path is empty)
 		} else {;# the battery we are attempting to poll is still present
 			if {[catch {
+				log "TRACE" "Calculating charge"
 				set chargeDict [calculateCharge $w]
 			} err]} {
+				log "TRACE" "Error while calculating charge: $::errorInfo"
 				set sys($w,chargeInPercent) 100
 			} else {
+
+				# record battery history
+				$sys($w,history) add [dict get $chargeDict percent]
+				writeHistoryToTempFile $w
+
 				set sys($w,timeRemaining) [dict get $chargeDict time]
 				set sys($w,chargeInPercent) [dict get $chargeDict percent]
 				if {[info exists sys($w,status)]} {
 					set sys($w,lastStatus) $sys($w,status);# saving last status
 				}
-				set sys($w,status) [dict get $chargeDict status]
+				if {[dict exists $chargeDict status]} {;# keep old status if status could not be read
+					set sys($w,status) [dict get $chargeDict status]
+				}
 
 				# reset warning / notification status if charger has been connected / disconnected etc
-				if {$sys($w,status) ne $sys($w,lastStatus)} {
+				if {[info exists sys($w,status)] && $sys($w,status) ne $sys($w,lastStatus)} {
 					set sys($w,hasBeenWarned) 0
 					set sys($w,hasBeenNotified) 0
 				}
 				set sys($w,unavailable) 0
 				drawWarnWindow $w
 				drawFullyChargedWindow $w
+
+				renderBatteryHistory $w
 			}
 		}
 		drawBatteryDisplay $w $sys($w,chargeInPercent)
+	}
+
+	proc writeHistoryToTempFile {w} {
+		variable sys
+		if {[file exists $sys(tempDir)] && ![file isdirectory $sys(tempDir)]} {
+		       log "ERROR" "Could not write battery history, temp folder is a file"
+		       return
+		}
+		if {![file exists $sys(tempDir)]} {
+			file mkdir $sys(tempDir)
+		}
+		set fl [open $sys(tempFile) w+]
+		puts $fl [$sys($w,history) get]
+		close $fl
+	}
+
+	proc readHistoryDataFromTempFile {w} {
+		variable sys
+		if {![file exists $sys(tempFile)]} {
+			set sys($w,history) [::geekosphere::tbar::simplerle::simplerle new]
+		} else {
+			set data [read [set fl [open $sys(tempFile) r]]]
+			close $fl
+			set sys($w,history) [::geekosphere::tbar::simplerle::simplerle new]
+			$sys($w,history) setContainer $data
+			log "INFO" "Container data restored: $data -> [$sys($w,history) get]"
+		}
+	}
+
+	proc renderBatteryHistory {w} {
+		variable sys
+		if {[winfo exists $sys($w,batteryWindow)]} {
+			set history [$sys($w,history) decompress]
+			set historyLength [llength $history]
+			set readingsToSkip [expr {($historyLength * 1.0) / ($sys($w,batteryHistoryResolution) * 1.0)}]
+			set ceilReadingsToSkip [expr {ceil($readingsToSkip)}]
+			set roundedReadingsToSkip [expr {round($ceilReadingsToSkip)}]
+			if {$readingsToSkip == 0} { set readingsToSkip 1 }
+			log "TRACE" "$historyLength readings, skipping every $readingsToSkip - $ceilReadingsToSkip - $roundedReadingsToSkip readings"
+
+			set readingsToSkip $roundedReadingsToSkip
+			set readings [list]
+			for {set i 0} {$i < $historyLength} {incr i} {
+				if {[expr {$i % $readingsToSkip}] == 0} {
+					set loadPercent [lindex $history $i]
+					log "TRACE" "Adding idx $i -> $loadPercent"
+					lappend readings $loadPercent
+				}
+			}
+			$sys($w,batteryWindow).barChart setValues $readings
+			$sys($w,batteryWindow).barChart update
+		}
 	}
 
 	#
@@ -190,9 +280,11 @@ namespace eval geekosphere::tbar::widget::battery {
 			error "Fillstatus must be between 0 and 100 percent"
 		}
 		set canvasPath ${w}.batterydisplay
+		set percentLabelPath ${w}.batterydisplayperc
 		set color [determineColorOfWidgetByBatteryStatus $w $fillStatus]
 		if {![winfo exists $canvasPath]} {
-			pack [canvas $canvasPath -bg $sys($w,background) -height $sys($w,height) -width $sys($w,width) -highlightthickness 0]
+			pack [canvas $canvasPath -bg $sys($w,background) -height $sys($w,height) -width $sys($w,width) -highlightthickness 0] -side left
+			pack [label $percentLabelPath -font $sys($w,font) -fg $sys($w,foreground) -bg $sys($w,background) -height $sys($w,height) -text ${fillStatus}%] -side right
 			set cWidth [$canvasPath cget -width]
 			set cHeight [$canvasPath cget -height]
 
@@ -220,6 +312,7 @@ namespace eval geekosphere::tbar::widget::battery {
 			set sys($w,batterydisplay,cHeight) $cHeight
 			set sys($w,batterydisplay,endPoleY) $endPoleY
 		}
+		$percentLabelPath configure -text ${fillStatus}%
 
 		if {[info exists sys($w,lastBatteryStatusBox)]} {
 			$canvasPath delete $sys($w,lastBatteryStatusBox)
@@ -240,21 +333,22 @@ namespace eval geekosphere::tbar::widget::battery {
 			if {[info exists sys($w,batteryChargeSymbol)]} { $canvasPath delete $sys($w,batteryChargeSymbol) }
 			set status [getStatus $sys($w,batteryDir)]
 			set symbol "?"
-			if {$status eq "Discharging" || $status == "-"} { 
-			set symbol "-"
+			set sizeModifier 3.2
+			if {$status eq "Discharging" || $status == "-"} {
+				set symbol "-"
+				set sizeModifier 2.5
 			} elseif {$status eq "Charging" || $status eq "+"} {
 				set symbol "+"
+				set sizeModifier 2.5
 			}
-			#set rgb [split [winfo rgb . [$canvasPath itemcget $sys($w,batteryBody) -outline]]]
-			#set negativeColor [format "#%x%x%x" [expr {65535 - [lindex $rgb 0]}] [expr {65535 - [lindex $rgb 1]}] [expr {65535 - [lindex $rgb 2]}]]
-			font configure $tmpFont -size [expr {round($sys($w,batterydisplay,cWidth) / 2.5)}] -weight bold
+			font configure $tmpFont -size [expr {round($sys($w,batterydisplay,cWidth) / $sizeModifier)}] -weight bold
 			set sys($w,batteryChargeSymbol) \
 				[$canvasPath create text \
 					[expr {$sys($w,batterydisplay,cWidth)  / 2}] [expr {($sys($w,batterydisplay,cHeight) / 2) + ($sys($w,batterydisplay,cHeight) / 10)}] \
 					-anchor c -text $symbol -fill $sys($w,batteryChargeSymbolColor) -font $tmpFont]
 		}
 
-		# creating overlay between pole and battery, covering the ugly line 
+		# creating overlay between pole and battery, covering the ugly line
 		if {![info exists sys($w,lastColorOverLine)]} {
 			set startLineX [expr {$startPoleX+1}]
 			set startLineY $endPoleY
@@ -306,24 +400,35 @@ namespace eval geekosphere::tbar::widget::battery {
 	# battery display
 	proc displayBatteryInfo {w} {
 		variable sys
-		if {[info exists sys($w,unavailable)] && $sys($w,unavailable)} { return }
-		set batteryWindow ${w}.batteryWindow
-		if {![winfo exists $batteryWindow]} {
-			toplevel $batteryWindow
+		if {([info exists sys($w,unavailable)] && $sys($w,unavailable))} { return }
+		if {![info exists sys($w,timeRemaining)] || ![info exists sys($w,chargeInPercent)] || ![info exists sys($w,status)]} { return }
+		if {![winfo exists $sys($w,batteryWindow)]} {
+			toplevel $sys($w,batteryWindow)
+			$sys($w,batteryWindow) configure -bg $sys($w,background)
 		} else {
-			destroy $batteryWindow
+			destroy $sys($w,batteryWindow)
 			return
 		}
-		pack [label ${batteryWindow}.time -text "Time Remaining: $sys($w,timeRemaining)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
-		pack [label ${batteryWindow}.percent -text "Battery Left: $sys($w,chargeInPercent)%" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
-		pack [label ${batteryWindow}.status -text "Status: $sys($w,status)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
-		positionWindowRelativly $batteryWindow $w
+		# TODO: batteryWindow is not the only item that needs to be updated ....
+		pack [label $sys($w,batteryWindow).time -text "Time Remaining: $sys($w,timeRemaining)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
+		pack [label $sys($w,batteryWindow).percent -text "Battery Left: $sys($w,chargeInPercent)%" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
+		pack [label $sys($w,batteryWindow).status -text "Status: $sys($w,status)" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -fill x
+		pack [label $sys($w,batteryWindow).history -text "History: " -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font) -anchor w] -side left
+		pack [barChart $sys($w,batteryWindow).barChart \
+				-height $sys($w,height) \
+				-fg $sys($w,foreground) \
+				-bg $sys($w,background) \
+				-font $sys($w,font) \
+				-gc $sys($w,batteryHistoryColor) \
+				-width $sys($w,batteryHistoryResolution)] -side right
+		positionWindowRelativly $sys($w,batteryWindow) $w
+		renderBatteryHistory $w
 	}
 
 	# draws the warning window if appropriate
 	proc drawWarnWindow {w} {
 		variable sys
-		if {$sys($w,warnat) != -1 && $sys($w,chargeInPercent) <= $sys($w,warnat) && ![winfo exists ${w}.warnWindow] && !$sys($w,hasBeenWarned) && $sys($w,status) ne "Charging" && $sys($w,status) ne "+"} {
+		if {$sys($w,warnat) != -1 && $sys($w,chargeInPercent) <= $sys($w,warnat) && ![winfo exists ${w}.warnWindow] && !$sys($w,hasBeenWarned) && [info exists sys($w,status)] && $sys($w,status) ne "Charging" && $sys($w,status) ne "+"} {
 			tk_dialog ${w}.warnWindow "Battery warning" "Warning, $sys($w,chargeInPercent)% battery left" "" 0 Ok
 			set sys($w,hasBeenWarned) 1
 		}
@@ -385,12 +490,16 @@ namespace eval geekosphere::tbar::widget::battery {
 		set remaining [getRemainingCapacity $w]
 		set status [getStatus $sys($w,batteryDir)]
 		set rate [getCurrentNow $sys($w,batteryDir)]
+		log "TRACE" "Battery info: total:$total remaining:$remaining status:$status rate:$rate"
 		dict set returnDict percent [expr {floor(min($remaining*1.0 / $total*1.0 * 100,100))}]
 		if {$status eq "+" || $status eq "Charging"} {
 			set timeLeft [expr {($total*1.0 - $remaining) / $rate}]
+			log "TRACE" "charging"
 		} elseif {$status eq "-" || $status eq "Discharging"} {
 			set timeLeft [expr {$remaining*1.0 / $rate}]
+			log "TRACE" "discharging"
 		} else {
+			log "TRACE" "can't determine if charging or discharging"
 			set timeLeft -1
 			dict set returnDict time "N/A"
 			return $returnDict
@@ -405,7 +514,12 @@ namespace eval geekosphere::tbar::widget::battery {
 	# get the state of the battery
 	proc getStatus {batteryFolder} {
 		variable sys
-		set data [gets [set fl [open [file join $batteryFolder [dict get $sys(battery) status]] r]]];close $fl
+		set filePath [file join $batteryFolder [dict get $sys(battery) status]]
+		if {[file exists $filePath]} {
+			set data [gets [set fl [open $filePath r]]];close $fl
+		} else {
+			set data ""
+		}
 		return $data
 	}
 
@@ -423,7 +537,16 @@ namespace eval geekosphere::tbar::widget::battery {
 	# get current now
 	proc getCurrentNow {batteryFolder} {
 		variable sys
-		set data [gets [set fl [open [file join $batteryFolder [dict get $sys(battery) current_now]] r]]];close $fl
+		set currentNow [file join $batteryFolder [dict get $sys(battery) current_now]]
+		set powerNow [file join $batteryFolder [dict get $sys(battery) power_now]]
+		if {[file exists $currentNow]} {
+			set readFrom $currentNow
+		} elseif {[file exists $powerNow]} {
+			set readFrom $powerNow
+		} else {
+			log "ERROR" "Could not determine current power, current_now and power_now not present"
+		}
+		set data [gets [set fl [open $readFrom r]]];close $fl
 		return $data
 	}
 
@@ -503,7 +626,7 @@ namespace eval geekosphere::tbar::widget::battery {
 
 	proc setWarnAt {w warnat} {
 		variable sys
-		if {![string is integer $warnat]} { 
+		if {![string is integer $warnat]} {
 			log "ERROR" "-warnAt value is not an integer, falling back to 5%"
 			set sys($w,warnat) 5
 		} else {
@@ -533,5 +656,15 @@ namespace eval geekosphere::tbar::widget::battery {
 	proc setBatteryChargeSymbolColor {w color} {
 		variable sys
 		set sys($w,batteryChargeSymbolColor) $color
+	}
+
+	proc setBatteryHistoryResolution {w res} {
+		variable sys
+		set sys($w,batteryHistoryResolution) $res
+	}
+
+	proc setBatteryHistoryColor {w color} {
+		variable sys
+		set sys($w,batteryHistoryColor) $color
 	}
 }

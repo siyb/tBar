@@ -1,10 +1,4 @@
-package provide notify 1.0
-package require util
-if {[catch { package require Img } err]} {
-	error "You need to install libtk-img in order to be able to use the notify widget"
-}
-
-package require imageresize
+package provide notify 1.1
 
 proc notify {w args} {
 	geekosphere::tbar::widget::notify::makeNotify $w $args
@@ -21,13 +15,12 @@ namespace eval geekosphere::tbar::widget::notify {
 	proc makeNotify {w arguments} {
 		variable sys
 		set sys($w,originalCommand) ${w}_
-
+		set sys($w,isInNotifiedState) 0
 		changeNotifyAt $w [getOption "-notifyAt" $arguments]
 
 		# has -image?
 		if {[set imgp [getOption "-image" $arguments]] != ""} {
 			changeImage $w $imgp
-
 			# should be scaled?
 			if {[set imgdim [getOption "-imageDimensions" $arguments]] != ""} {
 				changeImageDimensions $w $imgdim
@@ -45,7 +38,7 @@ namespace eval geekosphere::tbar::widget::notify {
 		frame $w
 		pack [label ${w}.displayLabel] -side left -fill both
 
-		# rename widgets so that it will not receive commands
+		# rename widget so that it will not receive commands
 		uplevel #0 rename $w ${w}_
 
 		# run configuration
@@ -87,6 +80,9 @@ namespace eval geekosphere::tbar::widget::notify {
 					"-width" {
 						changeWidth $w $value
 					}
+					"-onLeftMouseClick" {
+						changeOnLeftMouseClick $w $value
+					}
 					"-imageDimensions" {
 						if {[info exists sys($w,initialized)]} { error "imageDimensions cannot be changed after widget initialization" }
 					}
@@ -110,12 +106,14 @@ namespace eval geekosphere::tbar::widget::notify {
 				} else {
 					${w}.displayLabel configure -image $sys($w,scaledImage)
 				}
+				set sys($w,isInNotifiedState) 1
 			} else {
 				${w}.displayLabel configure -text $sys($w,text)
 			}
 		} else {
 			${w}.displayLabel configure -image ""
 			${w}.displayLabel configure -text ""
+			set sys($w,isInNotifiedState) 0
 		}
 	}
 
@@ -161,7 +159,7 @@ namespace eval geekosphere::tbar::widget::notify {
 
 	proc changeImage {w imagePath} {
 		variable sys
-		if {![file exists $imagePath]} { error "Image file $imageFile does not exists" }
+		if {![file exists $imagePath]} { error "Image file $imagePath does not exists" }
 		set sys($w,imagePath) $imagePath
 		set sys($w,image) [image create photo -file $imagePath]
 	}
@@ -184,4 +182,8 @@ namespace eval geekosphere::tbar::widget::notify {
 		set sys($w,notifyAt) $expression
 	}
 
+	proc changeOnLeftMouseClick {w code} {
+		variable sys
+		bind $w.displayLabel <Button-1> $code
+	}
 }

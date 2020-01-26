@@ -1,13 +1,21 @@
 package provide util 1.2
 
-package require logger
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require tbar_logger
+}
 
 catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::util {
-	
+
 	initLogger
-	
+
 	set sys(componentCounter) 0
+
+	proc countLines {file} {
+		set count [llength [split [read [set fl [open $file r]]] "\n"]]
+		close $fl
+		return $count
+	}
 
 	# parses a procfile formatted like "item : value", spaces between : and strings is irrelevant
 	# returns a dict containing all values of lookForList
@@ -23,6 +31,15 @@ namespace eval geekosphere::tbar::util {
 		return $returnDict
 	}
 
+	# will pad the given string with spaces to the given length.
+	# inserts the spaces at the left
+	proc padStringLeft {string length} {
+		set len [string length $string]
+		if {$len >= $length} { return $string }
+		set padding [expr {$length - $len}]
+		return [string repeat " " $padding]$string
+	}
+
 	proc positionWindowRelativly {windowToPosition w} {
 		# hack to prevent flickering caused by update:
 		# 1) window will be handled by the geometry manager to position it first (size doesn't matter
@@ -35,7 +52,7 @@ namespace eval geekosphere::tbar::util {
 		if {[catch {
 			wm geometry $windowToPosition [getNewWindowGeometry [winfo rootx $w]  [winfo rooty $w] [winfo reqwidth $windowToPosition] [winfo reqheight $windowToPosition] [winfo height $w] [winfo screenheight $w] [winfo screenwidth $w]]
 		}]} {
-			log "WARNING" "Unable to render window properly"
+			log "WARNING" "Unable to render window properly $::errorInfo"
 			return -1
 		}
 	}
@@ -84,18 +101,20 @@ namespace eval geekosphere::tbar::util {
 			}
 		}
 	}
-	
+
 	# gets sys array from all widget libraries
-	proc getSysArrays  {} {
-		set returnList [list]
-		foreach ns [namespace children ::geekosphere::tbar::widget] {
+	proc getSysArrays {ins retlist} {
+		upvar 1 $retlist l
+		foreach ns [namespace children $ins] {
 			if {[info exists ${ns}::sys]} {
-				lappend returnList ${ns}::sys
+				lappend l ${ns}::sys
+			}
+			if {[llength [namespace children $ins]] > 0} {
+				getSysArrays $ns l
 			}
 		}
-		return $returnList
 	}
-	
+
 	# returns all children of a window recursivly (also nested children)
 	proc returnNestedChildren {window {clist ""}} {
 		if {$clist eq ""} { set clist [list] }

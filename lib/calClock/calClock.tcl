@@ -1,9 +1,12 @@
-package provide calClock 1.2
+package provide calClock 1.3
 
-package require callib
-package require util
-package require logger
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require callib
+	package require util
+	package require tbar_logger
+}
 
+# TODO add option to remove appointment
 proc calClock {w args} {
 	geekosphere::tbar::widget::calClock::makeCalClock $w $args
 
@@ -25,7 +28,9 @@ namespace eval geekosphere::tbar::widget::calClock {
 		set sys($w,ical) 1
 		set sys($w,ical) [string is true -strict [getOption "-ical" $arguments]]
 		if {$sys($w,ical)} {
-			package require icalCalClock
+			if {![info exist geekosphere::tbar::packageloader::available]} {
+				package require icalCalClock
+			}
 		}
 		
 		set sys($w,originalCommand) ${w}_
@@ -450,6 +455,7 @@ namespace eval geekosphere::tbar::widget::calClock {
 				-text				"Ok" \
 				-command		 [list geekosphere::tbar::widget::calClock::addCalendarEntry $w $year $month $day]
 		] -side left -fill x
+		positionWindowRelativly ${w}.mkappointment $sys($w,calWin).cal 
 	}
 	
 	proc addCalendarEntry {w year month day} {

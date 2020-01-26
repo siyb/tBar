@@ -1,7 +1,10 @@
 package provide network 1.2
 
-package require statusBar
-package require util
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require statusBar
+	package require util
+	package require tbar_logger
+}
 
 proc network {w args} {
 	geekosphere::tbar::widget::network::makeNetwork $w $args
@@ -13,19 +16,20 @@ proc network {w args} {
 }
 
 catch { namespace import ::geekosphere::tbar::util::* }
+catch { namespace import ::geekosphere::tbar::util::logger::* }
 namespace eval geekosphere::tbar::widget::network {
-
+	initLogger
 	if {$::tcl_platform(os) eq "Linux"} {
 		set sys(netInfo) [file join / proc net dev]
 	} else {
 		error "Network widget does not support your OS ($::tcl_platform(os)) yet. Please report this issue to help improove the software."
 	}
 
-
 	proc makeNetwork {w arguments} {
 		variable sys
 		if {[set sys($w,device) [getOption "-device" $arguments]] eq ""} { error "Specify a device using the -device option." }
 		if {[set sys($w,updateInterval) [getOption "-updateinterval" $arguments]] eq ""} { error "Specify an update interval using the -updateinterval option." }
+		set sys(padding) 6;# padding for display, so that the widget does not expand
 		set sys($w,additionalDevices) [getOption "-additionalDevices" $arguments]
 		lappend sys($w,additionalDevices) $sys($w,device)
 		set sys($w,originalCommand) ${w}_
@@ -47,6 +51,9 @@ namespace eval geekosphere::tbar::widget::network {
 		# the data of all devices
 		set sys($w,allDeviceData) [list]
 
+		# a list of devices that should not be parsed any more because they seem to not exist
+		set sys($w,stopParsing) [list]
+
 		bind ${w}.network <Button-1> [namespace code [list actionHandler $w %W]]
 	}
 
@@ -59,26 +66,55 @@ namespace eval geekosphere::tbar::widget::network {
 		variable sys
 		updateAllDevices $w
 		set netDict [getDeviceData $w $sys($w,device)]
+		if {$netDict == -1} {
+			set validDevice [getNextValidDevice $w]
+			if {$validDevice == -1} { log "ERROR" "NO VALID DEVICES!" ; return }
+			set netDict [getDeviceData $w $validDevice]
+			set sys($w,device) $validDevice
+		}
 		set tx [dict get $netDict "TX"]
 		set rx [dict get $netDict "RX"]
-		${w}.network configure -text "$sys($w,device) - Up: ${tx} kB/s Down: ${rx} kB/s"
+		setBandwidthInfoInLabel ${w}.network $sys($w,device) $tx $rx
 		updateInfoWindow $w $sys($w,additionalDevices)
+	}
+
+	proc getNextValidDevice {w} {
+		variable sys
+		foreach d $sys($w,additionalDevices) {
+			if {[getDeviceData $w $d] != -1} {
+				return $d
+			}
+		}
+		return -1
 	}
 
 	proc updateInfoWindow {w deviceList} {
 		variable sys
 		foreach device $deviceList {
 			set netDict [getDeviceData $w $device];# even if there is no info window open, we still wanna update all devices which are being watched
+			if {$netDict == -1} {
+				if {[winfo exists $sys($w,infoWindow).${device}]} { destroy $sys($w,infoWindow).${device} }
+				continue;
+			}
 			set tx [dict get $netDict "TX"]
 			set rx [dict get $netDict "RX"]
 			if {![winfo exists $sys($w,infoWindow)]} { continue }
 			if {[winfo exists $sys($w,infoWindow).${device}]} {
-				$sys($w,infoWindow).${device} configure -text "$device - Up: ${tx} kB/s Down: ${rx} kB/s" -fg $sys($w,foreground) -bg $sys($w,background)
+				setBandwidthInfoInLabel $sys($w,infoWindow).${device} $device $tx $rx
+				$sys($w,infoWindow).${device} configure -fg $sys($w,foreground) -bg $sys($w,background)
 			} else {
-				pack [label $sys($w,infoWindow).${device} -text "$device - Up: ${tx} kB/s Down: ${rx} kB/s" -fg $sys($w,foreground) -bg $sys($w,background)] -anchor w
+				pack [label $sys($w,infoWindow).${device} -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font)] -anchor w
+				setBandwidthInfoInLabel $sys($w,infoWindow).${device} $device $tx $rx
 				bind $sys($w,infoWindow).${device} <Button-1> [namespace code [list changeMainDevice $w $device %W]]
 			}
 		}
+	}
+
+	proc setBandwidthInfoInLabel {labelPath device tx rx} {
+		variable sys
+		set tx [geekosphere::tbar::util::padStringLeft $tx $sys(padding)]
+		set rx [geekosphere::tbar::util::padStringLeft $rx $sys(padding)]
+		$labelPath configure -text "$device - Up: $tx kB/s Down: $rx kB/s" 
 	}
 
 	proc changeMainDevice {w newMainDevice invokerWindow} {
@@ -113,17 +149,22 @@ namespace eval geekosphere::tbar::widget::network {
 		variable sys
 		set sys($w,allDeviceData) [list];# reset list
 		set mainDeviceData [getNetworkSpeedFor $w $sys($w,device)]
-		lappend sys($w,allDeviceData) [list $sys($w,device) $mainDeviceData]
+		if {$mainDeviceData != -1} {
+			lappend sys($w,allDeviceData) [list $sys($w,device) $mainDeviceData]
+		}
 		foreach device $sys($w,additionalDevices) {
 			if {[lsearch -index 0 $sys($w,allDeviceData) $device] != -1} { continue };# do not update the same device twice!
-			lappend sys($w,allDeviceData) [list $device [getNetworkSpeedFor $w $device]]
+			set nsp [getNetworkSpeedFor $w $device]
+			if {$nsp != -1} {
+				lappend sys($w,allDeviceData) [list $device $nsp]
+			}
 		}
 	}
 
 	proc getDeviceData {w device} {
 		variable sys
 		set position [lsearch -index 0 $sys($w,allDeviceData) $device]
-		if {$position == -1} { error "Device could not be found in list: $device" }
+		if {$position == -1} { return -1 }
 		return [lindex $sys($w,allDeviceData) $position 1]
 	}
 
@@ -136,7 +177,10 @@ namespace eval geekosphere::tbar::widget::network {
 		if {![info exists sys($w,lastRx,$device)]} {
 			set sys($w,lastRx,$device) 0
 		}
-		set netDict [parseNetworkSpeed $device]
+		set netDict [parseNetworkSpeed $w $device]
+		if {$netDict == -1} {
+			return -1
+		}
 		set returnDict [dict create]
 		set rx [dict get $netDict "rx"]
 		set tx [dict get $netDict "tx"]
@@ -156,7 +200,7 @@ namespace eval geekosphere::tbar::widget::network {
 	}
 
 	# parses the network speed for the specified device
-	proc parseNetworkSpeed {device} {
+	proc parseNetworkSpeed {w device} {
 		variable sys
 		set returnDict [dict create]
 		set data [read [set fl [open $sys(netInfo) r]]]
@@ -169,8 +213,14 @@ namespace eval geekosphere::tbar::widget::network {
 			dict set returnDict "tx" [lindex $splitLine 8]
 			dict set returnDict "rx" [lindex $splitLine 0]
 		}
+		set deviceIdx [lsearch $sys($w,stopParsing) $device]
 		if {![dict exists $returnDict "tx"] || ![dict exists $returnDict "tx"]} { 
-			error "no tx / rx data, make sure that the device you specified exists"
+			if {$deviceIdx != -1} { return -1 }
+			log "WARNING" "no tx / rx data, make sure that the device you specified exists, skipping device - $deviceIdx / $device"
+			lappend sys($w,stopParsing) $device
+			return -1
+		} else {
+			set sys($w,stopParsing) [lreplace $sys($w,stopParsing) $deviceIdx $deviceIdx]	
 		}
 		return $returnDict
 	}
@@ -239,6 +289,7 @@ namespace eval geekosphere::tbar::widget::network {
 
 	proc changeFont {w font} {
 		variable sys
+		set sys($w,font) $font
 		${w}.network configure -font $font
 	}
 }

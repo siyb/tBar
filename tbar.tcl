@@ -1,12 +1,39 @@
-#!/usr/bin/env tclsh
-if {$::tcl_version < 8.5} {
-	puts "tBar requires TCL 8.5, $::tcl_version installed, exiting."
-	exit
+#!/usr/bin/env tclsh8.6
+
+proc checkValidTclVersion {checkPatchLevel minimumRequired} {
+	set min [split $minimumRequired "."]
+	if {$checkPatchLevel} {
+		set cur [split $::tcl_patchLevel "."]
+	} else {
+		set cur [split $::tcl_version "."]
+	}
+	set position 0
+	set valid 1
+	if {[llength $min] != [llength $cur]} {
+		set valid 0
+	} else {
+		foreach m $min c $cur {
+			if {$m > $c} {
+				set valid 0
+			}
+		}
+	}
+	return $valid
 }
 
+if {![checkValidTclVersion 0 8.6]} {
+	puts "tBar requires TCL 8.6 or higher to function correctly, $::tcl_version installed, exiting."
+	exit
+} elseif {![checkValidTclVersion 0 8.6] && ![checkValidTclVersion 1 8.5.9]} {
+	puts "You are running a version lower than TCL 8.5.9, you need to enable the compatibility mode in your config in order to run tBar"
+}
+
+package require packageloader
 package require Tk
 package require tbar
-package require logger
+package require tbar_logger
+package require tconsole
+
 namespace import ::geekosphere::tbar::util::logger::*
 initLogger
 
@@ -42,8 +69,23 @@ foreach {parameter value} $argv {
 		}
 		"--help" {
 			puts "tBar help
---config <path>			specify a config file to load"
+--config <path>			specify a config file to load
+--ipc <namespace>#<command>	send ipc command to tBar, make sure that the ipc call uses the same config as the running tBar instance
+--console			opens the tBar console"
 			exit
+		}
+		"--ipc" {
+			set splitParam [split $value "#"]
+			if {[llength $splitParam] != 2} {
+				puts "Invalid parameter, try <namespace>#<command>, e.g. my::ns#myCommand"
+				exit
+			}
+			set namespace [lindex $splitParam 0]
+			set proc [lindex $splitParam 1]
+			set IPC 1
+		}
+		"--console" {
+			set CONSOLE 1
 		}
 	}
 }
@@ -57,6 +99,15 @@ if {[info exists geekosphere::tbar::sys(config)] && [file exists $geekosphere::t
 	source [file join / etc tbar config.tcl]
 } elseif {[file exists [file join . config.tcl]]} {
 	source [file join . config.tcl]
+}
+if {[info exists CONSOLE]} {
+	geekosphere::tbar::ipc::sendIPCCommand ::geekosphere::tbar::console launchConsole
+	exit
+}
+if {[info exists IPC]} {
+	puts "Running $namespace $proc"
+	geekosphere::tbar::ipc::sendIPCCommand $namespace $proc
+	exit
 }
 
 # creating font

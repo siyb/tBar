@@ -1,9 +1,13 @@
 package provide cpu 1.2
 
-package require barChart
-package require util
-package require logger
-
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require barChart
+	package require util
+	package require tbar_logger
+	package require struct
+}
+# TODO: move to package manager
+package require struct
 proc cpu {w args} {
 	geekosphere::tbar::widget::cpu::makeCpu $w $args
 
@@ -13,7 +17,7 @@ proc cpu {w args} {
 	return $w
 }
 
-# TODO 1.2: add support for multiple thermal sources
+# TODO 1.x: add support for multiple thermal sources
 catch { namespace import ::geekosphere::tbar::util::* }
 namespace eval geekosphere::tbar::widget::cpu {
 
@@ -58,7 +62,8 @@ namespace eval geekosphere::tbar::widget::cpu {
 		variable sys
 		set sys($w,originalCommand) ${w}_
 		set sys($w,cpu,temperature) "N/A"
-		set sys($w,cpu,load) "N/A"
+		set sys($w,cpu,loadDisplayBar) "N/A"
+		set sys($w,additionalDevices) [list]
 
 		# cache general cpu information (which is static)
 		set sys(general) [geekosphere::tbar::util::parseProcFile $sys(cpuinfo) [list "processor" "cpuMHz" "cachesize"]]
@@ -72,10 +77,6 @@ namespace eval geekosphere::tbar::widget::cpu {
 		set sys($w,device) $device
 		set sys($w,cpu,mhz) 0
 		set sys($w,cpu,cache) [getCacheSize $sys($w,device)]
-
-		set sys($w,cpu,totalTime) 0
-		set sys($w,cpu,activeTime) 0
-		set sys($w,cpu,load) 0
 
 		frame ${w}
 
@@ -98,14 +99,16 @@ namespace eval geekosphere::tbar::widget::cpu {
 		}
 
 		if {$sys($w,showLoad)} {
-			if {$sys($w,showTotalLoad)} {
+			if {[getOption "-notext" $arguments] == 1} {
+				set displayText ""
+			} elseif {$sys($w,showTotalLoad)} {
 				set displayText "CPU Total Load:"
 			} else {
 				set displayText "CPU Load $sys($w,device):"
 			}
 			pack [frame ${w}.load] -side left -fill both
 			pack [label ${w}.load.label -text "$displayText"] -side left -fill both
-			pack [barChart ${w}.load.barChart -textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,load) -width 100] -side left -fill both
+			pack [barChart ${w}.load.barChart -textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,loadDisplayBar) -width 100] -side left -fill both
 		}
 
 		if {$sys($w,useSpeedStep)} {
@@ -146,13 +149,14 @@ namespace eval geekosphere::tbar::widget::cpu {
 		#
 		# Updating gui
 		#
-		set sys($w,cpu,temperature) "[getTemperature] C°"
+		set sys($w,cpu,temperature) "[getTemperature] Cï¿½"
 		set sys($w,cpu,mhz) [getMHz $w $sys($w,device)]
-		set load [getCpuLoad $w]
-		set sys($w,cpu,load) $load
+		set load [getCpuDeviceBySetting $w]
+		set sys($w,cpu,loadDisplayBar) $load
 		if {$sys($w,showLoad)} {
 			${w}.load.barChart pushValue $load
 			${w}.load.barChart update
+			freqInfoUpdate $w; # updates widgets in popup (if open!)
 		}
 	}
 
@@ -202,6 +206,14 @@ namespace eval geekosphere::tbar::widget::cpu {
 					}
 					"-font" {
 						changeFont $w $value
+					}
+					"-notext" {
+					}
+					"-additionalDevices" {
+						set sys($w,additionalDevices) $value
+						foreach device $value {
+							set geekosphere::tbar::widget::cpu::sys($w,cpu,loadDisplayBar,$device) "N/A"
+						}
 					}
 					default {
 						error "${opt} not supported"
@@ -284,7 +296,36 @@ namespace eval geekosphere::tbar::widget::cpu {
 	}
 
 	# returns the cpu load of the specified cpu device
-	proc getCpuLoad {w} {
+	proc getCpuLoad {w deviceData} {
+		variable sys
+
+		if {$deviceData eq ""} {
+			error "unable to determine cpu load, please check if you specified the correct device"
+		}
+		set cpuIdentifier [lindex $deviceData 0]
+		log "TRACE" "Obtaining cpu load for '$cpuIdentifier'"
+		if {![info exists sys($w,cpu,totalTime,$cpuIdentifier)]} {
+			set sys($w,cpu,totalTime,$cpuIdentifier) 0
+		}
+		if {![info exists sys($w,cpu,activeTime,$cpuIdentifier)]} {
+			set sys($w,cpu,activeTime,$cpuIdentifier) 0
+		}
+		
+		set activeTime [expr {[lindex $deviceData 1] + [lindex $deviceData 2] + [lindex $deviceData 3] + [lindex $deviceData 5] + [lindex $deviceData 6] + [lindex $deviceData 7]}]
+		set idleTime [lindex $deviceData 4]
+		set totalTime [expr {$activeTime + $idleTime}]
+
+		set diffTotal [expr {$totalTime - $sys($w,cpu,totalTime,$cpuIdentifier)}]
+		set diffActive [expr {$activeTime - $sys($w,cpu,activeTime,$cpuIdentifier)}]
+		if {$diffTotal == 0 || $diffActive == 0} { return 0.0 }
+		set usage [::tcl::mathfunc::floor [expr $diffActive. / $diffTotal. * 100.]]
+
+		set sys($w,cpu,totalTime,$cpuIdentifier) $totalTime
+		set sys($w,cpu,activeTime,$cpuIdentifier) $activeTime
+		return $usage
+	}
+	
+	proc getCpuDeviceBySetting {w} {
 		variable sys
 		# load of all cpus
 		if {$sys($w,showTotalLoad)} {
@@ -293,21 +334,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		} else {
 			set deviceData [lsearch -inline -index 0 $sys(statData) "cpu$sys($w,device)"]
 		}
-		if {$deviceData eq ""} {
-			error "unable to determine cpu load, please check if you specified the correct device"
-		}
-		set activeTime [expr {[lindex $deviceData 1] + [lindex $deviceData 2] + [lindex $deviceData 3] + [lindex $deviceData 5] + [lindex $deviceData 6] + [lindex $deviceData 7]}]
-		set idleTime [lindex $deviceData 4]
-		set totalTime [expr {$activeTime + $idleTime}]
-
-		set diffTotal [expr {$totalTime - $sys($w,cpu,totalTime)}]
-		set diffActive [expr {$activeTime - $sys($w,cpu,activeTime)}]
-		if {$diffTotal == 0 || $diffActive == 0} { return 0.0 }
-		set usage [::tcl::mathfunc::floor [expr $diffActive. / $diffTotal. * 100.]]
-
-		set sys($w,cpu,totalTime) $totalTime
-		set sys($w,cpu,activeTime) $activeTime
-		return $usage
+		return [getCpuLoad $w $deviceData]
 	}
 
 	# returns a list of all cpu entries of the statfile
@@ -323,26 +350,69 @@ namespace eval geekosphere::tbar::widget::cpu {
 
 	proc displayFreqInfo {w} {
 		variable sys
-		set freqWindow ${w}.freq
-		if {[winfo exists $freqWindow]} {
-			destroy $freqWindow
+		set sys($w,freqWindow) ${w}.freq
+		if {[winfo exists $sys($w,freqWindow)]} {
+			destroy $sys($w,freqWindow)
+			unset sys($w,freqWindow)
 			return
 		}
 
-		toplevel $freqWindow
+		toplevel $sys($w,freqWindow)
 		set displayText ""
 		dict for {item value} [cpuSpeedstepInfo $w] {
 			append displayText "${item}: ${value}\n"
 		}
-		pack [label ${freqWindow}.display \
+		append displayText "\n"
+		pack [label $sys($w,freqWindow).display \
 			-text $displayText \
 			-fg $sys($w,foreground) \
 			-bg $sys($w,background) \
 			-font $sys($w,font) \
 			-justify left
 		]
+		
+		foreach device $sys($w,additionalDevices) {
+			pack [frame $sys($w,freqWindow).${device} -bg $sys($w,background) ] -fill x
+			pack [label $sys($w,freqWindow).${device}.l -text "$device:" -fg $sys($w,foreground) -bg $sys($w,background) -font $sys($w,font)] -side left
+			pack [barChart $sys($w,freqWindow).${device}.barchart \
+				-height $sys($w,height) \
+				-fg $sys($w,foreground) \
+				-bg $sys($w,background) \
+				-gc $sys($w,loadcolor) \
+				-font $sys($w,font) \
+				-textvariable geekosphere::tbar::widget::cpu::sys($w,cpu,loadDisplayBar,$device) \
+				-width 100] -side right
+		}
+		
+		positionWindowRelativly $sys($w,freqWindow) $w
+		freqInfoUpdate $w
+	}
+	
+	proc freqInfoUpdate {w} {
+		variable sys
+		foreach device $sys($w,additionalDevices) {
+			if {![info exists sys($w,hist,$device)]} {
+				set sys($w,hist,$device) [::struct::stack]
+			}
+			
+			set load [getCpuLoad $w [lsearch -inline -index 0 $sys(statData) $device]]
+			$sys($w,hist,$device) push $load
+			if {[$sys($w,hist,$device) size] >= 100} {
+				set tmp [$sys($w,hist,$device) getr]
+				$sys($w,hist,$device) clear
+				$sys($w,hist,$device) push {*}[lreplace $tmp 0 0]
+			}
+			
+			if {![info exists sys($w,freqWindow)]} {
+				continue
+			}
 
-		positionWindowRelativly $freqWindow $w
+			if {[winfo exists $sys($w,freqWindow).${device}]} {
+				$sys($w,freqWindow).${device}.barchart setValues [$sys($w,hist,$device) getr]
+				$sys($w,freqWindow).${device}.barchart update
+				set geekosphere::tbar::widget::cpu::sys($w,cpu,loadDisplayBar,$device) $load
+			}
+		}
 	}
 
 	proc cpuSpeedstepInfo {w} {
@@ -489,11 +559,13 @@ namespace eval geekosphere::tbar::widget::cpu {
 
 	proc changeWidth {w width} {
 		variable sys
+		set sys($w,width) $width
 		$sys($w,originalCommand) configure -width $width
 	}
 
 	proc changeHeight {w height} {
 		variable sys
+		set sys($w,height) $height
 		$sys($w,originalCommand) configure -height $height
 		if {$sys($w,showLoad)} {
 			${w}.load.barChart configure -height $height
@@ -505,6 +577,7 @@ namespace eval geekosphere::tbar::widget::cpu {
 		if {$sys($w,showLoad)} {
 			${w}.load.barChart configure -gc $color
 		}
+		set sys($w,loadcolor) $color
 	}
 
 	proc changeFont {w font} {

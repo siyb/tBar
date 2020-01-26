@@ -1,8 +1,10 @@
 package provide i3_workspace 1.0
 
-package require logger
-package require i3_ipc
-package require json
+if {![info exist geekosphere::tbar::packageloader::available]} {
+	package require tbar_logger
+	package require i3_ipc
+	package require json
+}
 
 proc i3_workspace {w args} {
 	geekosphere::tbar::widget::i3::workspace::makeI3Workspace $w $args
@@ -18,19 +20,23 @@ catch {
 	namespace import ::geekosphere::tbar::i3::ipc::*
 	namespace import ::geekosphere::tbar::util::*
 }
+
 namespace eval geekosphere::tbar::widget::i3::workspace {
 	initLogger
 
 	proc makeI3Workspace {w arguments} {
 		variable sys
-
+		set sys(currentWorkspace) -1;# should be the same on in all widgets!
 		set sys($w,originalCommand) ${w}_
 		set sys($w,workspace) [list]
 		set sys($w,focusColor) "blue"
 		set sys($w,urgentColor) "red"
+		set sys($w,urgentFontColor) "white"
+		set sys($w,focusFontColor) "white"
+		set sys($w,generalFontColor) "white"
 		set sys($w,rolloverFontColor) [getOption "-fg" $arguments]
 		set sys($w,rolloverBackgroundColor) [getOption "-bg" $arguments]
-
+		set sys($w,legacyMode) 0
 		pack [frame ${w}]
 
 		# rename widgets so that it will not receive commands
@@ -38,11 +44,10 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 		set sys($w,lastWorkspaceStatus) [dict create]
 
-		initIpc $w
-
 		# run configuration
 		action $w configure $arguments
 
+		initIpc $w
 	}
 
 	# initialize i3 ipc stuff
@@ -59,6 +64,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set event [getEvent]
 		set type [lindex $event 0]
 		set message [lindex $event 1]
+		if {$event == -1} {
+			log "WARNING" "A connection error occured, resetting system!"
+			resetWorkspaceSystem $w
+			return
+		}
 		set eventDict [::json::json2dict $message]
 		# command reply / subscribe reply
 		# TODO: dict exists is an ugly workaround for bug in i3_ipc, read comment above i3queryDecode
@@ -84,6 +94,9 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 				"urgent" {
 					getWorkspaces
 				}
+				"create" {
+					getWorkspaces
+				}
 				"unspecified" {
 					return
 				}
@@ -99,6 +112,11 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 		set event [getInfo]
 		set type [lindex $event 0]
 		set message [lindex $event 1]
+		if {$event == -1} {
+			log "WARNING" "A connection error occured, resetting system!"
+			resetWorkspaceSystem $w
+			return
+		}
 		set eventDict [::json::json2dict $message]
 		if {$sys($w,lastWorkspaceStatus) == $eventDict} {
 			return
@@ -129,6 +147,26 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	# Workspace datastructure modificiation
 	#
 
+	proc resetWorkspaceSystem {w} {
+		variable sys
+		after 500
+		removeAllWorkspaceLabels $w
+		set sys($w,workspace) [list]
+		set sys($w,lastWorkspaceStatus) [dict create]
+		connect
+		subscribeToWorkspace
+		getWorkspaces
+		updateDisplay $w
+	}
+
+	proc removeAllWorkspaceLabels {w} {
+		variable sys
+		foreach workspace $sys($w,workspace) {
+			set currentWorkspaceNumber [lindex $workspace 0]
+			destroy ${w}.workspace${currentWorkspaceNumber}
+		}
+	}
+
 	proc flagWorkspace {w workspace kind} {
 		variable sys
 		set number [dict get $workspace num]
@@ -140,6 +178,7 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 				setUrgentStatus $w $number 0
 			}
 			"+focus" {
+				set sys(currentWorkspace) $number 
 				setActiveStatus $w $number 1
 			}
 			"-focus" {
@@ -148,6 +187,15 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 			default {
 				error "Flag unknown: $kind"
 			}
+		}
+	}
+
+	proc getCurrentWorkspace {} {
+		variable sys
+		if {[info exists sys(currentWorkspace)]} {
+			return $sys(currentWorkspace)
+		} else {
+			return -1
 		}
 	}
 
@@ -200,8 +248,9 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	proc addWorkspace {w workspace} {
 		variable sys
 		set number [dict get $workspace num]
+		set name [dict get $workspace name]
 		if {![workspacePresent $w $number]} {
-			lappend sys($w,workspace) [list $number 0 0]
+			lappend sys($w,workspace) [list $number 0 0 $name]
 		}
 	}
 
@@ -218,32 +267,67 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 
 	proc updateDisplay {w} {
 		variable sys
-		set sortedWorkspaces [lsort -index 0 -integer $sys($w,workspace)]
+		if {[hasNamedWorkspace $w]} {
+			set sortedWorkspaces [lsort -index 3 $sys($w,workspace)]
+		} else {
+			set sortedWorkspaces [lsort -index 0 -integer $sys($w,workspace)]
+		}
 		foreach wspace $sortedWorkspaces {
 			set workspace [lindex $wspace 0]
+			set name [lindex $wspace 3]
 			# TODO: destroy is a dirty and slow hack, increase speed by only destroying "unsorted" windows
 			destroy ${w}.workspace${workspace}
 			if {![winfo exists ${w}.workspace${workspace}]} {
 				pack [label ${w}.workspace${workspace} \
-					-text $workspace \
+					-text $name \
 					-bg $sys($w,background) \
 					-fg $sys($w,foreground) \
 					-font $sys($w,font) \
 					-activeforeground $sys($w,rolloverFontColor)  \
 					-activebackground $sys($w,rolloverBackgroundColor) \
 					-highlightthickness 0 \
-					-width 2
 				] -side left
-				bind ${w}.workspace${workspace} <Button-1> [list sendCommand $workspace]
+				bind ${w}.workspace${workspace} <Button-1> [list geekosphere::tbar::widget::i3::workspace::changeWorkspace $w $name]
 			}
 			if {[getActiveStatus $w $workspace] == 1} {
-				${w}.workspace${workspace} configure -bg $sys($w,focusColor)
+				${w}.workspace${workspace} configure -bg $sys($w,focusColor) -fg $sys($w,focusFontColor)
 			} elseif {[getUrgentStatus $w $workspace] == 1} {
-				${w}.workspace${workspace} configure -bg $sys($w,urgentColor)
+				${w}.workspace${workspace} configure -bg $sys($w,urgentColor) -fg $sys($w,urgentFontColor)
 			} else {
-				${w}.workspace${workspace} configure -bg $sys($w,background)
+				${w}.workspace${workspace} configure -bg $sys($w,background) -fg $sys($w,generalFontColor)
 			}
 		}
+	}
+	
+	proc hasNamedWorkspace {w} {
+		variable sys
+		foreach wspace $sys($w,workspace) {
+			if {[lindex $wspace 0] eq "null"} {
+				return 1
+			}
+		}
+		return 0
+	}
+
+	proc changeWorkspace {w workspace} {
+		variable sys
+		log "DEBUG" "Changing to workspace $workspace"
+		if {$sys($w,legacyMode)} {
+			changeWorkspaceLegacy $workspace
+		} else {
+			changeWorkspaceNew $workspace
+		}
+		wm focusmodel . passive
+	}
+
+	proc changeWorkspaceLegacy {workspace} {
+		log "DEBUG" "Using i3 legacy mode: $workspace"
+		sendCommand $workspace
+	}
+
+	proc changeWorkspaceNew {workspace} {
+		log "DEBUG" "Using i3 new mode: $workspace"
+		sendCommand [list workspace $workspace]
 	}
 
 	proc action {w args} {
@@ -269,6 +353,15 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 					"-urgentcolor" {
 						changeUrgentcolor $w $value
 					}
+					"-focusFontColor" {
+						changeFocusFontColor $w $value
+					}
+					"-urgentFontColor" {
+						changeUrgentFontColor $w $value
+					}
+					"-generalFontColor" {
+						changeGeneralFontColor $w $value
+					}
 					"-rolloverfontcolor" {
 						changeRolloverFontColor $w $value
 					}
@@ -278,6 +371,12 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 					"-side" {
 						# do nothing, -side parameter was meant for widget wrapper
 						# dirty hack
+					}
+					"-setipcpath" {
+						setIpcPath $value
+					}
+					"-legacymode" {
+						setLegacyMode $w $value
 					}
 					default {
 						error "${opt} not supported"
@@ -298,6 +397,19 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	#
 	# Widget configuration procs
 	#
+
+	proc setLegacyMode {w legacyMode} {
+		variable sys
+		set sys($w,legacyMode) $legacyMode
+	}
+
+	proc setIpcPath {path} {
+		if {![file exists $path] || [file isfile $path] || [file isdirectory $path]} {
+			log "WARNING" "The i3 ipc path specified using the -setipcpath option does not exist, is a regular file or a directory. Using '~/.i3/ipc.sock' as fallback"
+			return
+		}
+		set geekosphere::tbar::i3::ipc::sys(socketFile) $path
+	}
 
 	proc setForAllWorkspaces {w args} {
 		variable sys
@@ -334,6 +446,21 @@ namespace eval geekosphere::tbar::widget::i3::workspace {
 	proc changeUrgentcolor {w color} {
 		variable sys
 		set sys($w,urgentColor) $color
+	}
+
+	proc changeFocusFontColor {w color} {
+		variable sys
+		set sys($w,focusFontColor) $color
+	}
+
+	proc changeUrgentFontColor {w color} {
+		variable sys
+		set sys($w,urgentFontColor) $color
+	}
+
+	proc changeGeneralFontColor {w color} {
+		variable sys
+		set sys($w,generalFontColor) $color
 	}
 
 	proc changeRolloverBackground {w color} {

@@ -1,7 +1,13 @@
-package require calClock
-
+catch { namespace import geekosphere::tbar::packageloader::* }
 namespace eval geekosphere::tbar::wrapper::clock {
-	
+
+	generallyRequires calClock util callib logger
+	parameterRequires calClock -ical icalCalClock logger sqlite3 ical struct::tree
+	setNamespace calClock ::geekosphere::tbar::widget::notify
+	registerNamespaceImportsFor calClock \
+		::geekosphere::tbar::util::* \
+		::geekosphere::tbar::util::logger::*
+		
 	proc init {path settingsList} {
 		pack [calClock $path \
 			-fg $geekosphere::tbar::conf(color,text) \

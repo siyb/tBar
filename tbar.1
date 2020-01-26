@@ -33,13 +33,20 @@ managers. It provides basic system monitoring facilities such as:
 * i3 desktop switcher widget
 .TP
 * Simple widget API
-
+.TP
+* Weather widget, using the inofficial google weather API
 .SH OPTIONS
 .TP
 \fB\-\-config\fR \fIFILE\fR
 specifies a config file to use instead of the global / user configuration file
+.TP
+\fB\-\-console\fR
+opens the developer console if an instance of tBar is running
+.TP
+\fB\-\-ipc\fR \fICOMMAND\fR
+runs the provided IPC command, for a list of all supported IPC commands please try ::geekosphere::tbar::ipc#listIPC 
 
-.SH FILES
+.SH FILES AND DIRECTORIES
 .TP
 .I /etc/tbar/config.tcl
 global configuration file
@@ -52,6 +59,12 @@ user specific widget directory, place widgets here in order to make them loadabl
 .TP
 .I ~/.tbar/lib
 user specific library directory, place libraries along with a pkgIndex.tcl file here in order to make them loadable by tBar
+.TP
+.I ~/.tbar/cache
+the default cache directory
+.TP
+.I ~/.tbar/bugreport
+user specific crashfiles
 .TP
 .I ~/.tbar/icaldata
 sqlite database storing user specific calendar data

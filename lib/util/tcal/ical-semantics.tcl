@@ -2,7 +2,9 @@ package provide ical-semantics 0.1
 
 namespace eval ical {}
 
-package require struct::list
+if {![info exists geekosphere::tbar::packageloader::available]} {
+	package require struct::list
+}
 
 proc ical::components {tree node body} {
     set errs {}

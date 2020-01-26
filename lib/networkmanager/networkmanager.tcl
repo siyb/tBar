@@ -1,4 +1,4 @@
-package provide wicd 1.0
+package provide networkmanager 1.0
 
 if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require tbar_logger
@@ -6,13 +6,13 @@ if {![info exist geekosphere::tbar::packageloader::available]} {
 	package require BWidget
 }
 
-proc wicd {w args} {
-	if {[geekosphere::tbar::widget::wicd::makeWicd $w $args] == -1} {
+proc networkmanager {w args} {
+	if {[geekosphere::tbar::widget::networkmanager::makeNetworkManager $w $args] == -1} {
 		return -1
 	}
 
 	proc $w {args} {
-		geekosphere::tbar::widget::wicd::action [string trim [dict get [info frame 0] proc] ::] $args
+		geekosphere::tbar::widget::networkmanager::action [string trim [dict get [info frame 0] proc] ::] $args
 	}
 	return $w
 }
@@ -45,10 +45,10 @@ if {0} {
     ("after" script)
 
 }
-namespace eval geekosphere::tbar::widget::wicd {
+namespace eval geekosphere::tbar::widget::networkmanager {
 	initLogger
 
-	proc makeWicd {w arguments} {
+	proc makeNetworkManager {w arguments} {
 		variable sys
 
 		# wicd dbus connection
@@ -186,14 +186,14 @@ namespace eval geekosphere::tbar::widget::wicd {
 				-font $sys($w,font) \
 				-fg $sys($w,foreground) \
 				-bg $sys($w,background) \
-				-command [list geekosphere::tbar::widget::wicd::handleConnection $w $network $connected]
+				-command [list geekosphere::tbar::widget::networkmanager::handleConnection $w $network $connected]
 
 			button ${networkPath}.configure \
 				-text "Configure" \
 				-font $sys($w,font) \
 				-fg $sys($w,foreground) \
 				-bg $sys($w,background) \
-				-command [list geekosphere::tbar::widget::wicd::showNetworkDetail $w $network]
+				-command [list geekosphere::tbar::widget::networkmanager::showNetworkDetail $w $network]
 
 			grid ${networkPath}.connect ${networkPath}.configure -sticky ew
 		}
@@ -260,20 +260,20 @@ namespace eval geekosphere::tbar::widget::wicd {
 			-fg $sys($w,foreground) \
 			-bg $sys($w,background) \
 			-font $sys($w,font) \
-			-textvariable ::geekosphere::tbar::widget::wicd::sys($w,key,[dict get $network id])
+			-textvariable ::geekosphere::tbar::widget::networkmanager::sys($w,key,[dict get $network id])
 		grid ${f}.key ${f}.keyEntry -sticky w
 		button ${f}.save \
 			-text "save" \
 			-fg $sys($w,foreground) \
 			-bg $sys($w,background) \
 			-font $sys($w,font) \
-			-command [list ::geekosphere::tbar::widget::wicd::saveNetwork $w $network]
+			-command [list ::geekosphere::tbar::widget::networkmanager::saveNetwork $w $network]
 		button ${f}.cancel \
 			-text "cancel" \
 			-fg $sys($w,foreground) \
 			-bg $sys($w,background) \
 			-font $sys($w,font) \
-			-command [list ::geekosphere::tbar::widget::wicd::destroyDetailWindow $w]
+			-command [list ::geekosphere::tbar::widget::networkmanager::destroyDetailWindow $w]
 		grid ${f}.save ${f}.cancel -sticky ew
 
 	}
